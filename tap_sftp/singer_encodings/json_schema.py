@@ -38,8 +38,8 @@ def sample_file(conn, table_spec, f, sample_rate, max_records, config):
         file_handle = conn.get_file_handle(f)
 
     # Add file_name to opts and flag infer_compression to support gzipped files
-    opts = {'key_properties': table_spec['key_properties'],
-            'delimiter': table_spec['delimiter'],
+    opts = {'key_properties': table_spec.get('key_properties', []),
+            'delimiter': table_spec.get('delimiter', ','),
             'file_name': f['filepath'],
             'encoding': table_spec.get('encoding', 'utf-8')}
 

@@ -61,7 +61,7 @@ def sync_file(sftp_file_spec, stream, table_spec, config):
         file_handle = sftp_client.get_file_handle(sftp_file_spec)
 
     # Add file_name to opts and flag infer_compression to support gzipped files
-    opts = {'key_properties': table_spec['key_properties'],
+    opts = {'key_properties': table_spec.get('key_properties', []),
             'delimiter': table_spec.get('delimiter', ','),
             'file_name': sftp_file_spec['filepath'],
             'encoding': table_spec.get('encoding', 'utf-8')}
