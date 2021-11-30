@@ -2,8 +2,9 @@ import codecs
 import csv
 import io
 import os
+import chardet
 
-from tap_sftp import decrypt
+from chardet.universaldetector import UniversalDetector
 from tap_sftp.singer_encodings import compression
 
 SDC_EXTRA_COLUMN = "_sdc_extra"
@@ -24,8 +25,15 @@ def get_row_iterator(iterable, options=None):
     options = options or {}
 
     # Replace any NULL bytes in the line given to the DictReader
+    detector = UniversalDetector()
+    for line in iterable:
+        detector.feed(line)
+        if detector.done: break
+    detector.close()
+    
+    iterable.seek(0)
     reader = csv.DictReader(
-        io.TextIOWrapper(iterable, encoding=options.get('encoding', 'utf-8')),
+        io.TextIOWrapper(iterable, encoding=detector.result.get('encoding')),
         fieldnames=None,
         restkey=SDC_EXTRA_COLUMN,
         delimiter=options.get('delimiter', ',')
