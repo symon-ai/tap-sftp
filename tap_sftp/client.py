@@ -31,6 +31,7 @@ class SFTPConnection():
         self.decrypted_file = None
         self.key = None
         self.transport = None
+        self.retries = 5
         self.__sftp = None
         if private_key_file:
             key_path = os.path.expanduser(private_key_file)
@@ -46,19 +47,23 @@ class SFTPConnection():
         jitter=None,
         factor=2)
     def __connect(self):
-        try:
-            LOGGER.info('Creating new connection to SFTP...')
-            self.transport = paramiko.Transport((self.host, self.port))
-            self.transport.use_compression(True)
-            self.transport.connect(username=self.username, password=self.password, hostkey=None, pkey=self.key)
-            self.__sftp = paramiko.SFTPClient.from_transport(self.transport)
-            LOGGER.info('Connection successful')
-        except (AuthenticationException, SSHException) as ex:
-            self.transport.close()
-            self.transport = paramiko.Transport((self.host, self.port))
-            self.transport.use_compression(True)
-            self.transport.connect(username=self.username, password=self.password, hostkey=None, pkey=None)
-            self.__sftp = paramiko.SFTPClient.from_transport(self.transport)
+        for i in range(self.retries+1):
+            try:
+                LOGGER.info('Creating new connection to SFTP...')
+                self.transport = paramiko.Transport((self.host, self.port))
+                self.transport.use_compression(True)
+                self.transport.connect(username=self.username, password=self.password, hostkey=None, pkey=self.key)
+                self.__sftp = paramiko.SFTPClient.from_transport(self.transport)
+                LOGGER.info('Connection successful')
+                break
+            except (AuthenticationException, SSHException) as ex:
+                self.transport.close()
+                time.sleep(5*i)
+                LOGGER.info('Connection error, retrying...')
+                if i >= (self.retries):
+                    raise ex
+
+
 
     @property
     def sftp(self):
