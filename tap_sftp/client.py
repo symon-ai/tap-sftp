@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import stat
@@ -15,6 +16,7 @@ from tap_sftp import decrypt
 
 LOGGER = singer.get_logger()
 
+logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 
 def handle_backoff(details):
     LOGGER.warn(
