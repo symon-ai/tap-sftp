@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import stat
@@ -15,6 +16,7 @@ from tap_sftp import decrypt
 
 LOGGER = singer.get_logger()
 
+logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 
 def handle_backoff(details):
     LOGGER.warn(
@@ -59,7 +61,7 @@ class SFTPConnection():
             except (AuthenticationException, SSHException) as ex:
                 self.transport.close()
                 time.sleep(5*i)
-                LOGGER.info('Connection error, retrying...')
+                LOGGER.info('Connection failed, retrying...')
                 if i >= (self.retries):
                     raise ex
 
