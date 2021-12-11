@@ -91,6 +91,7 @@ def sync_file(sftp_file_spec, stream, table_spec, config):
         LOGGER.info(f'Sync Complete - Records Synced: {records_synced}')
 
     stats.add_file_data(table_spec, sftp_file_spec['filepath'], sftp_file_spec['last_modified'], records_synced)
+    file_handle.close()
     sftp_client.close()
 
     return records_synced
