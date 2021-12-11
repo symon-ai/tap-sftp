@@ -59,13 +59,12 @@ class SFTPConnection():
                 LOGGER.info('Connection successful')
                 break
             except (AuthenticationException, SSHException) as ex:
-                self.transport.close()
+                if self.transport:
+                    self.transport.close()
                 time.sleep(5*i)
                 LOGGER.info('Connection failed, retrying...')
                 if i >= (self.retries):
                     raise ex
-
-
 
     @property
     def sftp(self):
@@ -84,7 +83,7 @@ class SFTPConnection():
             self.decrypted_file.close()
 
     def match_files_for_table(self, files, table_name, search_pattern):
-        LOGGER.info("Searching for files for table '%s', matching pattern: %s", table_name, table_pattern)
+        LOGGER.info("Searching for files for table '%s', matching pattern: %s", table_name, search_pattern)
         matcher = re.compile(search_pattern)
         return [f for f in files if matcher.search(f["filepath"])]
 
