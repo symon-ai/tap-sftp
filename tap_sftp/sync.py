@@ -5,7 +5,17 @@ from tap_sftp import client, stats
 from tap_sftp.aws_ssm import AWS_SSM
 from tap_sftp.singer_encodings import csv_handler
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+
 LOGGER = singer.get_logger()
+
+
+def sync_ftp(sftp_file, stream, table_spec, config, state, table_name):
+    records_streamed = sync_file(sftp_file, stream, table_spec, config)
+    state = singer.write_bookmark(state, table_name, 'modified_since', sftp_file['last_modified'].isoformat())
+    singer.write_state(state)
+    return records_streamed
 
 
 def sync_stream(config, state, stream):
@@ -39,10 +49,10 @@ def sync_stream(config, state, stream):
     if not files:
         return records_streamed
 
-    for sftp_file in files:
-        records_streamed += sync_file(sftp_file, stream, table_spec, config)
-        state = singer.write_bookmark(state, table_name, 'modified_since', sftp_file['last_modified'].isoformat())
-        singer.write_state(state)
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        future_sftp = {executor.submit(sync_ftp, sftp_file, stream, table_spec, config, state, table_name): sftp_file for sftp_file in files}
+        for future in as_completed(future_sftp):
+            records_streamed += future.result()
 
     LOGGER.info('Wrote %s records for table "%s".', records_streamed, table_name)
 
