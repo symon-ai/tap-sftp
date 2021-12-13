@@ -33,7 +33,7 @@ class SFTPConnection():
         self.decrypted_file = None
         self.key = None
         self.transport = None
-        self.retries = 5
+        self.retries = 10
         self.__sftp = None
         if private_key_file:
             key_path = os.path.expanduser(private_key_file)
