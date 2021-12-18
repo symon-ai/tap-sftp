@@ -170,10 +170,9 @@ class SFTPConnection():
                 )
                 LOGGER.info(f'Decrypting file complete')
                 try:
-                    self.decrypted_file = open(decrypted_path, 'rb')
+                    return open(decrypted_path, 'rb')
                 except FileNotFoundError:
                     raise Exception(f'Decryption of file failed: {sftp_file_path}')
-                return self.decrypted_file, decrypted_path
             else:
                 self.sftp.get(sftp_file_path, local_path)
                 return open(local_path, 'rb')
