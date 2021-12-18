@@ -77,6 +77,7 @@ class SFTPConnection():
 
     def close(self):
         self.sftp.close()
+        self.__sftp.close()
         self.transport.close()
         # decrypted files require an open file object, so close it
         if self.decrypted_file:
