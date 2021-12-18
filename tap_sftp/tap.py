@@ -30,8 +30,6 @@ def stream_is_selected(mdata):
     return mdata.get((), {}).get('selected', False)
 
 
-
-
 def do_sync(config, catalog, state):
     LOGGER.info('Starting sync.')
 
