@@ -49,7 +49,7 @@ def sync_stream(config, state, stream):
     if not files:
         return records_streamed
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=3) as executor:
         future_sftp = {executor.submit(sync_ftp, sftp_file, stream, table_spec, config, state, table_name): sftp_file for sftp_file in files}
         for future in as_completed(future_sftp):
             records_streamed += future.result()
