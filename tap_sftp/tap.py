@@ -91,3 +91,6 @@ def main():
         do_discover(args.config)
     elif args.catalog or args.properties:
         do_sync(args.config, args.catalog, args.state)
+
+if __name__=="__main__":
+    main()

@@ -61,6 +61,8 @@ class SFTPConnection():
             except (AuthenticationException, SSHException) as ex:
                 if self.transport:
                     self.transport.close()
+                if self.__sftp:
+                    self.__sftp.close()
                 time.sleep(5*i)
                 LOGGER.info('Connection failed, retrying...')
                 if i >= (self.retries):
@@ -77,7 +79,6 @@ class SFTPConnection():
 
     def close(self):
         self.sftp.close()
-        self.__sftp.close()
         self.transport.close()
         # decrypted files require an open file object, so close it
         if self.decrypted_file:
