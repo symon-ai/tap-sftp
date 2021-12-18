@@ -65,7 +65,6 @@ def sync_file(sftp_file_spec, stream, table_spec, config):
     decryption_configs = config.get('decryption_configs')
     if decryption_configs:
         decryption_configs['key'] = AWS_SSM.get_decryption_key(decryption_configs.get('SSM_key_name'))
-        file_handle = sftp_client.get_file_handle(sftp_file_spec, decryption_configs)
         
     with sftp_client.get_file_handle(sftp_file_spec, decryption_configs) as file_handle:
         if decryption_configs:
