@@ -80,9 +80,6 @@ class SFTPConnection():
     def close(self):
         self.__sftp.close()
         self.transport.close()
-        # decrypted files require an open file object, so close it
-        if self.decrypted_file:
-            self.decrypted_file.close()
 
     def match_files_for_table(self, files, table_name, search_pattern):
         LOGGER.info("Searching for files for table '%s', matching pattern: %s", table_name, search_pattern)

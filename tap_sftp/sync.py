@@ -101,6 +101,10 @@ def sync_file(sftp_file_spec, stream, table_spec, config):
             LOGGER.info(f'Sync Complete - Records Synced: {records_synced}')
 
     stats.add_file_data(table_spec, sftp_file_spec['filepath'], sftp_file_spec['last_modified'], records_synced)
+
+    if config.get('delete_after_sync'):
+        sftp_client.sftp.remove(sftp_file_spec["filepath"])
+        LOGGER.info(f"Deleting remote file: {sftp_file_spec['filepath']}")
     sftp_client.close()
     del sftp_client
 
