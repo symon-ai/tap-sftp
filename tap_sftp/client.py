@@ -70,7 +70,8 @@ class SFTPConnection():
 
     @property
     def sftp(self):
-        self.__connect()
+        if self.__sftp is None:
+            self.__connect()
         return self.__sftp
 
     @sftp.setter
