@@ -93,7 +93,7 @@ class SFTPConnection():
     def is_directory(self, file_attr):
         return stat.S_ISDIR(file_attr.st_mode)
 
-    def get_files_by_prefix(self, prefix):
+    def get_files_by_prefix(self, prefix, search_subdirectories=True):
         """
         Accesses the underlying file system and gets all files that match "prefix", in this case, a directory path.
 
@@ -111,7 +111,7 @@ class SFTPConnection():
 
         for file_attr in result:
             # NB: This only looks at the immediate level beneath the prefix directory
-            if self.is_directory(file_attr):
+            if self.is_directory(file_attr) and search_subdirectories:
                 files += self.get_files_by_prefix(prefix + '/' + file_attr.filename)
             else:
                 if self.is_empty(file_attr):
@@ -130,8 +130,8 @@ class SFTPConnection():
 
         return files
 
-    def get_files(self, prefix, search_pattern, modified_since=None):
-        files = self.get_files_by_prefix(prefix)
+    def get_files(self, prefix, search_pattern, modified_since=None, search_subdirectories=True):
+        files = self.get_files_by_prefix(prefix, search_subdirectories)
         if files:
             LOGGER.info('Found %s files in "%s"', len(files), prefix)
         else:

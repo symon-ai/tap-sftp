@@ -7,7 +7,8 @@ SDC_SOURCE_LINENO_COLUMN = "_sdc_source_lineno"
 
 
 def get_schema_for_table(conn, table_spec, config):
-    files = conn.get_files(table_spec['search_prefix'], table_spec['search_pattern'])
+    search_subdir = config.get("search_subdirectories", True)
+    files = conn.get_files(table_spec['search_prefix'], table_spec['search_pattern'], search_subdirectories=search_subdir)
 
     if not files:
         return {}
