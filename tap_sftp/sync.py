@@ -22,6 +22,7 @@ def sync_stream(config, state, stream):
     table_name = stream.tap_stream_id
     modified_since = utils.strptime_to_utc(singer.get_bookmark(state, table_name, 'modified_since') or
                                            config['start_date'])
+    search_subdir = config.get("search_subdirectories", True)
 
     LOGGER.info('Syncing table "%s".', table_name)
     LOGGER.info('Getting files modified since %s.', modified_since)
@@ -39,7 +40,8 @@ def sync_stream(config, state, stream):
     files = sftp_client.get_files(
         table_spec["search_prefix"],
         table_spec["search_pattern"],
-        modified_since
+        modified_since,
+        search_subdir
     )
     sftp_client.close()
 
