@@ -75,6 +75,7 @@ def sync_file(sftp_file_spec, stream, table_spec, config):
         # Add file_name to opts and flag infer_compression to support gzipped files
         opts = {'key_properties': table_spec.get('key_properties', []),
                 'delimiter': table_spec.get('delimiter', ','),
+                'quotechar': table_spec.get('quotechar', '"'),
                 'file_name': sftp_file_spec['filepath'],
                 'encoding': table_spec.get('encoding', 'utf-8')}
 
@@ -87,10 +88,11 @@ def sync_file(sftp_file_spec, stream, table_spec, config):
             with Transformer() as transformer:
                 for row in reader:
                     custom_columns = {
-                        '_sdc_source_file': sftp_file_spec["filepath"],
-
-                        # index zero, +1 for header row
-                        '_sdc_source_lineno': records_synced + 2
+                        # Uncomment if required custom fields
+                        # '_sdc_source_file': sftp_file_spec["filepath"],
+                        #
+                        # # index zero, +1 for header row
+                        # '_sdc_source_lineno': records_synced + 2
                     }
                     rec = {**row, **custom_columns}
 

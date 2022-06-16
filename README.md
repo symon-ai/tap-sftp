@@ -11,17 +11,11 @@ installation instructions for [Mac](http://docs.python-guide.org/en/latest/start
 It's recommended to use a virtualenv:
 
 ```bash
-$ python3 -m venv venv
-$ pip install tap-sftp
-```
-
-or
-
-```bash
-$ python3 -m venv venv
-$ . venv/bin/activate
+$ python3 -m venv ~/.virtualenvs/tap-sftp
+$ source ~/.virtualenvs/tap-sftp/bin/activate
+$ pip install -U pip setuptools
 $ pip install --upgrade pip
-$ pip install .
+$ pip install -e .
 ```
 
 ## Configuration:
@@ -34,28 +28,45 @@ $ pip install .
         "port": 22,
         "username": "YOUR_USER",
         "password": "YOUR_PASS",
+        "search_subdirectories": false,
         "tables": [
             {
-                "table_name": "MyExportData",
-                "search_prefix": "\/Export\/SubFolder",
-                "search_pattern": "MyExportData.*\\.zip.gpg$",
+                "table_name": "Orders",
+                "search_prefix": "\/Orders\/SubFolder",
+                "search_pattern": "Orders.*\\.csv",
                 "key_properties": [],
                 "delimiter": ",",
+                "quotechar": "\"",
+                "encoding": "utf-8"
+            },
+            {
+                "table_name": "Customers",
+                "search_prefix": "\/Customers\/SubFolder",
+                "search_pattern": "Customers.*\\.csv",
+                "key_properties": [],
+                "delimiter": "|",
+                "quotechar": "\"",
                 "encoding": "utf-8"
             }
         ],
-        "start_date":"2021-01-28",
-        "decryption_configs": {
-            "SSM_key_name": "SSM_PARAMETER_KEY_NAME",
-            "gnupghome": "/your/dir/.gnupg",
-            "passphrase": "your_gpg_passphrase"
-        },
-        "private_key_file": "Optional_Path",
+        "start_date":"1900-01-01",
+        "private_key_file": "Optional_Path"
     }
    ```
-   If using the decryption feature you must pass the configs shown above, including the AWS SSM parameter name for where the decryption private key is stored. In order to retrieve this parameter the runtime environment must have access to SSM through IAM environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN).
-
-   The private_key_file is optional.
+   - **host**: URI of the SFTP server.
+   - **port**: The port number of the SFTP service listening on server. Default is 22.
+   - **username**: The username to connect to the server.
+   - **password**: The password to authenticate. Leave this blank if private key file is used.
+   - **search_subdirectories**: Flag indicates whether to search within the subdirectories or not. Set it to false if the path(defined in prefix) for the target file is known and subdirectory search is not required. 
+   - **tables**: List of configurations which will be used to search files within the file hierarchy and read the target tables.
+   - **table_name**: Name of the table should appear in the data stream.
+   - **search_prefix**: Hierarchical path of the file(s) to be read.
+   - **search_pattern**: Pattern to be used to search the file(s).
+   - **key_properties**: Define mandatory column headers within the file.
+   - **delimiter**: Delimiter used as separator in csv file.
+   - **quotechar**: Specifies the character used to surround fields that contain the delimiter character. The default is a double quote ( ' " ' ). 
+   - **start_date**: Date since file(s) modified. 
+   - **private_key_file**(optional): Provide path for private_key_file if private key will be used instead of password.
 
 ## Discovery mode:
 
@@ -76,18 +87,19 @@ Edit the `catalog.json` and select the streams to replicate. Or use this helpful
 Run the tap like any other singer compatible tap:
 
 ```
-$ tap-sftp --config config.json --catalog catalog.json --state state.json
+$ tap-sftp --config config.json --catalog catalog.json
 ```
 
 ## To run tests:
 
 1. Install python dependencies in a virtual env and run unit and integration tests
 ```
-  python3 -m venv venv
-  . venv/bin/activate
-  pip install --upgrade pip
-  pip install .
-  pip install tox
+  $ python3 -m venv ~/.virtualenvs/tap-sftp
+  $ source ~/.virtualenvs/tap-sftp/bin/activate
+  $ pip install -U pip setuptools
+  $ pip install --upgrade pip
+  $ pip install -e .
+  $ pip install tox
 ```
 
 2. To run unit tests:

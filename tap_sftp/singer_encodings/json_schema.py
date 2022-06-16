@@ -17,9 +17,10 @@ def get_schema_for_table(conn, table_spec, config):
 
     data_schema = {
         **generate_schema(samples, table_spec),
-        SDC_SOURCE_FILE_COLUMN: {'type': 'string'},
-        SDC_SOURCE_LINENO_COLUMN: {'type': 'integer'},
-        csv_handler.SDC_EXTRA_COLUMN: {'type': 'array', 'items': {'type': 'string'}},
+        # Uncomment if required these custom columns
+        # SDC_SOURCE_FILE_COLUMN: {'type': 'string'},
+        # SDC_SOURCE_LINENO_COLUMN: {'type': 'integer'},
+        # csv_handler.SDC_EXTRA_COLUMN: {'type': 'array', 'items': {'type': 'string'}}
     }
 
     return {
@@ -42,7 +43,8 @@ def sample_file(conn, table_spec, f, sample_rate, max_records, config):
     opts = {'key_properties': table_spec.get('key_properties', []),
             'delimiter': table_spec.get('delimiter', ','),
             'file_name': f['filepath'],
-            'encoding': table_spec.get('encoding', 'utf-8')}
+            'encoding': table_spec.get('encoding', 'utf-8'),
+            'quotechar': table_spec.get('quotechar', '"')}
 
     readers = csv_handler.get_row_iterators(file_handle, options=opts, infer_compression=True)
 
