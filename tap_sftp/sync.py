@@ -1,10 +1,9 @@
 import singer
 from singer import Transformer, metadata, utils
-
 from tap_sftp import client, stats
 from tap_sftp.aws_ssm import AWS_SSM
 from tap_sftp.singer_encodings import csv_handler
-
+from tap_sftp import defaults
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
@@ -51,6 +50,10 @@ def sync_stream(config, state, stream):
     if not files:
         return records_streamed
 
+    max_file_size = config.get("max_file_size", defaults.MAX_FILE_SIZE)
+    if any(f['file_size']/1024 > max_file_size for f in files):
+        raise BaseException(f'File size limit exceeded the current limit of {max_file_size} KB.')
+
     with ThreadPoolExecutor(max_workers=8) as executor:
         future_sftp = {executor.submit(sync_ftp, sftp_file, stream, table_spec, config, state, table_name): sftp_file for sftp_file in files}
         for future in as_completed(future_sftp):
@@ -67,7 +70,7 @@ def sync_file(sftp_file_spec, stream, table_spec, config):
     decryption_configs = config.get('decryption_configs')
     if decryption_configs:
         decryption_configs['key'] = AWS_SSM.get_decryption_key(decryption_configs.get('SSM_key_name'))
-        
+
     with sftp_client.get_file_handle(sftp_file_spec, decryption_configs) as file_handle:
         if decryption_configs:
             sftp_file_spec['filepath'] = file_handle.name

@@ -50,6 +50,12 @@ $ pip install -e .
             }
         ],
         "start_date":"1900-01-01",
+        "decryption_configs": {
+            "SSM_key_name": "SSM_PARAMETER_KEY_NAME",
+            "gnupghome": "/your/dir/.gnupg",
+            "passphrase": "your_gpg_passphrase",
+            "decrypt_remote": true
+        },
         "private_key_file": "Optional_Path"
     }
    ```
@@ -66,6 +72,11 @@ $ pip install -e .
    - **delimiter**: Delimiter used as separator in csv file.
    - **quotechar**: Specifies the character used to surround fields that contain the delimiter character. The default is a double quote ( ' " ' ). 
    - **start_date**: Date since file(s) modified. 
+   - **decryption_configs**: List of configurations that are used to decrypt encrypted file. 
+   - **SSM_key_name**: Key name of the SSM parameter store where the decryption private key is stored. 
+   - **gnupghome**: The home directory for gnupg. 
+   - **passphrase**: Passphrase to decrypt encrypted file. 
+   - **decrypt_remote**: Flag indicates whether to decrypt from remote source directly. Default is true. 
    - **private_key_file**(optional): Provide path for private_key_file if private key will be used instead of password.
 
 ## Discovery mode:

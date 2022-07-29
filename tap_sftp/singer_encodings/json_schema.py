@@ -1,6 +1,6 @@
-import re
 from tap_sftp.aws_ssm import AWS_SSM
-from . import csv_handler
+from tap_sftp.singer_encodings import csv_handler
+from tap_sftp import defaults
 
 SDC_SOURCE_FILE_COLUMN = "_sdc_source_file"
 SDC_SOURCE_LINENO_COLUMN = "_sdc_source_lineno"
@@ -9,19 +9,20 @@ SDC_SOURCE_LINENO_COLUMN = "_sdc_source_lineno"
 def get_schema_for_table(conn, table_spec, config):
     search_subdir = config.get("search_subdirectories", True)
     files = conn.get_files(table_spec['search_prefix'], table_spec['search_pattern'], search_subdirectories=search_subdir)
-
+    max_file_size = config.get("max_file_size", defaults.MAX_FILE_SIZE)
     if not files:
         return {}
-
-    samples = sample_files(conn, table_spec, files, config)
-
-    data_schema = {
-        **generate_schema(samples, table_spec),
-        # Uncomment if required these custom columns
-        # SDC_SOURCE_FILE_COLUMN: {'type': 'string'},
-        # SDC_SOURCE_LINENO_COLUMN: {'type': 'integer'},
-        # csv_handler.SDC_EXTRA_COLUMN: {'type': 'array', 'items': {'type': 'string'}}
-    }
+    if any(f['file_size']/1024 > max_file_size for f in files):
+        data_schema = {}
+    else:
+        samples = sample_files(conn, table_spec, files, config)
+        data_schema = {
+            **generate_schema(samples, table_spec),
+            # Uncomment if required these custom columns
+            # SDC_SOURCE_FILE_COLUMN: {'type': 'string'},
+            # SDC_SOURCE_LINENO_COLUMN: {'type': 'integer'},
+            # csv_handler.SDC_EXTRA_COLUMN: {'type': 'array', 'items': {'type': 'string'}}
+        }
 
     return {
         'type': 'object',
@@ -34,32 +35,29 @@ def sample_file(conn, table_spec, f, sample_rate, max_records, config):
     decryption_configs = config.get('decryption_configs')
     if decryption_configs:
         decryption_configs['key'] = AWS_SSM.get_decryption_key(decryption_configs.get('SSM_key_name'))
-        file_handle, decrypted_name = conn.get_file_handle(f, decryption_configs)
-        f['filepath'] = decrypted_name
-    else:
-        file_handle = conn.get_file_handle(f)
 
-    # Add file_name to opts and flag infer_compression to support gzipped files
-    opts = {'key_properties': table_spec.get('key_properties', []),
-            'delimiter': table_spec.get('delimiter', ','),
-            'file_name': f['filepath'],
-            'encoding': table_spec.get('encoding', 'utf-8'),
-            'quotechar': table_spec.get('quotechar', '"')}
+    with conn.get_file_handle_for_sample(f, decryption_configs=decryption_configs, max_records=max_records) as file_handle:
+        # Add file_name to opts and flag infer_compression to support gzipped files
+        opts = {'key_properties': table_spec.get('key_properties', []),
+                'delimiter': table_spec.get('delimiter', ','),
+                'file_name': f['filepath'],
+                'encoding': table_spec.get('encoding', 'utf-8'),
+                'quotechar': table_spec.get('quotechar', '"')}
 
-    readers = csv_handler.get_row_iterators(file_handle, options=opts, infer_compression=True)
+        readers = csv_handler.get_row_iterators(file_handle, options=opts, infer_compression=True)
 
-    for reader in readers:
-        current_row = 0
-        for row in reader:
-            if (current_row % sample_rate) == 0:
-                if row.get(csv_handler.SDC_EXTRA_COLUMN):
-                    row.pop(csv_handler.SDC_EXTRA_COLUMN)
-                samples.append(row)
+        for reader in readers:
+            current_row = 0
+            for row in reader:
+                if (current_row % sample_rate) == 0:
+                    if row.get(csv_handler.SDC_EXTRA_COLUMN):
+                        row.pop(csv_handler.SDC_EXTRA_COLUMN)
+                    samples.append(row)
 
-            current_row += 1
+                current_row += 1
 
-            if len(samples) >= max_records:
-                break
+                if len(samples) >= max_records:
+                    break
 
     # Empty sample to show field selection, if needed
     empty_file = False
@@ -72,7 +70,7 @@ def sample_file(conn, table_spec, f, sample_rate, max_records, config):
 
 
 def sample_files(conn, table_spec, files, config,
-                 sample_rate=1, max_records=1000, max_files=1):
+                 sample_rate=1, max_records=defaults.SAMPLE_SIZE, max_files=1):
     to_return = []
     empty_samples = []
 

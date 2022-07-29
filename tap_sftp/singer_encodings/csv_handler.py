@@ -1,9 +1,6 @@
-import codecs
 import csv
 import io
-import os
-import chardet
-
+import logging
 from chardet.universaldetector import UniversalDetector
 from tap_sftp.singer_encodings import compression
 
@@ -23,15 +20,7 @@ def get_row_iterator(iterable, options=None):
     """Accepts an interable, options and returns a csv.DictReader object
     which can be used to yield CSV rows."""
     options = options or {}
-
-    # Replace any NULL bytes in the line given to the DictReader
-    detector = UniversalDetector()
-    for line in iterable:
-        detector.feed(line)
-        if detector.done: break
-    detector.close()
-    
-    iterable.seek(0)
+    detector = find_encoding(iterable)
     reader = csv.DictReader(
         io.TextIOWrapper(iterable, encoding=detector.result.get('encoding')),
         fieldnames=None,
@@ -53,3 +42,15 @@ def get_row_iterator(iterable, options=None):
             raise Exception('CSV file missing date_overrides headers: {}'
                             .format(date_overrides - headers))
     return reader
+
+def find_encoding(iterable):
+    # Replace any NULL bytes in the line given to the DictReader
+    detector = UniversalDetector()
+    for line in iterable:
+        detector.feed(line)
+        if detector.done:
+            break
+    detector.close()
+    logging.info(f"Detected encoding: {detector.result.get('encoding')}")
+    iterable.seek(0)
+    return detector

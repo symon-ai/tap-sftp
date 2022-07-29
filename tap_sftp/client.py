@@ -5,18 +5,17 @@ import stat
 import tempfile
 import time
 from datetime import datetime
-
 import backoff
 import paramiko
 import pytz
 import singer
 from paramiko.ssh_exception import AuthenticationException, SSHException
-
 from tap_sftp import decrypt
+from tap_sftp import sample_generator
 
 LOGGER = singer.get_logger()
-
 logging.getLogger("paramiko").setLevel(logging.CRITICAL)
+
 
 def handle_backoff(details):
     LOGGER.warn(
@@ -49,7 +48,7 @@ class SFTPConnection():
         jitter=None,
         factor=2)
     def __connect(self):
-        for i in range(self.retries+1):
+        for i in range(self.retries + 1):
             try:
                 LOGGER.info('Creating new connection to SFTP...')
                 self.transport = paramiko.Transport((self.host, self.port))
@@ -59,6 +58,7 @@ class SFTPConnection():
                 self.transport.packetizer.REKEY_PACKETS = pow(2, 40)
                 self.transport.connect(username=self.username, password=self.password, hostkey=None, pkey=self.key)
                 self.__sftp = paramiko.SFTPClient.from_transport(self.transport)
+
                 LOGGER.info('Connection successful')
                 break
             except (AuthenticationException, SSHException) as ex:
@@ -66,7 +66,7 @@ class SFTPConnection():
                     self.__sftp.close()
                 if self.transport:
                     self.transport.close()
-                time.sleep(5*i)
+                time.sleep(5 * i)
                 LOGGER.info('Connection failed, retrying...')
                 if i >= (self.retries):
                     raise ex
@@ -129,7 +129,8 @@ class SFTPConnection():
                 # NB: SFTP specifies path characters to be '/'
                 #     https://tools.ietf.org/html/draft-ietf-secsh-filexfer-13#section-6
                 files.append({"filepath": prefix + '/' + file_attr.filename,
-                              "last_modified": datetime.utcfromtimestamp(last_modified).replace(tzinfo=pytz.UTC)})
+                              "last_modified": datetime.utcfromtimestamp(last_modified).replace(tzinfo=pytz.UTC),
+                              "file_size": file_attr.st_size})
 
         return files
 
@@ -140,7 +141,7 @@ class SFTPConnection():
         else:
             LOGGER.warning('Found no files on specified SFTP server at "%s"', prefix)
 
-        matching_files = self.get_files_matching_pattern(files, search_pattern)
+        matching_files = self.get_files_matching_pattern(files, f'{search_pattern}$')
 
         if matching_files:
             LOGGER.info('Found %s files in "%s" matching "%s"', len(matching_files), prefix, search_pattern)
@@ -157,21 +158,24 @@ class SFTPConnection():
 
     def get_file_handle(self, f, decryption_configs=None):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and returns a handle to the file. """
-        with tempfile.TemporaryDirectory() as tmpdirname:
+        with tempfile.TemporaryDirectory() as tmp_dir_name:
             sftp_file_path = f["filepath"]
-            local_path = f'{tmpdirname}/{os.path.basename(sftp_file_path)}'
+            local_path = f'{tmp_dir_name}/{os.path.basename(sftp_file_path)}'
             if decryption_configs:
+                decrypt_remote = decryption_configs.get("decrypt_remote", True)
                 LOGGER.info(f'Decrypting file: {sftp_file_path}')
-                # Getting sftp file to local, then reading it is much faster than reading it directly from the SFTP
-                self.sftp.get(sftp_file_path, local_path)
-                decrypted_path = decrypt.gpg_decrypt(
-                    local_path,
-                    tmpdirname,
-                    decryption_configs.get('key'),
-                    decryption_configs.get('gnupghome'),
-                    decryption_configs.get('passphrase')
-                )
-                LOGGER.info(f'Decrypting file complete')
+                if not decrypt_remote:
+                    self.sftp.get(sftp_file_path, local_path)
+                    decrypted_path = decrypt.gpg_decrypt(local_path, tmp_dir_name, decryption_configs.get('key'),
+                                                         decryption_configs.get('gnupghome'),
+                                                         decryption_configs.get('passphrase'))
+                else:
+                    with self.sftp.open(sftp_file_path, 'rb', 32768) as sftp_file:
+                        sftp_file.prefetch()
+                        decrypted_path = decrypt.gpg_decrypt_from_remote(sftp_file, sftp_file_path, tmp_dir_name,
+                                                                         decryption_configs.get('key'),
+                                                                         decryption_configs.get('gnupghome'),
+                                                                         decryption_configs.get('passphrase'))
                 try:
                     return open(decrypted_path, 'rb')
                 except FileNotFoundError:
@@ -179,6 +183,22 @@ class SFTPConnection():
             else:
                 self.sftp.get(sftp_file_path, local_path)
                 return open(local_path, 'rb')
+
+    def get_file_handle_for_sample(self, f, decryption_configs=None, max_records=None):
+        """ Takes a file dict {"filepath": "...", "last_modified": "..."} and returns a handle to the file. """
+        with tempfile.TemporaryDirectory() as tmp_dir_name:
+            sftp_file_path = f["filepath"]
+            sftp_file_name = os.path.basename(sftp_file_path)
+            with self.sftp.open(sftp_file_path, "rb") as sftp_file_object:
+                if decryption_configs:
+                    sample_file = sample_generator.generate_sample_for_encrypted(sftp_file_object, sftp_file_path, decryption_configs, tmp_dir_name, max_records)
+                    try:
+                        return open(sample_file, 'rb')
+                    except FileNotFoundError:
+                        raise Exception(f'Decryption of file failed: {sftp_file_path}')
+                else:
+                    sample_file = sample_generator.generate_sample(sftp_file_object, sftp_file_name, tmp_dir_name, max_records)
+                    return open(sample_file, "rb")
 
     def get_files_matching_pattern(self, files, pattern):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and a regex pattern string, and returns
