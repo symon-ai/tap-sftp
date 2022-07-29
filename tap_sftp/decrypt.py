@@ -12,6 +12,9 @@ def gpg_decrypt_to_file(gpg, src_file_path, decrypted_path, passphrase):
 
 
 def initialize_gpg(key, gnupghome):
+    if not gnupghome:
+        gnupghome = os.getcwd()
+        LOGGER.info(f'GPG home folder not provided. using current folder at "{gnupghome}"')
     if not os.path.exists(gnupghome):
         try:
             LOGGER.info(f'GPG home folder does not exist. Creating home folder at "{gnupghome}"')
