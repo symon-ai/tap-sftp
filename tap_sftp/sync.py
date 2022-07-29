@@ -1,10 +1,10 @@
 import singer
 from singer import Transformer, metadata, utils
 from tap_sftp import client, stats
-from tap_sftp.aws_ssm import AWS_SSM
 from tap_sftp.singer_encodings import csv_handler
 from tap_sftp import defaults
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from tap_sftp import helper
 
 
 LOGGER = singer.get_logger()
@@ -69,7 +69,7 @@ def sync_file(sftp_file_spec, stream, table_spec, config):
     sftp_client = client.connection(config)
     decryption_configs = config.get('decryption_configs')
     if decryption_configs:
-        decryption_configs['key'] = AWS_SSM.get_decryption_key(decryption_configs.get('SSM_key_name'))
+        helper.update_decryption_key(decryption_configs)
 
     with sftp_client.get_file_handle(sftp_file_spec, decryption_configs) as file_handle:
         if decryption_configs:

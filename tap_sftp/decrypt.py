@@ -1,6 +1,8 @@
+import singer
 import os
 import gnupg
 from tap_sftp.capturer import Capturer
+LOGGER = singer.get_logger()
 
 
 def gpg_decrypt_to_file(gpg, src_file_path, decrypted_path, passphrase):
@@ -10,6 +12,12 @@ def gpg_decrypt_to_file(gpg, src_file_path, decrypted_path, passphrase):
 
 
 def initialize_gpg(key, gnupghome):
+    if not os.path.exists(gnupghome):
+        try:
+            LOGGER.info(f'GPG home folder does not exist. Creating home folder at "{gnupghome}"')
+            os.makedirs(gnupghome)
+        except OSError:
+            raise Exception(f'Unable to create GNU home directory at "{gnupghome}"')
     gpg = gnupg.GPG(gnupghome=gnupghome)
     gpg.import_keys(key)
     return gpg

@@ -63,7 +63,8 @@ $ pip install -e .
    - **port**: The port number of the SFTP service listening on server. Default is 22.
    - **username**: The username to connect to the server.
    - **password**: The password to authenticate. Leave this blank if private key file is used.
-   - **search_subdirectories**: Flag indicates whether to search within the subdirectories or not. Set it to false if the path(defined in prefix) for the target file is known and subdirectory search is not required. 
+   - **search_subdirectories**: Flag indicates whether to search within the subdirectories or not. Set it to false if the path(defined in prefix) for the target file is known and subdirectory search is not required.
+   - **max_file_size**: Maximum file size allowed. Default is 5242880 KB (5GB). Discovery will generate stream with empty properties and Sync will raise exception if file size is bigger than this.
    - **tables**: List of configurations which will be used to search files within the file hierarchy and read the target tables.
    - **table_name**: Name of the table should appear in the data stream.
    - **search_prefix**: Hierarchical path of the file(s) to be read.
@@ -72,8 +73,9 @@ $ pip install -e .
    - **delimiter**: Delimiter used as separator in csv file.
    - **quotechar**: Specifies the character used to surround fields that contain the delimiter character. The default is a double quote ( ' " ' ). 
    - **start_date**: Date since file(s) modified. 
-   - **decryption_configs**: List of configurations that are used to decrypt encrypted file. 
-   - **SSM_key_name**: Key name of the SSM parameter store where the decryption private key is stored. 
+   - **decryption_configs**: List of configurations that are used to decrypt encrypted file.
+   - **key_storage_type**: Type of the key storage. Currently, supported "AWS_SSM" and "AWS_Secrets_Manager". Default is "AWS_Secrets_Manager".
+   - **key_name**: Name of the key in storage location where the decryption private key/passphrase is stored. 
    - **gnupghome**: The home directory for gnupg. 
    - **passphrase**: Passphrase to decrypt encrypted file. 
    - **decrypt_remote**: Flag indicates whether to decrypt from remote source directly. Default is true. 

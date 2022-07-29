@@ -1,6 +1,6 @@
-from tap_sftp.aws_ssm import AWS_SSM
 from tap_sftp.singer_encodings import csv_handler
 from tap_sftp import defaults
+from tap_sftp import helper
 
 SDC_SOURCE_FILE_COLUMN = "_sdc_source_file"
 SDC_SOURCE_LINENO_COLUMN = "_sdc_source_lineno"
@@ -34,8 +34,7 @@ def sample_file(conn, table_spec, f, sample_rate, max_records, config):
     samples = []
     decryption_configs = config.get('decryption_configs')
     if decryption_configs:
-        decryption_configs['key'] = AWS_SSM.get_decryption_key(decryption_configs.get('SSM_key_name'))
-
+        helper.update_decryption_key(decryption_configs)
     with conn.get_file_handle_for_sample(f, decryption_configs=decryption_configs, max_records=max_records) as file_handle:
         # Add file_name to opts and flag infer_compression to support gzipped files
         opts = {'key_properties': table_spec.get('key_properties', []),
