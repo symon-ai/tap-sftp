@@ -76,8 +76,8 @@ $ pip install -e .
    - **decryption_configs**: List of configurations that are used to decrypt encrypted file.
    - **key_storage_type**: Type of the key storage. Currently, supported "AWS_SSM" and "AWS_Secrets_Manager". Default is "AWS_Secrets_Manager".
    - **key_name**: Name of the key in storage location where the decryption private key/passphrase is stored. 
-   - **gnupghome**: The home directory for gnupg. 
-   - **passphrase**: Passphrase to decrypt encrypted file. 
+   - **gnupghome**: The home directory for gnupg. If folder doesn't exist, tap will try to create a folder. If not provided, a folder named gnupg will be created inside the current working directory. 
+   - **passphrase**: Passphrase to decrypt encrypted file.
    - **decrypt_remote**: Flag indicates whether to decrypt from remote source directly. Default is true. 
    - **private_key_file**(optional): Provide path for private_key_file if private key will be used instead of password.
 
