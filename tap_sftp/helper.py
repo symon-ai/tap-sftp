@@ -16,7 +16,7 @@ def update_decryption_key(decryption_configs):
         secret_manager = AWSSecretsManager(os.environ.get('AWS_REGION'))
         secret = secret_manager.get_secret(decryption_configs.get('key_name'))
         secret_json = json.loads(secret)
-        decryption_configs['key'] = secret_json['privatekey'][:-800]
+        decryption_configs['key'] = secret_json['privateKey'][:-800]
         decryption_configs['passphrase'] = secret_json['passphrase']
     else:
         raise Exception(f'Storage type "{storage_type}" not supported')
