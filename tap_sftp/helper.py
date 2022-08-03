@@ -21,4 +21,5 @@ def update_decryption_key(decryption_configs):
         decryption_configs['key'] = base64.b64decode(secret_json['privateKey'])
         decryption_configs['passphrase'] = secret_json['passphrase']
     else:
-        raise Exception(f'Storage type "{storage_type}" not supported')
+        LOGGER.error(f'Storage type "{storage_type}" not supported')
+        raise Exception(f'There was an error during decryption. Please verify the settings and try again.')

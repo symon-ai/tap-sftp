@@ -9,7 +9,9 @@ def gpg_decrypt_to_file(gpg, src_file_path, decrypted_path, passphrase):
     with open(src_file_path, 'rb') as file_obj:
         decryption_result = gpg.decrypt_file(file_obj, output=decrypted_path, passphrase=passphrase)
         if decryption_result.returncode in [1, 2]:
-            raise Exception(f'There was an error while decrypting file. Please verify decryption settings are correct.')
+            LOGGER.error(
+                f'Error decrypting file. returncode: {decryption_result.returncode}; stderr: {decryption_result.stderr}')
+            raise Exception(f'There was an error during decryption. Please verify the settings and try again.')
     return decrypted_path
 
 
@@ -26,7 +28,8 @@ def initialize_gpg(key, gnupghome):
     gpg = gnupg.GPG(gnupghome=gnupghome)
     import_key_result = gpg.import_keys(key)
     if import_key_result.returncode != 0:
-        raise Exception(f"Unable to import decryption key. Please verify the provided key is correct.")
+        LOGGER.error(f"Error importing key. returncode: {import_key_result.returncode}; stderr: {import_key_result.stderr}")
+        raise Exception(f"The PGP Key is invalid. Please try generating a new key.")
     return gpg
 
 
@@ -52,6 +55,7 @@ def gpg_decrypt_with_capturer(src_file_object, key, gnupghome, passphrase, captu
     gpg.on_data = capturer
     decryption_result = gpg.decrypt_file(src_file_object, always_trust=True, passphrase=passphrase)
     if decryption_result.returncode in [1, 2]:
-        raise Exception(f'There was an error while decrypting file. Please verify decryption settings are correct.')
+        LOGGER.error(f'Error decrypting file. returncode: {decryption_result.returncode}; stderr: {decryption_result.stderr}')
+        raise Exception(f'There was an error during decryption. Please verify the settings and try again.')
 
     return capturer.out_file_path

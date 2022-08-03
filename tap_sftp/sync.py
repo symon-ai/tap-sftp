@@ -52,7 +52,8 @@ def sync_stream(config, state, stream):
 
     max_file_size = config.get("max_file_size", defaults.MAX_FILE_SIZE)
     if any(f['file_size']/1024 > max_file_size for f in files):
-        raise BaseException(f'File size limit exceeded the current limit of {max_file_size} KB.')
+        LOGGER.error(f'File size limit exceeded the current limit of {max_file_size} KB.')
+        raise BaseException(f'File size exceeded the current limit of {max_file_size/1024/1024} GB.')
 
     with ThreadPoolExecutor(max_workers=8) as executor:
         future_sftp = {executor.submit(sync_ftp, sftp_file, stream, table_spec, config, state, table_name): sftp_file for sftp_file in files}
