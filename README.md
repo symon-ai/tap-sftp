@@ -77,7 +77,7 @@ $ pip install -e .
    - **key_storage_type**: Type of the key storage. Currently, supported "AWS_SSM" and "AWS_Secrets_Manager". Default is "AWS_Secrets_Manager". Saving "AWS_Secrets_Manager" requires storing key and passphrase as follows
      ```json
       {
-     "privateKey": {private key base64 encoded},
+     "privateKeyEncoded": {private key base64 encoded},
      "passphrase": passphrase as text
      }
 ```
