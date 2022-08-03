@@ -1,3 +1,5 @@
+import logging
+
 import singer
 from tap_sftp.aws_secrets_manager import AWSSecretsManager
 from tap_sftp.aws_ssm import AWS_SSM
@@ -15,8 +17,8 @@ def update_decryption_key(decryption_configs):
     elif storage_type == "AWS_Secrets_Manager":
         secret_manager = AWSSecretsManager(os.environ.get('AWS_REGION'))
         secret = secret_manager.get_secret(decryption_configs.get('key_name'))
-        secret_json = json.loads(secret)
-        decryption_configs['key'] = secret_json['privateKey'][:-800]
+        secret_json = json.loads(secret, strict=False)
+        decryption_configs['key'] = secret_json['privateKey']
         decryption_configs['passphrase'] = secret_json['passphrase']
     else:
         raise Exception(f'Storage type "{storage_type}" not supported')
