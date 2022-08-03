@@ -74,7 +74,13 @@ $ pip install -e .
    - **quotechar**: Specifies the character used to surround fields that contain the delimiter character. The default is a double quote ( ' " ' ). 
    - **start_date**: Date since file(s) modified. 
    - **decryption_configs**: List of configurations that are used to decrypt encrypted file.
-   - **key_storage_type**: Type of the key storage. Currently, supported "AWS_SSM" and "AWS_Secrets_Manager". Default is "AWS_Secrets_Manager".
+   - **key_storage_type**: Type of the key storage. Currently, supported "AWS_SSM" and "AWS_Secrets_Manager". Default is "AWS_Secrets_Manager". Saving "AWS_Secrets_Manager" requires storing key and passphrase as follows
+     ```json
+      {
+     "privateKey": {private key base64 encoded},
+     "passphrase": passphrase as text
+     }
+```
    - **key_name**: Name of the key in storage location where the decryption private key/passphrase is stored. 
    - **gnupghome**: The home directory for gnupg. If folder doesn't exist, tap will try to create a folder. If not provided, a folder named gnupg will be created inside the current working directory. 
    - **passphrase**: Passphrase to decrypt encrypted file.
