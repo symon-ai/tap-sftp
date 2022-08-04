@@ -11,7 +11,7 @@ def gpg_decrypt_to_file(gpg, src_file_path, decrypted_path, passphrase):
         if decryption_result.returncode in [1, 2]:
             LOGGER.error(
                 f'Error decrypting file. returncode: {decryption_result.returncode}; stderr: {decryption_result.stderr}')
-            raise Exception(f'There was an error during decryption. Please verify the settings and try again.')
+            raise Exception(f'Sorry, we encountered an error during decryption. Verify your settings and try again.')
     return decrypted_path
 
 
@@ -27,9 +27,9 @@ def initialize_gpg(key, gnupghome):
             raise Exception(f'Unable to create GNU home directory at "{gnupghome}"')
     gpg = gnupg.GPG(gnupghome=gnupghome)
     import_key_result = gpg.import_keys(key)
-    if import_key_result.returncode != 0:
+    if import_key_result.returncode != 0 and not import_key_result.fingerprints:
         LOGGER.error(f"Error importing key. returncode: {import_key_result.returncode}; stderr: {import_key_result.stderr}")
-        raise Exception(f"The PGP Key is invalid. Please try generating a new key.")
+        raise Exception(f"Sorry, this PGP Key is invalid. Try generating a new key.")
     return gpg
 
 
@@ -56,6 +56,6 @@ def gpg_decrypt_with_capturer(src_file_object, key, gnupghome, passphrase, captu
     decryption_result = gpg.decrypt_file(src_file_object, always_trust=True, passphrase=passphrase)
     if decryption_result.returncode in [1, 2]:
         LOGGER.error(f'Error decrypting file. returncode: {decryption_result.returncode}; stderr: {decryption_result.stderr}')
-        raise Exception(f'There was an error during decryption. Please verify the settings and try again.')
+        raise Exception(f'Sorry, we encountered an error during decryption. Verify your settings and try again.')
 
     return capturer.out_file_path
