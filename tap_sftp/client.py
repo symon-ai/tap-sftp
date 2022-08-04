@@ -185,7 +185,6 @@ class SFTPConnection():
                 return open(local_path, 'rb')
 
     def get_file_handle_for_sample(self, f, decryption_configs=None, max_records=None):
-        """ Takes a file dict {"filepath": "...", "last_modified": "..."} and returns a handle to the file. """
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             sftp_file_path = f["filepath"]
             sftp_file_name = os.path.basename(sftp_file_path)
