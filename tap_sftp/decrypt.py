@@ -16,8 +16,8 @@ def gpg_decrypt_to_file(src_file_object, key, gnupghome, passphrase, decrypted_p
         else:
             decryption_result = gpg.decrypt_file(src_file_object, output=decrypted_path, passphrase=passphrase)
         if decryption_result.returncode in [1, 2]:
-            LOGGER.error(f'Error decrypting file. returncode: {decryption_result.returncode}; stderr: {decryption_result.stderr}')
-            raise Exception(f'Sorry, we encountered an error during decryption. Verify your settings and try again.')
+            raise Exception(
+                f'{"tap_sftp.decryption_key_invalid_error:" if "decryption failed: No secret key" in decryption_result.stderr else "tap_sftp.decryption_failed_error"}: {decryption_result.stderr}')
         return decrypted_path
 
 
@@ -36,8 +36,7 @@ def initialize_gpg(key, gnupghome):
     gpg = gnupg.GPG(gnupghome=gnupghome)
     import_key_result = gpg.import_keys(key)
     if import_key_result.returncode != 0 and not import_key_result.fingerprints:
-        LOGGER.error(f"Error importing key. returncode: {import_key_result.returncode}; stderr: {import_key_result.stderr}")
-        raise Exception(f"Sorry, this PGP Key is invalid. Try generating a new key.")
+        raise Exception(f"tap_sftp.decryption_key_invalid_error: {import_key_result.stderr}")
     return gpg
 
 
