@@ -16,8 +16,7 @@ def gpg_decrypt_to_file(src_file_object, key, gnupghome, passphrase, decrypted_p
         else:
             decryption_result = gpg.decrypt_file(src_file_object, output=decrypted_path, passphrase=passphrase)
         if decryption_result.returncode in [1, 2]:
-            raise Exception(
-                f'{"tap_sftp.decryption_key_invalid_error:" if "decryption failed: No secret key" in decryption_result.stderr else "tap_sftp.decryption_failed_error"}: {decryption_result.stderr}')
+            raise Exception(f'tap_sftp.decryption_failed_error: {decryption_result.stderr}')
         return decrypted_path
 
 
