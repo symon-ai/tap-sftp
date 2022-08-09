@@ -13,7 +13,8 @@ def get_schema_for_table(conn, table_spec, config):
     if not files:
         return {}
     if any(f['file_size']/1024 > max_file_size for f in files):
-        data_schema = {}
+        raise BaseException(
+            f'tap_sftp.max_filesize_error: File size limit exceeded the current limit of{max_file_size / 1024 / 1024} GB.')
     else:
         samples = sample_files(conn, table_spec, files, config)
         data_schema = {
