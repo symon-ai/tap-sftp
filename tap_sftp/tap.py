@@ -1,12 +1,10 @@
 import json
 import sys
-
 import singer
-from singer import metadata, utils
+from singer import utils
 from terminaltables import AsciiTable
-
+from data_utils.v1.utils.stat_collector import FILE_SYNC_STATS
 from tap_sftp.discover import discover_streams
-from tap_sftp.stats import STATS
 from tap_sftp.sync import sync_stream
 
 REQUIRED_CONFIG_KEYS = ["username", "port", "host", "tables", "start_date"]
@@ -29,42 +27,19 @@ def do_discover(config):
 def stream_is_selected(mdata):
     return mdata.get((), {}).get('selected', False)
 
-
 def do_sync(config, catalog, state):
-    LOGGER.info('Starting sync.')
-
-    for stream in catalog.streams:
-        stream_name = stream.tap_stream_id
-        mdata = metadata.to_map(stream.metadata)
-
-        if not stream_is_selected(mdata):
-            LOGGER.info("%s: Skipping - not selected", stream_name)
-            continue
-
-        singer.write_state(state)
-        key_properties = metadata.get(metadata.to_map(stream.metadata), (), "table-key-properties")
-        if key_properties is None: 
-            key_properties = []
-        singer.write_schema(stream_name, stream.schema.to_dict(), key_properties)
-
-        LOGGER.info("%s: Starting sync", stream_name)
-        counter_value = sync_stream(config, state, stream)
-        LOGGER.info("%s: Completed sync (%s rows)", stream_name, counter_value)
+    sync_stream(config, catalog, state)
 
     headers = [['table_name',
-                'search prefix',
-                'search pattern',
                 'file path',
                 'row count',
                 'last_modified']]
 
     rows = []
 
-    for table_name, table_data in STATS.items():
+    for table_name, table_data in FILE_SYNC_STATS.items():
         for filepath, file_data in table_data['files'].items():
             rows.append([table_name,
-                         table_data['search_prefix'],
-                         table_data['search_pattern'],
                          filepath,
                          file_data['row_count'],
                          file_data['last_modified']])
@@ -92,5 +67,6 @@ def main():
     elif args.catalog or args.properties:
         do_sync(args.config, args.catalog, args.state)
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main()

@@ -1,4 +1,4 @@
-from tap_sftp.singer_encodings import compression
+from data_utils.v1.utils import compression
 from zipfile import ZipFile
 from paramiko.sftp_file import SFTPFile
 from tap_sftp import decrypt
@@ -28,8 +28,8 @@ def generate_sample(src_file_object, src_file_name, out_dir, max_records):
     return final_file
 
 
-def generate_sample_for_encrypted(src_file_object, src_file_path, decryption_configs, out_dir, max_records):
-    return decrypt.gpg_decrypt_from_remote(src_file_object, src_file_path, out_dir,
+def generate_sample_for_encrypted(src_file_object, dest_file_name, decryption_configs, out_dir, max_records):
+    return decrypt.gpg_decrypt_from_remote(src_file_object, dest_file_name, out_dir,
                                            decryption_configs.get('key'),
                                            decryption_configs.get('gnupghome'),
                                            decryption_configs.get('passphrase'),

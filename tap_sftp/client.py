@@ -11,6 +11,7 @@ import pytz
 import singer
 from paramiko.ssh_exception import AuthenticationException, SSHException
 from tap_sftp import decrypt
+from tap_sftp import defaults
 from tap_sftp import sample_generator
 
 LOGGER = singer.get_logger()
@@ -172,7 +173,9 @@ class SFTPConnection():
                 else:
                     with self.sftp.open(sftp_file_path, 'rb', 32768) as sftp_file:
                         sftp_file.prefetch()
-                        decrypted_path = decrypt.gpg_decrypt_from_remote(sftp_file, sftp_file_path, tmp_dir_name,
+                        sftp_file_name = os.path.basename(sftp_file_path)
+                        original_file_name = os.path.splitext(sftp_file_name)[0]
+                        decrypted_path = decrypt.gpg_decrypt_from_remote(sftp_file, original_file_name, tmp_dir_name,
                                                                          decryption_configs.get('key'),
                                                                          decryption_configs.get('gnupghome'),
                                                                          decryption_configs.get('passphrase'))
@@ -190,7 +193,8 @@ class SFTPConnection():
             sftp_file_name = os.path.basename(sftp_file_path)
             with self.sftp.open(sftp_file_path, "rb") as sftp_file_object:
                 if decryption_configs:
-                    sample_file = sample_generator.generate_sample_for_encrypted(sftp_file_object, sftp_file_path, decryption_configs, tmp_dir_name, max_records)
+                    original_file_name = os.path.splitext(sftp_file_name)[0]
+                    sample_file = sample_generator.generate_sample_for_encrypted(sftp_file_object, original_file_name, decryption_configs, tmp_dir_name, max_records)
                     try:
                         return open(sample_file, 'rb')
                     except FileNotFoundError:

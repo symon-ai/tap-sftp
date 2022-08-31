@@ -47,9 +47,7 @@ def gpg_decrypt(src_file_path, output_path, key, gnupghome, passphrase):
         return gpg_decrypt_to_file(src_file_object, key, gnupghome, passphrase, decrypted_path)
 
 
-def gpg_decrypt_from_remote(src_file_object, source_file_path, out_dir, key, gnupghome, passphrase, max_records=None):
-    gpg_filename = os.path.basename(source_file_path)
-    decrypted_filename = os.path.splitext(gpg_filename)[0]
+def gpg_decrypt_from_remote(src_file_object, decrypted_filename, out_dir, key, gnupghome, passphrase, max_records=None):
     decrypted_path = f'{out_dir}/{decrypted_filename}'
     capturer = Capturer(decrypted_path, max_records)
     return gpg_decrypt_to_file(src_file_object, key, gnupghome, passphrase, capturer.out_file_path, capturer)

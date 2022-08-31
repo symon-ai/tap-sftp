@@ -20,3 +20,10 @@ def update_decryption_key(decryption_configs):
         secret_json = json.loads(secret)
         decryption_configs['key'] = base64.b64decode(secret_json['privateKeyEncoded'])
         decryption_configs['passphrase'] = secret_json['passphrase']
+
+
+def get_inner_file_extension_for_pgp_file(file_path):
+    file_extension = os.path.splitext(file_path)[1]
+    if file_extension in ['.gpg', '.pgp']:
+        file_extension = os.path.splitext(os.path.splitext(file_path)[0])[1]
+    return file_extension
