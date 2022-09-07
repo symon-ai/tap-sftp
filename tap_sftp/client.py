@@ -32,7 +32,7 @@ class SFTPConnection():
         self.decrypted_file = None
         self.key = None
         self.transport = None
-        self.retries = 10
+        self.retries = 2
         self.__sftp = None
         if private_key_file:
             key_path = os.path.expanduser(private_key_file)
@@ -50,6 +50,7 @@ class SFTPConnection():
     def __connect(self):
         for i in range(self.retries + 1):
             try:
+                start = time.time()
                 LOGGER.info('Creating new connection to SFTP...')
                 self.transport = paramiko.Transport((self.host, self.port))
                 self.transport.use_compression(True)
@@ -62,11 +63,17 @@ class SFTPConnection():
                 LOGGER.info('Connection successful')
                 break
             except (AuthenticationException, SSHException) as ex:
+                end = time.time()
+                LOGGER.info(f'Time elapsed: {end - start}')
+                start = time.time()
                 if self.__sftp:
                     self.__sftp.close()
                 if self.transport:
                     self.transport.close()
+                end = time.time()
+                LOGGER.info(f'Close time: {end - start}')
                 time.sleep(5 * i)
+                
                 LOGGER.info('Connection failed, retrying...')
                 if i >= (self.retries):
                     raise ex
