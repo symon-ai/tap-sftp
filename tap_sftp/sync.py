@@ -4,7 +4,7 @@ from tap_sftp import client, stats
 from tap_sftp.singer_encodings import csv_handler
 from tap_sftp import defaults
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from tap_sftp import helper
+from tap_sftp import helper, transform
 
 
 LOGGER = singer.get_logger()
@@ -88,7 +88,7 @@ def sync_file(sftp_file_spec, stream, table_spec, config):
 
         for reader in readers:
             LOGGER.info('Synced Record Count: 0')
-            with Transformer() as transformer:
+            with transform.Transformer() as transformer:
                 for row in reader:
                     custom_columns = {
                         # Uncomment if required custom fields
