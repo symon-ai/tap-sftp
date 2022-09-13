@@ -1,9 +1,8 @@
-import os.path
 import singer
 from tap_sftp import client
 from tap_sftp import defaults, helper
-from data_utils.v1.utils import file_format_handler
-from data_utils.v1.objects.file_spec import FileSpec
+from file_processors.clients.csv_client import CSVClient
+from file_processors.clients.excel_client import ExcelClient
 
 LOGGER = singer.get_logger()
 
@@ -28,23 +27,24 @@ def discover_streams(config):
             sorted_files = sorted(files, key=lambda f: f['last_modified'], reverse=True)
             for f in sorted_files:
                 file_path = f['filepath']
-                file_name = os.path.basename(file_path)
-                file_extension = helper.get_inner_file_extension_for_pgp_file(file_path)
-                file_type = table_spec.get('file_type')
+                file_type = table_spec.get('file_type').lower()
                 decryption_configs = config.get('decryption_configs')
                 if decryption_configs:
                     helper.update_decryption_key(decryption_configs)
-                file_spec = FileSpec(file_name, file_extension, file_path, file_type)
-                with get_file_handle(conn, f, file_extension, decryption_configs, defaults.SAMPLE_SIZE) as file_handle:
-                    streams += file_format_handler.generate_file_stream(file_handle, file_spec, table_spec)
+
+                if file_type in ["csv", "text"]:
+                    with conn.get_file_handle_for_sample(f, decryption_configs, defaults.SAMPLE_SIZE) as file_handle:
+                        csv_client = CSVClient(file_path, table_spec.get('table_name'),
+                                               table_spec.get('key_properties', []))
+                        csv_client.delimiter = table_spec.get('delimiter') or ","
+                        csv_client.quotechar = table_spec.get('quotechar') or "\""
+                        streams += csv_client.build_streams(file_handle, defaults.SAMPLE_SIZE)
+                elif file_type in ["excel"]:
+                    with conn.get_file_handle(f, decryption_configs) as file_handle:
+                        excel_client = ExcelClient(file_path, file_path, table_spec.get('key_properties', []))
+                        streams += excel_client.build_streams(file_handle, table_spec.get('worksheets', []),
+                                                              defaults.SAMPLE_SIZE)
+                else:
+                    raise BaseException(f'file_type_error: Unsupported file type "{file_type}"')
 
     return streams
-
-
-def get_file_handle(conn, f, file_type, decryption_configs, max_records):
-    if file_type.lower() in ["csv", "text"]:
-        return conn.get_file_handle_for_sample(f, decryption_configs=decryption_configs,
-                                               max_records=max_records)
-    else:
-        LOGGER.info(f'Downloading entire file to sample file type "{file_type}".')
-        return conn.get_file_handle(f, decryption_configs)

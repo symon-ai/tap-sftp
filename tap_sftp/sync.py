@@ -1,13 +1,12 @@
 import singer
 from singer import utils, metadata
 import itertools
-import os
-from data_utils.v1.utils import file_format_handler
-from data_utils.v1.objects.file_spec import FileSpec
 from tap_sftp import client
 from tap_sftp import defaults
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tap_sftp import helper
+from file_processors.clients.csv_client import CSVClient
+from file_processors.clients.excel_client import ExcelClient
 
 
 LOGGER = singer.get_logger()
@@ -17,7 +16,7 @@ def stream_is_selected(mdata):
     return mdata.get((), {}).get('selected', False)
 
 
-def sync_stream(config, catalog, state):
+def sync_stream(config, catalog, state, collect_sync_stats=False):
     sftp_client = client.connection(config)
     stream_groups = itertools.groupby(catalog.streams, key=lambda x: x.stream)
     for key, group in stream_groups:
@@ -60,20 +59,26 @@ def sync_stream(config, catalog, state):
                 f'tap_sftp.max_filesize_error: File size limit exceeded the current limit of{max_file_size / 1024 / 1024} GB.')
 
         for file in files:
-            sync_file(config, file, streams, table_spec, state, modified_since)
+
+            sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats)
 
 
-def sync_file(config, file, streams, table_spec, state, modified_since):
+def sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats):
     file_path = file["filepath"]
     LOGGER.info('Syncing file "%s".', file_path)
     sftp_client = client.connection(config)
     decryption_configs = config.get('decryption_configs')
-    file_type = table_spec.get('file_type')
-    file_name = os.path.basename(file_path)
-    file_extension = helper.get_inner_file_extension_for_pgp_file(file_path)
+    file_type = table_spec.get('file_type').lower()
 
     if decryption_configs:
         helper.update_decryption_key(decryption_configs)
-    file_spec = FileSpec(file_name, file_extension, file_path, file_type)
     with sftp_client.get_file_handle(file, decryption_configs) as file_handle:
-        file_format_handler.sync_file_data(file_handle, streams, file_spec, table_spec, state, modified_since)
+        if file_type in ["csv", "text"]:
+            csv_client = CSVClient(file_path, table_spec.get('table_name'), table_spec.get('key_properties', []))
+            csv_client.delimiter = table_spec.get('delimiter') or ","
+            csv_client.quotechar = table_spec.get('quotechar') or "\""
+            csv_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since, collect_sync_stats)
+        elif file_type in ["excel"]:
+            excel_client = ExcelClient(file_path, file_path, table_spec.get('key_properties', []))
+            excel_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since, collect_sync_stats)
+

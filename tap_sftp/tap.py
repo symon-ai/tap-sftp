@@ -3,7 +3,7 @@ import sys
 import singer
 from singer import utils
 from terminaltables import AsciiTable
-from data_utils.v1.utils.stat_collector import FILE_SYNC_STATS
+from file_processors.utils.stat_collector import FILE_SYNC_STATS
 from tap_sftp.discover import discover_streams
 from tap_sftp.sync import sync_stream
 
@@ -27,27 +27,30 @@ def do_discover(config):
 def stream_is_selected(mdata):
     return mdata.get((), {}).get('selected', False)
 
+
 def do_sync(config, catalog, state):
-    sync_stream(config, catalog, state)
+    collect_sync_stats = config.get("show_stats", False)
+    sync_stream(config, catalog, state, collect_sync_stats)
 
-    headers = [['table_name',
-                'file path',
-                'row count',
-                'last_modified']]
+    if collect_sync_stats:
+        headers = [['table_name',
+                    'file path',
+                    'row count',
+                    'last_modified']]
 
-    rows = []
+        rows = []
 
-    for table_name, table_data in FILE_SYNC_STATS.items():
-        for filepath, file_data in table_data['files'].items():
-            rows.append([table_name,
-                         filepath,
-                         file_data['row_count'],
-                         file_data['last_modified']])
+        for table_name, table_data in FILE_SYNC_STATS.items():
+            for filepath, file_data in table_data['files'].items():
+                rows.append([table_name,
+                             filepath,
+                             file_data['row_count'],
+                             file_data['last_modified']])
 
-    data = headers + rows
-    table = AsciiTable(data, title='Extraction Summary')
-    LOGGER.info("\n\n%s", table.table)
-    LOGGER.info('Done syncing.')
+        data = headers + rows
+        table = AsciiTable(data, title='Extraction Summary')
+        LOGGER.info("\n\n%s", table.table)
+        LOGGER.info('Done syncing.')
 
 
 @singer.utils.handle_top_exception(LOGGER)
