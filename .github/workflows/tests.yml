@@ -16,12 +16,11 @@ jobs:
         os: [ubuntu-latest]
         python-version: ['3.7', '3.8']
     steps:
-    - actions/checkout@v2
     - uses: webfactory/ssh-agent@v0.5.4
-              with:
-                  ssh-private-key: |
-                        ${{ secrets.PYTHON_GNUPG_DEPLOY_KEY }}
-                        ${{ secrets.FILE_PROCESSORS_DEPLOY_KEY }}
+      with:
+        ssh-private-key: |
+            ${{ secrets.PYTHON_GNUPG_DEPLOY_KEY }}
+            ${{ secrets.FILE_PROCESSORS_DEPLOY_KEY }}
 
     - name: Set up Python ${{matrix.python-version}}
       uses: actions/setup-python@v2
