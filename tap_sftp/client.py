@@ -5,12 +5,12 @@ import stat
 import tempfile
 import time
 from datetime import datetime
-import backoff
-import paramiko
-import pytz
-import singer
-from paramiko.ssh_exception import AuthenticationException, SSHException
-from file_processors.utils import decrypt
+import backoff  # type: ignore
+import paramiko  # type: ignore
+import pytz  # type: ignore
+import singer  # type: ignore
+from paramiko.ssh_exception import AuthenticationException, SSHException  # type: ignore
+from file_processors.utils import decrypt  # type: ignore
 from tap_sftp import helper
 
 LOGGER = singer.get_logger()

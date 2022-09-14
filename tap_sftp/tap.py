@@ -1,9 +1,9 @@
 import json
 import sys
-import singer
+import singer  # type: ignore
 from singer import utils
-from terminaltables import AsciiTable
-from file_processors.utils.stat_collector import FILE_SYNC_STATS
+from terminaltables import AsciiTable  # type: ignore
+from file_processors.utils.stat_collector import FILE_SYNC_STATS  # type: ignore
 from tap_sftp.discover import discover_streams
 from tap_sftp.sync import sync_stream
 

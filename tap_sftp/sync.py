@@ -1,13 +1,12 @@
-import singer
+import singer  # type: ignore
 from singer import utils, metadata
 import itertools
 from tap_sftp import client
 from tap_sftp import defaults
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tap_sftp import helper
-from file_processors.clients.csv_client import CSVClient
-from file_processors.clients.excel_client import ExcelClient
-
+from file_processors.clients.csv_client import CSVClient  # type: ignore
+from file_processors.clients.excel_client import ExcelClient  # type: ignore
 
 LOGGER = singer.get_logger()
 
@@ -59,7 +58,6 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
                 f'tap_sftp.max_filesize_error: File size limit exceeded the current limit of{max_file_size / 1024 / 1024} GB.')
 
         for file in files:
-
             sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats)
 
 
@@ -77,8 +75,9 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
             csv_client = CSVClient(file_path, table_spec.get('table_name'), table_spec.get('key_properties', []))
             csv_client.delimiter = table_spec.get('delimiter') or ","
             csv_client.quotechar = table_spec.get('quotechar') or "\""
-            csv_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since, collect_sync_stats)
+            csv_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since,
+                            collect_sync_stats)
         elif file_type in ["excel"]:
             excel_client = ExcelClient(file_path, file_path, table_spec.get('key_properties', []))
-            excel_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since, collect_sync_stats)
-
+            excel_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since,
+                              collect_sync_stats)

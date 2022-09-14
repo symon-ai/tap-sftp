@@ -1,4 +1,4 @@
-from tap_sftp.singer_encodings.compression import infer
+from file_processors.utils.compression import infer
 from tests.configuration.fixtures import get_sample_file_path
 
 

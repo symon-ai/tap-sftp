@@ -18,5 +18,5 @@ setup(
     [console_scripts]
     tap-sftp=tap_sftp.tap:main
     """,
-    packages=["tap_sftp", "tap_sftp.singer_encodings"]
+    packages=["tap_sftp"]
 )

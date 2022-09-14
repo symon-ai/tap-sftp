@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -65,3 +66,27 @@ def get_table_spec():
         'key_properties': [],
         'delimiter': ','
     }
+
+
+@fixture(params=["file_path"])
+def file_handle(request):
+    with get_file_handle(request.param) as file_handle:
+        yield file_handle
+
+
+@fixture(params=["file_path"])
+def file_handle_unscoped(request):
+    return get_file_handle(request.param)
+
+
+@fixture(params=["file_path"])
+def file_handle_second_unscoped(request):
+    return get_file_handle(request.param)
+
+
+def get_file_handle(file_path):
+    return open(get_full_file_path(file_path), 'rb')
+
+
+def get_full_file_path(file_name):
+    return os.path.join(os.path.dirname(__file__), file_name)

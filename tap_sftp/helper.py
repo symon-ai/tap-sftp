@@ -1,14 +1,15 @@
-import singer
+import singer  # type: ignore
 import json
 import os
 import base64
-from file_processors.utils import compression
+from file_processors.utils import compression  # type: ignore
 from zipfile import ZipFile
-from file_processors.utils.aws_secrets_manager import AWSSecretsManager
-from file_processors.utils.aws_ssm import AWS_SSM
-from paramiko.sftp_file import SFTPFile
+from file_processors.utils.aws_secrets_manager import AWSSecretsManager  # type: ignore
+from file_processors.utils.aws_ssm import AWS_SSM  # type: ignore
+from paramiko.sftp_file import SFTPFile  # type: ignore
 from file_processors.utils import decrypt
-from file_processors.utils.capturer import GPGDataCapturer
+from file_processors.utils.capturer import GPGDataCapturer  # type: ignore
+
 LOGGER = singer.get_logger()
 
 
@@ -60,4 +61,3 @@ def sample_file(src_file_object, src_file_name, out_dir, max_records):
 def load_file_encrypted(src_file_object, key, gnupghome, passphrase, decrypt_path, max_records=None):
     capturer = GPGDataCapturer(decrypt_path, max_records)
     return decrypt.gpg_decrypt_to_file(src_file_object, key, gnupghome, passphrase, decrypt_path, capturer)
-
