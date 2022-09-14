@@ -1,4 +1,5 @@
 # tap-sftp
+![Tests](https://github.com/symon-ai/tap-sftp/actions/workflows/tests.yml/badge.svg)
 
 [Singer](https://www.singer.io/) tap that extracts data from SFTP files and produces JSON-formatted data following the [Singer spec](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md).
 
