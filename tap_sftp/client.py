@@ -178,7 +178,7 @@ class SFTPConnection():
                 else:
                     with self.sftp.open(sftp_file_path, 'rb', 32768) as src_file_object:
                         src_file_object.prefetch()
-                        decrypt_path = helper.load_file_encrypted(src_file_object,
+                        decrypt_path = helper.load_file_decrypted(src_file_object,
                                                                   decryption_configs.get('key'),
                                                                   decryption_configs.get('gnupghome'),
                                                                   decryption_configs.get('passphrase'),
@@ -186,7 +186,7 @@ class SFTPConnection():
                 try:
                     return open(decrypt_path, 'rb')
                 except FileNotFoundError:
-                    raise Exception(f'Decryption of file failed: {sftp_file_path}')
+                    raise Exception(f'tap_sftp.decryption_error: Decryption of file failed: {sftp_file_path}')
             else:
                 self.sftp.get(sftp_file_path, local_path)
                 return open(local_path, 'rb')
@@ -198,7 +198,7 @@ class SFTPConnection():
             with self.sftp.open(sftp_file_path, "rb") as sftp_file_object:
                 if decryption_configs:
                     original_file_name = os.path.splitext(sftp_file_name)[0]
-                    sample_file = helper.load_file_encrypted(sftp_file_object,
+                    sample_file = helper.load_file_decrypted(sftp_file_object,
                                                              decryption_configs.get('key'),
                                                              decryption_configs.get('gnupghome'),
                                                              decryption_configs.get('passphrase'),

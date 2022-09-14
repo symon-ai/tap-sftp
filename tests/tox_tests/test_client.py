@@ -6,7 +6,7 @@ import pytest
 import stat
 from paramiko.sftp_attr import SFTPAttributes
 from tests.configuration.fixtures import get_sample_file_path, sftp_client, get_full_file_path, file_handle_unscoped, \
-    file_handle_second_unscoped
+    file_handle_second_unscoped, file_handle
 
 date_modified_since_oldest = datetime.fromisoformat('1970-01-01 00:00:00')
 date_modified_since_old = datetime.fromisoformat('2016-01-01 00:00:00')
@@ -108,14 +108,18 @@ def test_get_files_by_prefix(sftp_client):
                 file['file_size'] == 0 or file['filepath'] == f'{prefix}/{file_result4.filename}']) == 0
 
 
-@patch('tap_sftp.helper.load_file_encrypted')
+@patch('tap_sftp.helper.load_file_decrypted')
 @patch('paramiko.sftp_file.SFTPFile')
 @patch('tempfile.TemporaryDirectory.__enter__')
-def test_get_file_handle_with_remote_decryption_config(mock_tempfile, mock_sftp_file, mock_load_file_encrypted,
-                                                       sftp_client):
+def test_get_file_handle_for_encrypted_file_with_remote_decryption_config(mock_tempfile, mock_sftp_file,
+                                                                          mock_load_file_decrypted, sftp_client):
     """Testing scenario -
             Testing get_file_handle function to verify getting file handle with decryption config with remote decryption
-             for the sftp file and SUT should download the decrypted file locally and return correct file handle."""
+             for the sftp file and SUT should
+             - download the decrypted file locally
+             - call paramiko prefetch
+             - return decrypted file handle."""
+
     prefix = "/sftp_path"
     tmp_dir_name = get_full_file_path("../data")
     file_name = "fake_file.txt.pgp"
@@ -131,12 +135,38 @@ def test_get_file_handle_with_remote_decryption_config(mock_tempfile, mock_sftp_
         "decrypt_remote": True
     }
     sftp_client.sftp.open.return_value.__enter__.return_value = mock_sftp_file
-    mock_load_file_encrypted.return_value = decrypt_path
+    mock_load_file_decrypted.return_value = decrypt_path
     with sftp_client.get_file_handle(file, decryption_config) as file_handle:
-        mock_load_file_encrypted.assert_called_with(mock_sftp_file, decryption_config.get("key"),
+        mock_load_file_decrypted.assert_called_with(mock_sftp_file, decryption_config.get("key"),
                                                     decryption_config.get("gnupghome"),
                                                     decryption_config.get("passphrase"), decrypt_path)
         assert file_handle.name == decrypt_path
+        mock_sftp_file.prefetch.assert_called_with()
+
+
+@pytest.mark.parametrize("file_handle", ["../data/fake_file.txt"], indirect=True)
+@patch('paramiko.sftp_file.SFTPFile')
+@patch('tempfile.TemporaryDirectory.__enter__')
+def test_get_file_handle_for_unencrypted_file(mock_tempfile, mock_sftp_file, file_handle, sftp_client):
+    """Testing scenario -
+            Testing get_file_handle function to verify getting file handle for unencrypted sftp file and SUT should
+             - download the file locally
+             - call paramiko get method
+             - return file handle for the downloaded file."""
+
+    prefix = "/sftp_path"
+    tmp_dir_name = get_full_file_path("../data")
+    file_name = "fake_file.txt"
+    sftp_path = f'{prefix}/{file_name}'
+    local_path = f'{tmp_dir_name}/{file_name}'
+    mock_tempfile.return_value = tmp_dir_name
+    file = {"id": 1, "filepath": sftp_path, "last_modified": date_modified_since_oldest, "file_size": 12404}
+    decryption_config = None
+    sftp_client.sftp.open.return_value.__enter__.return_value = mock_sftp_file
+    mock_open().return_value = file_handle
+    result_file_handle = sftp_client.get_file_handle(file, decryption_config)
+    sftp_client.sftp.get.assert_called_with(sftp_path, local_path)
+    assert result_file_handle.name == local_path
 
 
 @pytest.mark.parametrize("file_handle_second_unscoped", ["../data/fake_file.txt"], indirect=True)
@@ -144,18 +174,20 @@ def test_get_file_handle_with_remote_decryption_config(mock_tempfile, mock_sftp_
 @patch('builtins.open')
 @patch('file_processors.utils.decrypt.gpg_decrypt_to_file')
 @patch('tempfile.TemporaryDirectory.__enter__')
-def test_get_file_handle_with_local_decryption_config(mock_tempfile, mock_decrypt_to_file, mock_open,
+def test_get_file_handle_for_encrypted_file_with_local_decryption_config(mock_tempfile, mock_decrypt_to_file, mock_file_open,
                                                       file_handle_unscoped, file_handle_second_unscoped, sftp_client):
     """Testing scenario -
             Testing get_file_handle function to verify getting file handle with decryption config with local decryption
-             for the sftp file and SUT should download the encrypted file decrypt locally and return correct file handle."""
+             for the sftp file and SUT should
+             - download the encrypted file and decrypt locally
+             - return decrypted file handle."""
     prefix = "/sftp_path"
     tmp_dir_name = get_full_file_path("../data")
     file_name = "fake_file.txt.pgp"
     original_file_name = os.path.splitext(file_name)[0]
     sftp_path = f'{prefix}/{file_name}'
     encrypt_path = f'{tmp_dir_name}/{file_name}'
-    decrypt_path = f'{tmp_dir_name}/{original_file_name}'
+    local_path = f'{tmp_dir_name}/{original_file_name}'
     mock_tempfile.return_value = tmp_dir_name
     file = {"id": 1, "filepath": sftp_path, "last_modified": date_modified_since_oldest, "file_size": 12404}
     decryption_config = {
@@ -165,13 +197,139 @@ def test_get_file_handle_with_local_decryption_config(mock_tempfile, mock_decryp
         "decrypt_remote": False
     }
 
-    mock_decrypt_to_file.return_value = decrypt_path
-    mock_open.side_effect = lambda p, b, encoding=None: file_handle_unscoped if p == encrypt_path else file_handle_second_unscoped
+    mock_decrypt_to_file.return_value = local_path
+    mock_file_open.side_effect = lambda p, b, encoding=None: file_handle_unscoped if p == encrypt_path else file_handle_second_unscoped
     returned_file_handle = sftp_client.get_file_handle(file, decryption_config)
     mock_decrypt_to_file.assert_called_with(file_handle_unscoped, decryption_config.get("key"),
                                             decryption_config.get("gnupghome"),
-                                            decryption_config.get("passphrase"), decrypt_path)
+                                            decryption_config.get("passphrase"), local_path)
+    assert returned_file_handle.name == local_path
+
+
+@patch('tempfile.TemporaryDirectory.__enter__')
+def test_get_file_handle_with_invalid_remote_file(mock_tempfile, sftp_client):
+    """Testing scenario -
+            Testing get_file_handle function to verify getting file handle with invalid file and SUT should
+            raise an exception."""
+    prefix = "/sftp_path"
+    tmp_dir_name = get_full_file_path("../data")
+    file_name = "invalid_file"
+    sftp_path = f'{prefix}/{file_name}'
+    mock_tempfile.return_value = tmp_dir_name
+    file = {"id": 1, "filepath": sftp_path, "last_modified": date_modified_since_oldest, "file_size": 12404}
+    decryption_config = {
+        "key": "key",
+        "gnupghome": "home",
+        "passphrase": "passphrase",
+        "decrypt_remote": False
+    }
+
+    with pytest.raises(Exception):
+        sftp_client.get_file_handle(file, decryption_config)
+
+
+@pytest.mark.parametrize("file_handle", ["../data/fake_file.txt"], indirect=True)
+@patch('tap_sftp.helper.load_file_decrypted')
+@patch('builtins.open')
+@patch('paramiko.sftp_file.SFTPFile')
+@patch('tempfile.TemporaryDirectory.__enter__')
+def test_get_file_handle_for_sample_for_encrypted_file(mock_tempfile, mock_sftp_file, mock_file_open,
+                                                           mock_load_file_decrypted, file_handle, sftp_client):
+    """Testing scenario -
+            Testing get_file_handle_for_sample function to verify getting sampled file handle with decryption config
+             for the sftp file and SUT should
+             - download the sampled decrypted file locally according to sample size
+             - return decrypted file handle."""
+    prefix = "/sftp_path"
+    tmp_dir_name = get_full_file_path("../data")
+    file_name = "fake_file.txt.pgp"
+    original_file_name = os.path.splitext(file_name)[0]
+    sftp_path = f'{prefix}/{file_name}'
+    decrypt_path = f'{tmp_dir_name}/{original_file_name}'
+    max_records = 500
+    file = {"id": 1, "filepath": sftp_path, "last_modified": date_modified_since_oldest, "file_size": 12404}
+    decryption_config = {
+        "key": "key",
+        "gnupghome": "home",
+        "passphrase": "passphrase",
+        "decrypt_remote": False
+    }
+    mock_tempfile.return_value = tmp_dir_name
+    sftp_client.sftp.open.return_value.__enter__.return_value = mock_sftp_file
+    mock_load_file_decrypted.return_value = decrypt_path
+    mock_file_open.return_value = file_handle
+    returned_file_handle = sftp_client.get_file_handle_for_sample(file, decryption_config, max_records)
+    mock_load_file_decrypted.assert_called_with(mock_sftp_file, decryption_config.get("key"),
+                                                decryption_config.get("gnupghome"),
+                                                decryption_config.get("passphrase"), decrypt_path, max_records)
     assert returned_file_handle.name == decrypt_path
+
+
+@pytest.mark.parametrize("file_handle", ["../data/fake_file.txt"], indirect=True)
+@patch('tap_sftp.helper.sample_file')
+@patch('builtins.open')
+@patch('paramiko.sftp_file.SFTPFile')
+@patch('tempfile.TemporaryDirectory.__enter__')
+def test_get_sampled_file_handle_for_unencrypted_file(mock_tempfile, mock_sftp_file, mock_file_open,
+                                                      mock_sample_file, file_handle, sftp_client):
+    """Testing scenario -
+            Testing get_file_handle_for_sample function to verify getting sample file handle for unencrypted sftp file
+            and SUT should
+             - download the sampled file locally according to sample size
+             - return decrypted file handle."""
+    prefix = "/sftp_path"
+    tmp_dir_name = get_full_file_path("../data")
+    file_name = "fake_file.txt"
+    sftp_path = f'{prefix}/{file_name}'
+    local_path = f'{tmp_dir_name}/{file_name}'
+    max_records = 500
+    file = {"id": 1, "filepath": sftp_path, "last_modified": date_modified_since_oldest, "file_size": 12404}
+    decryption_config = None
+    mock_tempfile.return_value = tmp_dir_name
+    sftp_client.sftp.open.return_value.__enter__.return_value = mock_sftp_file
+    mock_sample_file.return_value = local_path
+    mock_file_open.return_value = file_handle
+    returned_file_handle = sftp_client.get_file_handle_for_sample(file, decryption_config, max_records)
+    mock_sample_file.assert_called_with(mock_sftp_file, file_name, tmp_dir_name, max_records)
+    assert returned_file_handle.name == local_path
+
+
+@patch('tempfile.TemporaryDirectory.__enter__')
+def test_get_sampled_file_handle_for_invalid_remote_file(mock_tempfile, sftp_client):
+    """Testing scenario -
+            Testing get_sampled_file_handle function to verify getting file handle with invalid file and SUT should
+            raise an exception."""
+    prefix = "/sftp_path"
+    tmp_dir_name = get_full_file_path("../data")
+    file_name = "invalid_file"
+    sftp_path = f'{prefix}/{file_name}'
+    mock_tempfile.return_value = tmp_dir_name
+    file = {"id": 1, "filepath": sftp_path, "last_modified": date_modified_since_oldest, "file_size": 12404}
+    decryption_config = {
+        "key": "key",
+        "gnupghome": "home",
+        "passphrase": "passphrase",
+        "decrypt_remote": False
+    }
+
+    with pytest.raises(Exception):
+        sftp_client.get_file_handle_for_sample(file, decryption_config)
+
+
+def test_get_files_matching_pattern(sftp_client):
+    search_pattern = "test2(.*)"
+    matched_files = sftp_client.get_files_matching_pattern(files, search_pattern)
+    assert len(matched_files) == 5
+    assert len([file for file in matched_files if file["id"] in [2, 3, 4, 5, 6]]) == 5
+
+
+def test_get_files_matching_pattern(sftp_client):
+    search_pattern = "(.*).csv$"
+    matched_files = sftp_client.get_files_matching_pattern(files, search_pattern)
+    assert len(matched_files) == 7
+    assert len([file for file in matched_files if file["id"] in [1, 2, 3, 4, 5, 7, 9]]) == 7
+
+
 
 
 

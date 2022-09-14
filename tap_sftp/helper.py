@@ -58,6 +58,6 @@ def sample_file(src_file_object, src_file_name, out_dir, max_records):
     return final_file
 
 
-def load_file_encrypted(src_file_object, key, gnupghome, passphrase, decrypt_path, max_records=None):
+def load_file_decrypted(src_file_object, key, gnupghome, passphrase, decrypt_path, max_records=None):
     capturer = GPGDataCapturer(decrypt_path, max_records)
     return decrypt.gpg_decrypt_to_file(src_file_object, key, gnupghome, passphrase, decrypt_path, capturer)
