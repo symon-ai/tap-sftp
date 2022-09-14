@@ -75,6 +75,29 @@ def do_sync(config, catalog, state):
     LOGGER.info('Done syncing.')
 
 
+# Function that updates schema for handling leading zeros being lost when casting column from 
+# integer to string. Singer transformer casts the cell record to first matching type (non null) 
+# in type definition array in catalog
+# e.g type: ['null', 'integer', 'string] --> casts to integer, and leading zeros lost
+# Update the type definition to have null and target type only
+def update_schema_for_column_update(config, catalog):
+    for stream in catalog.streams:
+        stream_name = stream.tap_stream_id
+        schema = stream.schema
+        columns_to_update = config.get('columns_to_update', {}).get(stream_name, [])
+
+        for column in columns_to_update:
+            if column['type'] != 'number' or column['targetType'] != 'string':
+                continue
+            
+            column_name = column['column']
+            column_schema_to_update = schema.properties.get(column_name, None)
+
+            if column_schema_to_update:
+                column_target_type = ['null', column['targetType']]
+                setattr(column_schema_to_update, 'type', column_target_type)        
+
+
 @singer.utils.handle_top_exception(LOGGER)
 def main():
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
@@ -90,6 +113,7 @@ def main():
     if args.discover:
         do_discover(args.config)
     elif args.catalog or args.properties:
+        update_schema_for_column_update(args.config, args.catalog)
         do_sync(args.config, args.catalog, args.state)
 
 if __name__=="__main__":
