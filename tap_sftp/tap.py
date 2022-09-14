@@ -107,13 +107,13 @@ def update_schema_for_column_update(config, catalog):
                 if 'integer' not in initial_column_type or initial_column_type.index('integer') > 1:
                     continue
 
-                # We know 'intger' is in the type definition array with index <= 1. Verify that 'integer' is the
+                # We know 'integer' is in the type definition array with index <= 1. Verify that 'integer' is the
                 # first element in the type definition array other than 'null'
                 if initial_column_type[0] not in ['null', 'integer']:
                     continue
 
                 target_column_type = ['null', column_update_info['targetType']]
-                setattr(column_schema, 'type', target_column_type)        
+                setattr(column_schema, 'type', target_column_type)
 
 
 @singer.utils.handle_top_exception(LOGGER)
