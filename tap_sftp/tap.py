@@ -4,8 +4,8 @@ import singer  # type: ignore
 from singer import utils
 from terminaltables import AsciiTable  # type: ignore
 from file_processors.utils.stat_collector import FILE_SYNC_STATS  # type: ignore
-from tap_sftp.discover import discover_streams
-from tap_sftp.sync import sync_stream
+from tap_sftp import discover
+from tap_sftp import sync
 
 REQUIRED_CONFIG_KEYS = ["username", "port", "host", "tables", "start_date"]
 REQUIRED_DECRYPT_CONFIG_KEYS = ['key_name']
@@ -16,7 +16,7 @@ LOGGER = singer.get_logger()
 
 def do_discover(config):
     LOGGER.info("Starting discover")
-    streams = discover_streams(config)
+    streams = discover.discover_streams(config)
     if not streams:
         raise Exception("No streams found")
     catalog = {"streams": streams}
@@ -30,7 +30,7 @@ def stream_is_selected(mdata):
 
 def do_sync(config, catalog, state):
     collect_sync_stats = config.get("show_stats", False)
-    sync_stream(config, catalog, state, collect_sync_stats)
+    sync.sync_stream(config, catalog, state, collect_sync_stats)
 
     if collect_sync_stats:
         headers = [['table_name',

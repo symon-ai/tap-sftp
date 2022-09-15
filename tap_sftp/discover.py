@@ -9,8 +9,10 @@ LOGGER = singer.get_logger()
 
 def discover_streams(config):
     streams = []
-
     conn = client.connection(config)
+    decryption_configs = config.get('decryption_configs')
+    if decryption_configs:
+        helper.update_decryption_key(decryption_configs)
 
     tables = config['tables']
     for table_spec in tables:
@@ -28,9 +30,6 @@ def discover_streams(config):
             for f in sorted_files:
                 file_path = f['filepath']
                 file_type = table_spec.get('file_type').lower()
-                decryption_configs = config.get('decryption_configs')
-                if decryption_configs:
-                    helper.update_decryption_key(decryption_configs)
 
                 if file_type in ["csv", "text"]:
                     with conn.get_file_handle_for_sample(f, decryption_configs, defaults.SAMPLE_SIZE) as file_handle:
