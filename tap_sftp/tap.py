@@ -75,6 +75,47 @@ def do_sync(config, catalog, state):
     LOGGER.info('Done syncing.')
 
 
+# Function that updates schema for handling leading zeros being lost when casting column from 
+# integer to string. Singer transformer casts the column to first matching type (non null) 
+# in type definition array in catalog
+# e.g type: ['null', 'integer', 'string] --> casts to integer, and leading zeros lost
+# Update the type definition to have null and target type only for columns that are being updated from 
+# integer type to string type
+def update_schema_for_column_update(config, catalog):
+    for stream in catalog.streams:
+        stream_name = stream.tap_stream_id
+        schema = stream.schema
+        columns_to_update = config.get('columns_to_update', {}).get(stream_name, [])
+
+        for column_update_info in columns_to_update:
+            # check if we are updating column from number to string (number could be float or integer)
+            if column_update_info['type'] != 'number' or column_update_info['targetType'] != 'string':
+                continue
+            
+            column_name = column_update_info['column']
+            column_schema = schema.properties.get(column_name, None)
+
+            if column_schema:
+                # type definition for the column
+                initial_column_type = column_schema.type
+                if not isinstance(initial_column_type, list):
+                    initial_column_type = [initial_column_type]
+
+                # Check if initally inferred type for the column is integer (to distinguish integer and float)
+                # Since singer transformer casts the column to first matching type other than null, 
+                # we could only have 'null' before 'integer' in type definition array
+                if 'integer' not in initial_column_type or initial_column_type.index('integer') > 1:
+                    continue
+
+                # We know 'integer' is in the type definition array with index <= 1. Verify that 'integer' is the
+                # first element in the type definition array other than 'null'
+                if initial_column_type[0] not in ['null', 'integer']:
+                    continue
+
+                target_column_type = ['null', column_update_info['targetType']]
+                setattr(column_schema, 'type', target_column_type)
+
+
 @singer.utils.handle_top_exception(LOGGER)
 def main():
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
@@ -90,6 +131,7 @@ def main():
     if args.discover:
         do_discover(args.config)
     elif args.catalog or args.properties:
+        update_schema_for_column_update(args.config, args.catalog)
         do_sync(args.config, args.catalog, args.state)
 
 if __name__=="__main__":
