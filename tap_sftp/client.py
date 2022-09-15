@@ -32,7 +32,7 @@ class SFTPConnection():
         self.decrypted_file = None
         self.key = None
         self.transport = None
-        self.retries = 10
+        self.retries = 5
         self.__sftp = None
         if private_key_file:
             key_path = os.path.expanduser(private_key_file)
@@ -66,7 +66,7 @@ class SFTPConnection():
                     self.__sftp.close()
                 if self.transport:
                     self.transport.close()
-                time.sleep(5 * i)
+                time.sleep(5)
                 LOGGER.info('Connection failed, retrying...')
                 if i >= (self.retries):
                     raise ex
