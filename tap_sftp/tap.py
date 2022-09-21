@@ -89,7 +89,9 @@ def update_schema_for_column_update(config, catalog):
 
         for column_update_info in columns_to_update:
             # check if we are updating column from number to string (number could be float or integer)
-            if column_update_info['type'] != 'number' or column_update_info['targetType'] != 'string':
+            if (column_update_info['columnUpdateType'] != 'modify' or 
+                column_update_info['type'] != 'number' or 
+                column_update_info['targetType'] != 'string'):
                 continue
             
             column_name = column_update_info['column']
