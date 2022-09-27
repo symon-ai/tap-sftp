@@ -2,3 +2,4 @@
 source=tap_sftp
 omit =
     *__init__.py
+    tests/*

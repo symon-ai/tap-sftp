@@ -15,7 +15,6 @@ LOGGER = singer.get_logger()
 
 def update_decryption_key(decryption_configs):
     storage_type = decryption_configs.get('key_storage_type', 'AWS_Secrets_Manager')
-    LOGGER.info('PDPDPDPDPDPDPDPDPDPDPDPDPDPDPDPDPDPDPDPDPDPDPDPDPDPDPDPDPD')
     LOGGER.info(f'Using key storage type "{storage_type}"')
     if storage_type == "AWS_SSM":
         decryption_configs['key'] = AWS_SSM.get_decryption_key(decryption_configs.get('key_name'))
@@ -57,6 +56,10 @@ def sample_file(src_file_object, src_file_name, out_dir, max_records):
         for path in generated_files:
             out_file.write(path)
     return final_file
+
+
+def get_custom_metadata(mdata, attribute_name, default_value=''):
+    return mdata.get((), {}).get(attribute_name, default_value)
 
 
 def load_file_decrypted(src_file_object, key, gnupghome, passphrase, decrypt_path, max_records=None):

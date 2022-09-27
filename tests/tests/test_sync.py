@@ -372,7 +372,7 @@ def test_sync_file_for_csv(mock_sync, mock_update_decryption_key, mock_connectio
     sync.sync_file(config, file, catalog.streams, table_spec, state, date_modified_since_oldest, collect_sync_stats)
     mock_update_decryption_key.assert_called_with(decryption_configs)
     mock_sync.assert_called_with(mock_open, [stream.to_dict() for stream in catalog.streams], state,
-                                 date_modified_since_oldest, collect_sync_stats)
+                                 date_modified_since_oldest)
 
 
 @patch('tap_sftp.client.SFTPConnection')
@@ -407,7 +407,7 @@ def test_sync_file_for_excel(mock_sync, mock_update_decryption_key, mock_connect
     sync.sync_file(config, file, catalog.streams, table_spec, state, date_modified_since_oldest, collect_sync_stats)
     mock_update_decryption_key.assert_not_called()
     mock_sync.assert_called_with(mock_open, [stream.to_dict() for stream in catalog.streams], state,
-                                 date_modified_since_oldest, collect_sync_stats)
+                                 date_modified_since_oldest)
 
 
 def test_stream_is_selected():

@@ -33,11 +33,11 @@ jobs:
 
     - name: Add dependencies
       run: |
-        poetry add flake8 pytest-cov tox-gh-actions
+        poetry add flake8 tox-gh-actions
 
     - name: Build coverage file
       run: |
-        poetry run pytest --cov-report=term-missing:skip-covered --junitxml=/tmp/pytest.xml --cov=. tests/ | tee /tmp/pytest-coverage.txt
+        poetry run pytest --cov-report=term-missing --junitxml=/tmp/pytest.xml --cov=. tests/ | tee /tmp/pytest-coverage.txt
     - name: Pytest coverage comment
       uses: MishaKav/pytest-coverage-comment@main
       with:
