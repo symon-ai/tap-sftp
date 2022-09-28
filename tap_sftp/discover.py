@@ -33,7 +33,7 @@ def discover_streams(config):
 
                 if file_type in ["csv", "text"]:
                     with conn.get_file_handle_for_sample(f, decryption_configs, defaults.SAMPLE_SIZE) as file_handle:
-                        csv_client = CSVClient(file_path, table_spec.get('table_name'),
+                        csv_client = CSVClient(file_path, '',
                                                table_spec.get('key_properties', []))
                         csv_client.delimiter = table_spec.get('delimiter') or ","
                         csv_client.quotechar = table_spec.get('quotechar') or "\""
@@ -41,9 +41,9 @@ def discover_streams(config):
                         streams += csv_client.build_streams(file_handle, defaults.SAMPLE_SIZE)
                 elif file_type in ["excel"]:
                     with conn.get_file_handle(f, decryption_configs) as file_handle:
-                        excel_client = ExcelClient(file_path, file_path, table_spec.get('key_properties', []))
-                        streams += excel_client.build_streams(file_handle, table_spec.get('worksheets', []),
-                                                              defaults.SAMPLE_SIZE)
+                        excel_client = ExcelClient(file_path, '', table_spec.get('key_properties', []))
+                        streams += excel_client.build_streams(file_handle, defaults.SAMPLE_SIZE,
+                                                              worksheets=table_spec.get('worksheets', []))
                 else:
                     raise BaseException(f'file_type_error: Unsupported file type "{file_type}"')
 
