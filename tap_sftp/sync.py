@@ -57,18 +57,17 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
         if any(f['file_size'] / 1024 > max_file_size for f in files):
             raise BaseException(
                 f'tap_sftp.max_filesize_error: File size limit exceeded the current limit of{max_file_size / 1024 / 1024} GB.')
-
+        has_header = table_spec.get('has_header')
         for file in files:
-            sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats)
+            sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats, has_header)
 
 
-def sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats):
+def sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats, has_header):
     file_path = file["filepath"]
     LOGGER.info('Syncing file "%s".', file_path)
     sftp_client = client.connection(config)
     decryption_configs = config.get('decryption_configs')
     file_type = table_spec.get('file_type').lower()
-    has_header = config.get('has_header')
     log_sync_update = config.get('log_sync_update')
     log_sync_update_interval = config.get('log_sync_update_interval')
 
@@ -82,6 +81,7 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
             csv_client.delimiter = table_spec.get('delimiter') or ","
             csv_client.quotechar = table_spec.get('quotechar') or "\""
             csv_client.encoding = table_spec.get('encoding')
+            print([stream.to_dict() for stream in streams])
             csv_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since)
         elif file_type in ["excel"]:
             excel_client = ExcelClient(file_path, '', table_spec.get('key_properties', []), has_header,

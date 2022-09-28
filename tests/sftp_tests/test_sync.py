@@ -345,7 +345,8 @@ def test_sync_file_for_csv(mock_sync, mock_update_decryption_key, mock_connectio
         "file_type": "csv",
         "search_prefix": "/test_tmp/bin",
         "search_pattern": "test1.csv",
-        "key_properties": []
+        "key_properties": [],
+        "has_header": True
     }
     decryption_configs = {
         "key_name": "key",
@@ -370,7 +371,7 @@ def test_sync_file_for_csv(mock_sync, mock_update_decryption_key, mock_connectio
     catalog = Catalog.from_dict({"streams": streams_csv})
     mock_connection.return_value = mock_sftp_client
     mock_sftp_client.get_file_handle.return_value.__enter__.return_value = mock_open
-    sync.sync_file(config, file, catalog.streams, table_spec, state, date_modified_since_oldest, collect_sync_stats)
+    sync.sync_file(config, file, catalog.streams, table_spec, state, date_modified_since_oldest, collect_sync_stats, True)
     mock_update_decryption_key.assert_called_with(decryption_configs)
     mock_sync.assert_called_with(mock_open, [stream.to_dict() for stream in catalog.streams], state,
                                  date_modified_since_oldest)
@@ -386,7 +387,8 @@ def test_sync_file_for_excel(mock_sync, mock_update_decryption_key, mock_connect
         "file_type": "excel",
         "search_prefix": "/test_tmp/bin",
         "search_pattern": "test2.xlsx",
-        "key_properties": []
+        "key_properties": [],
+        "has_header": True
     }
     config = {
         "host": "host",
@@ -405,7 +407,7 @@ def test_sync_file_for_excel(mock_sync, mock_update_decryption_key, mock_connect
     catalog = Catalog.from_dict({"streams": streams_excel})
     mock_connection.return_value = mock_sftp_client
     mock_sftp_client.get_file_handle.return_value.__enter__.return_value = mock_open
-    sync.sync_file(config, file, catalog.streams, table_spec, state, date_modified_since_oldest, collect_sync_stats)
+    sync.sync_file(config, file, catalog.streams, table_spec, state, date_modified_since_oldest, collect_sync_stats, True)
     mock_update_decryption_key.assert_not_called()
     mock_sync.assert_called_with(mock_open, [stream.to_dict() for stream in catalog.streams], state,
                                  date_modified_since_oldest)

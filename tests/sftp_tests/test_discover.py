@@ -15,8 +15,9 @@ date_modified_since_recent = datetime.fromisoformat('2022-01-01 00:00:00')
 @patch('tap_sftp.helper.update_decryption_key')
 @patch('file_processors.clients.csv_client.CSVClient.build_streams')
 def test_discover_streams_encrypted_csv_file(mock_build_streams, mock_update_decryption_key, mock_connection, mock_sftp_client):
+    tap_stream_id = "test1"
     table_specs = [{
-            "table_name": "test1",
+            "table_name": tap_stream_id,
             "file_type": "csv",
             "search_prefix": "/test_tmp/bin",
             "search_pattern": "test1.csv",
@@ -38,7 +39,7 @@ def test_discover_streams_encrypted_csv_file(mock_build_streams, mock_update_dec
         "tables": table_specs,
         "decryption_configs": decryption_configs
     }
-    streams = [{'tap_stream_id': 'test1', 'schema': {"type": "object", "properties": {}}}]
+    streams = [{'tap_stream_id': tap_stream_id, 'schema': {"type": "object", "properties": {}}}]
     files = [{"id": 1, "filepath": "/test_tmp/bin/test1.csv", "last_modified": date_modified_since_oldest,
               "file_size": 12404}]
     sample_size = defaults.SAMPLE_SIZE
@@ -48,7 +49,7 @@ def test_discover_streams_encrypted_csv_file(mock_build_streams, mock_update_dec
     mock_build_streams.return_value = streams
     result_streams = discover_streams(config)
     mock_update_decryption_key.assert_called_with(decryption_configs)
-    mock_build_streams.assert_called_with(mock_open, sample_size)
+    mock_build_streams.assert_called_with(mock_open, sample_size, tap_stream_id=tap_stream_id)
     assert result_streams == streams
 
 
@@ -64,6 +65,7 @@ def test_discover_streams_encrypted_excel_file(mock_build_streams, mock_update_d
             "search_prefix": "/test_tmp/bin",
             "search_pattern": "test1.xlsx",
             "key_properties": [],
+            "has_header": True,
             "worksheets": worksheets
         }]
     decryption_configs = {
