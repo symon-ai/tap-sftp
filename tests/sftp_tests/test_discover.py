@@ -92,7 +92,7 @@ def test_discover_streams_encrypted_excel_file(mock_build_streams, mock_update_d
     mock_build_streams.return_value = streams
     result_streams = discover_streams(config)
     mock_update_decryption_key.assert_called_with(decryption_configs)
-    mock_build_streams.assert_called_with(mock_open, worksheets, sample_size)
+    mock_build_streams.assert_called_with(mock_open, sample_size, worksheets=worksheets)
     assert result_streams == streams
 
 

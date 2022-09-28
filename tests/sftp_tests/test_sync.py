@@ -5,12 +5,13 @@ from tap_sftp import defaults
 from singer.catalog import Catalog
 from singer import metadata
 import pytest
-from tests.configuration.fixtures import sftp_client, file_handle
+from tests.configuration.fixtures import sftp_client, file_handle, get_full_file_path
 
 date_modified_since_oldest = datetime.fromisoformat('1970-01-01 00:00:00')
 date_modified_since_old = datetime.fromisoformat('2016-01-01 00:00:00')
 date_modified_since_recent = datetime.fromisoformat('2022-01-01 00:00:00')
 
+file_smple_order_policy_xlsx = "../data/sample_orders_policy.xlsx"
 streams_csv = [
     {
         "stream": "/test_tmp/bin/test1.csv",
@@ -416,3 +417,4 @@ def test_stream_is_selected():
     mdata = metadata.to_map(stream.metadata)
     result = sync.stream_is_selected(mdata)
     assert result is True
+

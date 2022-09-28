@@ -1,0 +1,21 @@
+{
+     "host": "",
+     "port": 22,
+     "username": "",
+     "password": "",
+     "search_subdirectories": true,
+     "tables": [
+          {
+             "table_name": "",
+             "file_type": "excel",
+             "search_prefix": "/Data",
+             "search_pattern": "sample_orders_policy.xlsx",
+             "key_properties": [],
+             "worksheets": ["SamplePolicyData"],
+             "encoding": "utf-8"
+         }
+     ],
+     "start_date":"1900-01-01",
+     "private_key_file": ""
+ }
+

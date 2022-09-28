@@ -1,7 +1,7 @@
 from tap_sftp import tap
 from unittest.mock import patch
 from singer.catalog import Catalog
-
+from tests.configuration.fixtures import sftp_client, file_handle, get_full_file_path
 
 @patch('tap_sftp.discover.discover_streams')
 def test_do_discover(mock_discover_streams):
