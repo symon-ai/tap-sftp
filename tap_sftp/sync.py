@@ -31,8 +31,8 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
                 continue
             return 0
 
-        table_specs = [table_config for table_config in config["tables"] if
-                       f"{table_config['search_prefix']}/{table_config['search_pattern']}" == key]
+        table_specs = [table_config for table_config in config.get('tables') if
+                       f"{table_config.get('search_prefix')}/{table_config.get('search_pattern')}" == key]
         if len(table_specs) == 0:
             LOGGER.info("No table configuration found for '%s', skipping stream", key)
             return 0
@@ -40,11 +40,11 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
             LOGGER.info("Multiple table configurations found for '%s', skipping stream", key)
             return 0
         table_spec = table_specs[0]
-        modified_since = utils.strptime_to_utc(config['start_date'])
+        modified_since = utils.strptime_to_utc(config.get('start_date'))
         search_subdir = config.get("search_subdirectories", True)
         files = sftp_client.get_files(
-            table_spec["search_prefix"],
-            table_spec["search_pattern"],
+            table_spec.get("search_prefix"),
+            table_spec.get("search_pattern"),
             modified_since,
             search_subdir
         )

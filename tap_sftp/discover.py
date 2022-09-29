@@ -14,11 +14,11 @@ def discover_streams(config):
     if decryption_configs:
         helper.update_decryption_key(decryption_configs)
 
-    tables = config['tables']
+    tables = config.get('tables')
     for table_spec in tables:
-        LOGGER.info('Sampling records to determine table JSON schema "%s".', table_spec['table_name'])
+        LOGGER.info('Sampling records to determine table JSON schema "%s".', table_spec.get('table_name'))
         has_header = table_spec.get('has_header')
-        files = conn.get_files(table_spec['search_prefix'], table_spec['search_pattern'],
+        files = conn.get_files(table_spec.get('search_prefix'), table_spec.get('search_pattern'),
                                search_subdirectories=False)
         max_file_size = config.get("max_file_size", defaults.MAX_FILE_SIZE)
         if not files:
@@ -36,8 +36,8 @@ def discover_streams(config):
                     with conn.get_file_handle_for_sample(f, decryption_configs, defaults.SAMPLE_SIZE) as file_handle:
                         csv_client = CSVClient(file_path, '',
                                                table_spec.get('key_properties', []), has_header)
-                        csv_client.delimiter = table_spec.get('delimiter') or ","
-                        csv_client.quotechar = table_spec.get('quotechar') or "\""
+                        csv_client.delimiter = table_spec.get('delimiter', ',')
+                        csv_client.quotechar = table_spec.get('quotechar', '"')
                         csv_client.encoding = table_spec.get('encoding')
                         streams += csv_client.build_streams(file_handle, defaults.SAMPLE_SIZE, tap_stream_id=table_name)
                 elif file_type in ["excel"]:

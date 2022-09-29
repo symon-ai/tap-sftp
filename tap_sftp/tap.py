@@ -9,7 +9,8 @@ from tap_sftp import sync
 
 REQUIRED_CONFIG_KEYS = ["username", "port", "host", "tables", "start_date"]
 REQUIRED_DECRYPT_CONFIG_KEYS = ['key_name']
-REQUIRED_TABLE_SPEC_CONFIG_KEYS = ["table_name", "file_type", "search_prefix", "search_pattern"]
+REQUIRED_COMMON_TABLE_SPEC_CONFIG_KEYS = ["file_type", "search_prefix", "search_pattern"]
+REQUIRED_CSV_TABLE_SPEC_CONFIG_KEYS = ["table_name"]
 
 LOGGER = singer.get_logger()
 
@@ -99,7 +100,10 @@ def main():
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
     # validate tables config
     for table in args.config.get('tables'):
-        utils.check_config(table, REQUIRED_TABLE_SPEC_CONFIG_KEYS)
+        utils.check_config(table, REQUIRED_COMMON_TABLE_SPEC_CONFIG_KEYS)
+        file_type = table.get("file_type")
+        if file_type in ["csv", "text"]:
+            utils.check_config(table, REQUIRED_CSV_TABLE_SPEC_CONFIG_KEYS)
 
     decrypt_configs = args.config.get('decryption_configs')
     if decrypt_configs:
