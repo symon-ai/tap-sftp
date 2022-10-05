@@ -5,13 +5,13 @@ import stat
 import tempfile
 import time
 from datetime import datetime
-import backoff
-import paramiko
-import pytz
-import singer
-from paramiko.ssh_exception import AuthenticationException, SSHException
-from tap_sftp import decrypt
-from tap_sftp import sample_generator
+import backoff  # type: ignore
+import paramiko  # type: ignore
+import pytz  # type: ignore
+import singer  # type: ignore
+from paramiko.ssh_exception import AuthenticationException, SSHException  # type: ignore
+from file_processors.utils import decrypt  # type: ignore
+from tap_sftp import helper
 
 LOGGER = singer.get_logger()
 logging.getLogger("paramiko").setLevel(logging.CRITICAL)
@@ -164,22 +164,29 @@ class SFTPConnection():
             if decryption_configs:
                 decrypt_remote = decryption_configs.get("decrypt_remote", True)
                 LOGGER.info(f'Decrypting file: {sftp_file_path}')
+                sftp_file_name = os.path.basename(sftp_file_path)
+                original_file_name = os.path.splitext(sftp_file_name)[0]
+
                 if not decrypt_remote:
                     self.sftp.get(sftp_file_path, local_path)
-                    decrypted_path = decrypt.gpg_decrypt(local_path, tmp_dir_name, decryption_configs.get('key'),
-                                                         decryption_configs.get('gnupghome'),
-                                                         decryption_configs.get('passphrase'))
+                    with open(local_path, 'rb') as src_file_object:
+                        decrypt_path = decrypt.gpg_decrypt_to_file(src_file_object,
+                                                                   decryption_configs.get('key'),
+                                                                   decryption_configs.get('gnupghome'),
+                                                                   decryption_configs.get('passphrase'),
+                                                                   f'{tmp_dir_name}/{original_file_name}')
                 else:
-                    with self.sftp.open(sftp_file_path, 'rb', 32768) as sftp_file:
-                        sftp_file.prefetch()
-                        decrypted_path = decrypt.gpg_decrypt_from_remote(sftp_file, sftp_file_path, tmp_dir_name,
-                                                                         decryption_configs.get('key'),
-                                                                         decryption_configs.get('gnupghome'),
-                                                                         decryption_configs.get('passphrase'))
+                    with self.sftp.open(sftp_file_path, 'rb', 32768) as src_file_object:
+                        src_file_object.prefetch()
+                        decrypt_path = helper.load_file_decrypted(src_file_object,
+                                                                  decryption_configs.get('key'),
+                                                                  decryption_configs.get('gnupghome'),
+                                                                  decryption_configs.get('passphrase'),
+                                                                  f'{tmp_dir_name}/{original_file_name}')
                 try:
-                    return open(decrypted_path, 'rb')
+                    return open(decrypt_path, 'rb')
                 except FileNotFoundError:
-                    raise Exception(f'Decryption of file failed: {sftp_file_path}')
+                    raise Exception(f'tap_sftp.decryption_error: Decryption of file failed: {sftp_file_path}')
             else:
                 self.sftp.get(sftp_file_path, local_path)
                 return open(local_path, 'rb')
@@ -190,13 +197,19 @@ class SFTPConnection():
             sftp_file_name = os.path.basename(sftp_file_path)
             with self.sftp.open(sftp_file_path, "rb") as sftp_file_object:
                 if decryption_configs:
-                    sample_file = sample_generator.generate_sample_for_encrypted(sftp_file_object, sftp_file_path, decryption_configs, tmp_dir_name, max_records)
+                    original_file_name = os.path.splitext(sftp_file_name)[0]
+                    sample_file = helper.load_file_decrypted(sftp_file_object,
+                                                             decryption_configs.get('key'),
+                                                             decryption_configs.get('gnupghome'),
+                                                             decryption_configs.get('passphrase'),
+                                                             f'{tmp_dir_name}/{original_file_name}',
+                                                             max_records)
                     try:
                         return open(sample_file, 'rb')
                     except FileNotFoundError:
                         raise Exception(f'Decryption of file failed: {sftp_file_path}')
                 else:
-                    sample_file = sample_generator.generate_sample(sftp_file_object, sftp_file_name, tmp_dir_name, max_records)
+                    sample_file = helper.sample_file(sftp_file_object, sftp_file_name, tmp_dir_name, max_records)
                     return open(sample_file, "rb")
 
     def get_files_matching_pattern(self, files, pattern):

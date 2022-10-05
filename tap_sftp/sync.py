@@ -1,118 +1,90 @@
-import singer
-from singer import Transformer, metadata, utils
-from tap_sftp import client, stats
-from tap_sftp.singer_encodings import csv_handler
+import singer  # type: ignore
+from singer import utils, metadata
+import itertools
+from tap_sftp import client
 from tap_sftp import defaults
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tap_sftp import helper
-
+from file_processors.clients.csv_client import CSVClient  # type: ignore
+from file_processors.clients.excel_client import ExcelClient  # type: ignore
 
 LOGGER = singer.get_logger()
 
 
-def sync_ftp(sftp_file, stream, table_spec, config, state, table_name):
-    records_streamed = sync_file(sftp_file, stream, table_spec, config)
-    state = singer.write_bookmark(state, table_name, 'modified_since', sftp_file['last_modified'].isoformat())
-    singer.write_state(state)
-    return records_streamed
+def stream_is_selected(mdata):
+    return mdata.get((), {}).get('selected', False)
 
 
-def sync_stream(config, state, stream):
-    table_name = stream.tap_stream_id
-    modified_since = utils.strptime_to_utc(singer.get_bookmark(state, table_name, 'modified_since') or
-                                           config['start_date'])
-    search_subdir = config.get("search_subdirectories", True)
-
-    LOGGER.info('Syncing table "%s".', table_name)
-    LOGGER.info('Getting files modified since %s.', modified_since)
-
+def sync_stream(config, catalog, state, collect_sync_stats=False):
     sftp_client = client.connection(config)
-    table_spec = [table_config for table_config in config["tables"] if table_config["table_name"] == table_name]
-    if len(table_spec) == 0:
-        LOGGER.info("No table configuration found for '%s', skipping stream", table_name)
-        return 0
-    if len(table_spec) > 1:
-        LOGGER.info("Multiple table configurations found for '%s', skipping stream", table_name)
-        return 0
-    table_spec = table_spec[0]
+    stream_groups = itertools.groupby(catalog.streams, key=lambda stream: helper.get_custom_metadata(
+        singer.metadata.to_map(stream.metadata), 'file_source'))
+    for key, group in stream_groups:
+        streams = list(group)
 
-    files = sftp_client.get_files(
-        table_spec["search_prefix"],
-        table_spec["search_pattern"],
-        modified_since,
-        search_subdir
-    )
-    sftp_client.close()
+        ''' Skipping file read if no stream is selected'''
+        streams_to_read = next((
+            stream for stream in streams if stream_is_selected(metadata.to_map(stream.metadata))), None)
+        if not streams_to_read:
+            for stream in streams:
+                LOGGER.info(f"{stream.tap_stream_id}: Skipping - not selected")
+                continue
+            return 0
 
-    LOGGER.info('Found %s files to be synced.', len(files))
+        table_specs = [table_config for table_config in config.get('tables') if
+                       f"{table_config.get('search_prefix')}/{table_config.get('search_pattern')}" == key]
+        if len(table_specs) == 0:
+            LOGGER.info("No table configuration found for '%s', skipping stream", key)
+            return 0
+        if len(table_specs) > 1:
+            LOGGER.info("Multiple table configurations found for '%s', skipping stream", key)
+            return 0
+        table_spec = table_specs[0]
+        modified_since = utils.strptime_to_utc(config.get('start_date'))
+        search_subdir = config.get("search_subdirectories", True)
+        files = sftp_client.get_files(
+            table_spec.get("search_prefix"),
+            table_spec.get("search_pattern"),
+            modified_since,
+            search_subdir
+        )
 
-    records_streamed = 0
-    if not files:
-        return records_streamed
+        if not files:
+            sftp_client.close()
+            return 0
 
-    max_file_size = config.get("max_file_size", defaults.MAX_FILE_SIZE)
-    if any(f['file_size']/1024 > max_file_size for f in files):
-        raise BaseException(f'tap_sftp.max_filesize_error: File size limit exceeded the current limit of{max_file_size/1024/1024} GB.')
-
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        future_sftp = {executor.submit(sync_ftp, sftp_file, stream, table_spec, config, state, table_name): sftp_file for sftp_file in files}
-        for future in as_completed(future_sftp):
-            records_streamed += future.result()
-
-    LOGGER.info('Wrote %s records for table "%s".', records_streamed, table_name)
-
-    return records_streamed
+        max_file_size = config.get("max_file_size", defaults.MAX_FILE_SIZE)
+        if any(f['file_size'] / 1024 > max_file_size for f in files):
+            raise BaseException(
+                f'tap_sftp.max_filesize_error: File size limit exceeded the current limit of{max_file_size / 1024 / 1024} GB.')
+        has_header = table_spec.get('has_header')
+        for file in files:
+            sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats, has_header)
 
 
-def sync_file(sftp_file_spec, stream, table_spec, config):
-    LOGGER.info('Syncing file "%s".', sftp_file_spec["filepath"])
+def sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats, has_header):
+    file_path = file["filepath"]
+    LOGGER.info('Syncing file "%s".', file_path)
     sftp_client = client.connection(config)
     decryption_configs = config.get('decryption_configs')
+    file_type = table_spec.get('file_type').lower()
+    log_sync_update = config.get('log_sync_update')
+    log_sync_update_interval = config.get('log_sync_update_interval')
+
     if decryption_configs:
         helper.update_decryption_key(decryption_configs)
-
-    with sftp_client.get_file_handle(sftp_file_spec, decryption_configs) as file_handle:
-        if decryption_configs:
-            sftp_file_spec['filepath'] = file_handle.name
-
-        # Add file_name to opts and flag infer_compression to support gzipped files
-        opts = {'key_properties': table_spec.get('key_properties', []),
-                'delimiter': table_spec.get('delimiter', ','),
-                'quotechar': table_spec.get('quotechar', '"'),
-                'file_name': sftp_file_spec['filepath'],
-                'encoding': table_spec.get('encoding', 'utf-8')}
-
-        readers = csv_handler.get_row_iterators(file_handle, options=opts, infer_compression=True)
-
-        records_synced = 0
-
-        for reader in readers:
-            LOGGER.info('Synced Record Count: 0')
-            with Transformer() as transformer:
-                for row in reader:
-                    custom_columns = {
-                        # Uncomment if required custom fields
-                        # '_sdc_source_file': sftp_file_spec["filepath"],
-                        #
-                        # # index zero, +1 for header row
-                        # '_sdc_source_lineno': records_synced + 2
-                    }
-                    rec = {**row, **custom_columns}
-
-                    to_write = transformer.transform(rec, stream.schema.to_dict(), metadata.to_map(stream.metadata))
-
-                    singer.write_record(stream.tap_stream_id, to_write)
-                    records_synced += 1
-                    if records_synced % 100000 == 0:
-                        LOGGER.info(f'Synced Record Count: {records_synced}')
-            LOGGER.info(f'Sync Complete - Records Synced: {records_synced}')
-
-    stats.add_file_data(table_spec, sftp_file_spec['filepath'], sftp_file_spec['last_modified'], records_synced)
-
-    if config.get('delete_after_sync'):
-        sftp_client.sftp.remove(sftp_file_spec["filepath"])
-        LOGGER.info(f"Deleting remote file: {sftp_file_spec['filepath']}")
-    sftp_client.close()
-    del sftp_client
-
-    return records_synced
+    with sftp_client.get_file_handle(file, decryption_configs) as file_handle:
+        if file_type in ["csv", "text"]:
+            csv_client = CSVClient(file_path, table_spec.get('table_name'), table_spec.get('key_properties', []),
+                                   has_header, collect_stats=collect_sync_stats, log_sync_update=log_sync_update,
+                                   log_sync_update_interval=log_sync_update_interval)
+            csv_client.delimiter = table_spec.get('delimiter') or ","
+            csv_client.quotechar = table_spec.get('quotechar') or "\""
+            csv_client.encoding = table_spec.get('encoding')
+            print([stream.to_dict() for stream in streams])
+            csv_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since)
+        elif file_type in ["excel"]:
+            excel_client = ExcelClient(file_path, '', table_spec.get('key_properties', []), has_header,
+                                       collect_stats=collect_sync_stats, log_sync_update=log_sync_update,
+                                       log_sync_update_interval=log_sync_update_interval)
+            excel_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since)

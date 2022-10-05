@@ -1,0 +1,47 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ['3.7', '3.8']
+    steps:
+    - uses: actions/checkout@v2
+    - uses: webfactory/ssh-agent@v0.5.4
+      with:
+        ssh-private-key: |
+            ${{ secrets.FILE_PROCESSORS_DEPLOY_KEY }}
+            ${{ secrets.PYTHON_GNUPG_DEPLOY_KEY }}
+          
+    - name: Set up Python ${{matrix.python-version}}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Poetry Install
+      uses: knowsuchagency/poetry-install@v2
+
+    - name: Add dependencies
+      run: |
+        poetry add flake8 tox-gh-actions
+
+    - name: Build coverage file
+      run: |
+        poetry run pytest --cov-report=term-missing --junitxml=/tmp/pytest.xml --cov=. tests/ | tee /tmp/pytest-coverage.txt
+    - name: Pytest coverage comment
+      uses: MishaKav/pytest-coverage-comment@main
+      with:
+        pytest-coverage-path: /tmp/pytest-coverage.txt
+        junitxml-path: /tmp/pytest.xml
+    - name: Test with tox
+      run: poetry run tox

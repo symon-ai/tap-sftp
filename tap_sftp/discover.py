@@ -1,33 +1,51 @@
-import singer
-from singer import metadata
+import singer  # type: ignore
 from tap_sftp import client
-from tap_sftp.singer_encodings import json_schema
+from tap_sftp import defaults, helper
+from file_processors.clients.csv_client import CSVClient  # type: ignore
+from file_processors.clients.excel_client import ExcelClient  # type: ignore
 
 LOGGER = singer.get_logger()
 
 
 def discover_streams(config):
     streams = []
-
     conn = client.connection(config)
+    decryption_configs = config.get('decryption_configs')
+    if decryption_configs:
+        helper.update_decryption_key(decryption_configs)
 
-    tables = config['tables']
+    tables = config.get('tables')
     for table_spec in tables:
-        LOGGER.info('Sampling records to determine table JSON schema "%s".', table_spec['table_name'])
-        schema = json_schema.get_schema_for_table(conn, table_spec, config)
-        if schema and not schema['properties']:
-            stream_md = [{"breadcrumb": [], "metadata": {"inclusion": "unsupported"}}]
+        LOGGER.info('Sampling records to determine table JSON schema "%s".', table_spec.get('table_name'))
+        has_header = table_spec.get('has_header')
+        files = conn.get_files(table_spec.get('search_prefix'), table_spec.get('search_pattern'),
+                               search_subdirectories=False)
+        max_file_size = config.get("max_file_size", defaults.MAX_FILE_SIZE)
+        if not files:
+            return {}
+        if any(f['file_size'] / 1024 > max_file_size for f in files):
+            raise BaseException(
+                f'tap_sftp.max_filesize_error: File size limit exceeded the current limit of{max_file_size / 1024 / 1024} GB.')
         else:
-            stream_md = metadata.get_standard_metadata(schema,
-                                                       key_properties=table_spec.get('key_properties'),
-                                                       replication_method='INCREMENTAL')
-        streams.append(
-            {
-                'stream': table_spec['table_name'],
-                'tap_stream_id': table_spec['table_name'],
-                'schema': schema,
-                'metadata': stream_md
-            }
-        )
+            sorted_files = sorted(files, key=lambda f: f['last_modified'], reverse=True)
+            for f in sorted_files:
+                file_path = f['filepath']
+                file_type = table_spec.get('file_type').lower()
+                if file_type in ["csv", "text"]:
+                    table_name = table_spec.get('table_name')
+                    with conn.get_file_handle_for_sample(f, decryption_configs, defaults.SAMPLE_SIZE) as file_handle:
+                        csv_client = CSVClient(file_path, '',
+                                               table_spec.get('key_properties', []), has_header)
+                        csv_client.delimiter = table_spec.get('delimiter', ',')
+                        csv_client.quotechar = table_spec.get('quotechar', '"')
+                        csv_client.encoding = table_spec.get('encoding')
+                        streams += csv_client.build_streams(file_handle, defaults.SAMPLE_SIZE, tap_stream_id=table_name)
+                elif file_type in ["excel"]:
+                    with conn.get_file_handle(f, decryption_configs) as file_handle:
+                        excel_client = ExcelClient(file_path, '', table_spec.get('key_properties', []), has_header)
+                        streams += excel_client.build_streams(file_handle, defaults.SAMPLE_SIZE,
+                                                              worksheets=table_spec.get('worksheets', []))
+                else:
+                    raise BaseException(f'file_type_error: Unsupported file type "{file_type}"')
 
     return streams
