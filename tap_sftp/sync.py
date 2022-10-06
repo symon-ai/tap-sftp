@@ -81,7 +81,6 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
             csv_client.delimiter = table_spec.get('delimiter') or ","
             csv_client.quotechar = table_spec.get('quotechar') or "\""
             csv_client.encoding = table_spec.get('encoding')
-            print([stream.to_dict() for stream in streams])
             csv_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since)
         elif file_type in ["excel"]:
             excel_client = ExcelClient(file_path, '', table_spec.get('key_properties', []), has_header,
