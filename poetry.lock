@@ -264,7 +264,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "file-processors"
-version = "1.0.1"
+version = "1.0.2"
 description = "File processors for singer tap and targets."
 category = "main"
 optional = false
@@ -290,8 +290,8 @@ xlrd = "2.0.1"
 [package.source]
 type = "git"
 url = "ssh://git@github.com/symon-ai/file-processors.git"
-reference = "v1.0.1"
-resolved_reference = "afca256c71d754b43ed80a45de4c4bdb784a9a79"
+reference = "v1.0.2"
+resolved_reference = "6c3ba6f4d3443c1556c9f4460c30ec4e6345e4be"
 
 [[package]]
 name = "filelock"
@@ -902,7 +902,7 @@ typing-extensions = {version = ">=3.7.4", markers = "python_version < \"3.8\""}
 
 [[package]]
 name = "zipp"
-version = "3.9.0"
+version = "3.10.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 category = "main"
 optional = false
@@ -915,7 +915,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "flake8 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.1"
-content-hash = "e048dcdcc2a1999d77fc8ab2da551da709c7ebcd1bf910d8da7cbc17617811f6"
+content-hash = "c8d450fa01eac723a7e30802f1378e53122261f6167164e8616f1cf63b5b02cd"
 
 [metadata.files]
 aiobotocore = []
