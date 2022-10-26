@@ -264,7 +264,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "file-processors"
-version = "1.0.2"
+version = "1.0.3"
 description = "File processors for singer tap and targets."
 category = "main"
 optional = false
@@ -290,8 +290,8 @@ xlrd = "2.0.1"
 [package.source]
 type = "git"
 url = "ssh://git@github.com/symon-ai/file-processors.git"
-reference = "WP-12708"
-resolved_reference = "1cda5fb1ec1686d9f82fbc826e90840d331435d1"
+reference = "v1.0.3"
+resolved_reference = "65e39732543e09e8b92c43719324e4e13074ed21"
 
 [[package]]
 name = "filelock"
@@ -915,7 +915,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "flake8 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.1"
-content-hash = "c48aa589626929350529c47c9f923430d157a47130f6f8bb52ab1bdfd9c83451"
+content-hash = "6f59136a1ddc1c152f82b58ee84b8ba9abaf9af66cdec0e50e8bcf298d0d7614"
 
 [metadata.files]
 aiobotocore = []
