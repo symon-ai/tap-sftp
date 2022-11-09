@@ -34,10 +34,12 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
         table_specs = [table_config for table_config in config.get('tables') if
                        f"{table_config.get('search_prefix')}/{table_config.get('search_pattern')}" == key]
         if len(table_specs) == 0:
-            LOGGER.info("No table configuration found for '%s', skipping stream", key)
+            LOGGER.info(
+                "No table configuration found for '%s', skipping stream", key)
             return 0
         if len(table_specs) > 1:
-            LOGGER.info("Multiple table configurations found for '%s', skipping stream", key)
+            LOGGER.info(
+                "Multiple table configurations found for '%s', skipping stream", key)
             return 0
         table_spec = table_specs[0]
         modified_since = utils.strptime_to_utc(config.get('start_date'))
@@ -59,7 +61,8 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
                 f'tap_sftp.max_filesize_error: File size limit exceeded the current limit of{max_file_size / 1024 / 1024} GB.')
         has_header = table_spec.get('has_header')
         for file in files:
-            sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats, has_header)
+            sync_file(config, file, streams, table_spec, state,
+                      modified_since, collect_sync_stats, has_header)
 
 
 def sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats, has_header):
@@ -81,9 +84,11 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
             csv_client.delimiter = table_spec.get('delimiter') or ","
             csv_client.quotechar = table_spec.get('quotechar') or "\""
             csv_client.encoding = table_spec.get('encoding')
-            csv_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since)
+            csv_client.sync(file_handle, [stream.to_dict()
+                            for stream in streams], state, modified_since)
         elif file_type in ["excel"]:
             excel_client = ExcelClient(file_path, '', table_spec.get('key_properties', []), has_header,
                                        collect_stats=collect_sync_stats, log_sync_update=log_sync_update,
                                        log_sync_update_interval=log_sync_update_interval)
-            excel_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since)
+            excel_client.sync(file_handle, [stream.to_dict()
+                              for stream in streams], state, modified_since)
