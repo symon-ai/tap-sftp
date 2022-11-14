@@ -146,6 +146,14 @@ urllib3 = ">=1.25.4,<1.27"
 crt = ["awscrt (==0.14.0)"]
 
 [[package]]
+name = "cchardet"
+version = "2.1.7"
+description = "cChardet is high speed universal character encoding detector."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "certifi"
 version = "2022.9.24"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -275,7 +283,7 @@ devel = ["colorama", "jsonschema", "json-spec", "pylint", "pytest", "pytest-benc
 
 [[package]]
 name = "file-processors"
-version = "1.0.5"
+version = "1.0.6"
 description = "File processors for singer tap and targets."
 category = "main"
 optional = false
@@ -285,7 +293,7 @@ develop = false
 [package.dependencies]
 backoff = "1.11.1"
 boto3 = "1.24.35"
-chardet = "4.0.0"
+cchardet = "2.1.7"
 deepdiff6 = "6.2.0"
 fastjsonschema = "~2.14.1"
 openpyxl = "3.0.10"
@@ -303,8 +311,8 @@ xlrd = "2.0.1"
 [package.source]
 type = "git"
 url = "ssh://git@github.com/symon-ai/file-processors.git"
-reference = "v1.0.5"
-resolved_reference = "98449e19ff5c5d518cdc07848f60468ac2d90fa1"
+reference = "WP-12916"
+resolved_reference = "5bac8ded9cf2f0b8ffe8727980058b56146072ac"
 
 [[package]]
 name = "filelock"
@@ -566,7 +574,7 @@ dev = ["pylint (==2.11.1)", "ipython", "ipdb", "nose", "unify (==0.5)"]
 
 [[package]]
 name = "platformdirs"
-version = "2.5.3"
+version = "2.5.4"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 category = "dev"
 optional = false
@@ -863,7 +871,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "virtualenv"
-version = "20.16.6"
+version = "20.16.7"
 description = "Virtual Python Environment builder"
 category = "dev"
 optional = false
@@ -928,7 +936,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "flake8 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.1"
-content-hash = "82a2c2ea2907ac0532ec3f354628be88464aee5228073eda12f33a95de7e8629"
+content-hash = "f2324df961b389aff5c04a2a4c07352a61b7daa40f4bd74730bf914869070c43"
 
 [metadata.files]
 aiobotocore = []
@@ -942,6 +950,7 @@ backoff = []
 bcrypt = []
 boto3 = []
 botocore = []
+cchardet = []
 certifi = []
 cffi = []
 chardet = []
