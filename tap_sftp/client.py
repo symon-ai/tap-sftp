@@ -19,7 +19,8 @@ logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 
 def handle_backoff(details):
     LOGGER.warn(
-        "SSH Connection closed unexpectedly. Waiting {wait} seconds and retrying...".format(**details)
+        "SSH Connection closed unexpectedly. Waiting {wait} seconds and retrying...".format(
+            **details)
     )
 
 
@@ -56,8 +57,10 @@ class SFTPConnection():
                 self.transport.default_window_size = paramiko.common.MAX_WINDOW_SIZE
                 self.transport.packetizer.REKEY_BYTES = pow(2, 40)
                 self.transport.packetizer.REKEY_PACKETS = pow(2, 40)
-                self.transport.connect(username=self.username, password=self.password, hostkey=None, pkey=self.key)
-                self.__sftp = paramiko.SFTPClient.from_transport(self.transport)
+                self.transport.connect(
+                    username=self.username, password=self.password, hostkey=None, pkey=self.key)
+                self.__sftp = paramiko.SFTPClient.from_transport(
+                    self.transport)
 
                 LOGGER.info('Connection successful')
                 break
@@ -86,7 +89,8 @@ class SFTPConnection():
         self.transport.close()
 
     def match_files_for_table(self, files, table_name, search_pattern):
-        LOGGER.info("Searching for files for table '%s', matching pattern: %s", table_name, search_pattern)
+        LOGGER.info("Searching for files for table '%s', matching pattern: %s",
+                    table_name, search_pattern)
         matcher = re.compile(search_pattern)
         return [f for f in files if matcher.search(f["filepath"])]
 
@@ -110,12 +114,14 @@ class SFTPConnection():
         try:
             result = self.sftp.listdir_attr(prefix)
         except FileNotFoundError as e:
-            raise Exception("Directory '{}' does not exist".format(prefix)) from e
+            raise Exception(
+                "Directory '{}' does not exist".format(prefix)) from e
 
         for file_attr in result:
             # NB: This only looks at the immediate level beneath the prefix directory
             if self.is_directory(file_attr) and search_subdirectories:
-                files += self.get_files_by_prefix(prefix + '/' + file_attr.filename)
+                files += self.get_files_by_prefix(prefix +
+                                                  '/' + file_attr.filename)
             else:
                 if self.is_empty(file_attr):
                     continue
@@ -139,20 +145,26 @@ class SFTPConnection():
         if files:
             LOGGER.info('Found %s files in "%s"', len(files), prefix)
         else:
-            LOGGER.warning('Found no files on specified SFTP server at "%s"', prefix)
+            LOGGER.warning(
+                'Found no files on specified SFTP server at "%s"', prefix)
 
-        matching_files = self.get_files_matching_pattern(files, f'{search_pattern}$')
+        matching_files = self.get_files_matching_pattern(
+            files, f'{search_pattern}$')
 
         if matching_files:
-            LOGGER.info('Found %s files in "%s" matching "%s"', len(matching_files), prefix, search_pattern)
+            LOGGER.info('Found %s files in "%s" matching "%s"',
+                        len(matching_files), prefix, search_pattern)
         else:
-            LOGGER.warning('Found no files on specified SFTP server at "%s" matching "%s"', prefix, search_pattern)
+            # rather than returning None, we throw error instead so we can catch it
+            raise FileNotFoundError(
+                f'Found no files on specified SFTP server at "{prefix}" matching "{search_pattern}".')
 
         for f in matching_files:
             LOGGER.info("Found file: %s", f['filepath'])
 
         if modified_since is not None:
-            matching_files = [f for f in matching_files if f["last_modified"] > modified_since]
+            matching_files = [
+                f for f in matching_files if f["last_modified"] > modified_since]
 
         return matching_files
 
@@ -171,22 +183,29 @@ class SFTPConnection():
                     self.sftp.get(sftp_file_path, local_path)
                     with open(local_path, 'rb') as src_file_object:
                         decrypt_path = decrypt.gpg_decrypt_to_file(src_file_object,
-                                                                   decryption_configs.get('key'),
-                                                                   decryption_configs.get('gnupghome'),
-                                                                   decryption_configs.get('passphrase'),
+                                                                   decryption_configs.get(
+                                                                       'key'),
+                                                                   decryption_configs.get(
+                                                                       'gnupghome'),
+                                                                   decryption_configs.get(
+                                                                       'passphrase'),
                                                                    f'{tmp_dir_name}/{original_file_name}')
                 else:
                     with self.sftp.open(sftp_file_path, 'rb', 32768) as src_file_object:
                         src_file_object.prefetch()
                         decrypt_path = helper.load_file_decrypted(src_file_object,
-                                                                  decryption_configs.get('key'),
-                                                                  decryption_configs.get('gnupghome'),
-                                                                  decryption_configs.get('passphrase'),
+                                                                  decryption_configs.get(
+                                                                      'key'),
+                                                                  decryption_configs.get(
+                                                                      'gnupghome'),
+                                                                  decryption_configs.get(
+                                                                      'passphrase'),
                                                                   f'{tmp_dir_name}/{original_file_name}')
                 try:
                     return open(decrypt_path, 'rb')
                 except FileNotFoundError:
-                    raise Exception(f'tap_sftp.decryption_error: Decryption of file failed: {sftp_file_path}')
+                    raise Exception(
+                        f'tap_sftp.decryption_error: Decryption of file failed: {sftp_file_path}')
             else:
                 self.sftp.get(sftp_file_path, local_path)
                 return open(local_path, 'rb')
@@ -199,17 +218,22 @@ class SFTPConnection():
                 if decryption_configs:
                     original_file_name = os.path.splitext(sftp_file_name)[0]
                     sample_file = helper.load_file_decrypted(sftp_file_object,
-                                                             decryption_configs.get('key'),
-                                                             decryption_configs.get('gnupghome'),
-                                                             decryption_configs.get('passphrase'),
+                                                             decryption_configs.get(
+                                                                 'key'),
+                                                             decryption_configs.get(
+                                                                 'gnupghome'),
+                                                             decryption_configs.get(
+                                                                 'passphrase'),
                                                              f'{tmp_dir_name}/{original_file_name}',
                                                              max_records)
                     try:
                         return open(sample_file, 'rb')
                     except FileNotFoundError:
-                        raise Exception(f'Decryption of file failed: {sftp_file_path}')
+                        raise Exception(
+                            f'Decryption of file failed: {sftp_file_path}')
                 else:
-                    sample_file = helper.sample_file(sftp_file_object, sftp_file_name, tmp_dir_name, max_records)
+                    sample_file = helper.sample_file(
+                        sftp_file_object, sftp_file_name, tmp_dir_name, max_records)
                     return open(sample_file, "rb")
 
     def get_files_matching_pattern(self, files, pattern):
