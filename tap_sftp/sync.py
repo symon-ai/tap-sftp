@@ -17,8 +17,8 @@ def stream_is_selected(mdata):
 
 def sync_stream(config, catalog, state, collect_sync_stats=False):
     sftp_client = client.connection(config)
-    stream_groups = itertools.groupby(catalog.streams, key=lambda stream: helper.get_custom_metadata(
-        singer.metadata.to_map(stream.metadata), 'file_source'))
+    stream_groups = itertools.groupby(
+        catalog.streams, key=lambda stream: stream.tap_stream_id)
     for key, group in stream_groups:
         streams = list(group)
 
@@ -30,9 +30,8 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
                 LOGGER.info(f"{stream.tap_stream_id}: Skipping - not selected")
                 continue
             return 0
-
         table_specs = [table_config for table_config in config.get('tables') if
-                       f"{table_config.get('search_prefix')}/{table_config.get('search_pattern')}" == key]
+                       table_config.get('table_name') == key]
         if len(table_specs) == 0:
             LOGGER.info(
                 "No table configuration found for '%s', skipping stream", key)
