@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tap_sftp import helper
 from file_processors.clients.csv_client import CSVClient  # type: ignore
 from file_processors.clients.excel_client import ExcelClient  # type: ignore
+import re
 
 LOGGER = singer.get_logger()
 
@@ -31,8 +32,9 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
                 continue
             return 0
 
+        # regex match instead of direct equality as search_pattern could get escaped regex chars
         table_specs = [table_config for table_config in config.get('tables') if
-                       f"{table_config.get('search_prefix')}/{table_config.get('search_pattern')}" == key]
+                       matches_key(table_config, key)]
         if len(table_specs) == 0:
             LOGGER.info(
                 "No table configuration found for '%s', skipping stream", key)
@@ -63,6 +65,12 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
         for file in files:
             sync_file(config, file, streams, table_spec, state,
                       modified_since, collect_sync_stats, has_header)
+
+
+def matches_key(table_config, key):
+    search_pattern = f"{re.escape(table_config.get('search_prefix'))}/{table_config.get('search_pattern')}"
+    matcher = re.compile(search_pattern)
+    return matcher.search(key) != None
 
 
 def sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats, has_header):
