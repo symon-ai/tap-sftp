@@ -33,7 +33,7 @@ jobs:
 
     - name: Add dependencies
       run: |
-        poetry add flake8 tox-gh-actions
+        poetry add flake8 tox-gh-actions@^2.11.0
 
     - name: Build coverage file
       run: |
