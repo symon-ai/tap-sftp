@@ -313,8 +313,8 @@ xlrd = "2.0.1"
 [package.source]
 type = "git"
 url = "ssh://git@github.com/symon-ai/file-processors.git"
-reference = "WP-13911"
-resolved_reference = "87df8f9c87f4648494f20068f0829f9a799e3be4"
+reference = "v1.0.11"
+resolved_reference = "a5cf2c6e22439b027a478c9705aafc908a4fb105"
 
 [[package]]
 name = "filelock"
@@ -928,7 +928,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.1"
-content-hash = "962e8cbe509aeee6a9c6bf41e7c4067f336dcaa592c2b7e4f6a2ccf5fb324ebb"
+content-hash = "e234094fd7da2f9ddb879170e394e37a8fa0a43624a42dee0e3cb11ae1dd0d2a"
 
 [metadata.files]
 aiobotocore = [
