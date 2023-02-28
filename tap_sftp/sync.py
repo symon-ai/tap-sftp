@@ -81,6 +81,7 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
     file_type = table_spec.get('file_type').lower()
     log_sync_update = config.get('log_sync_update')
     log_sync_update_interval = config.get('log_sync_update_interval')
+    columns_to_update = config.get('columns_to_update')
 
     if decryption_configs:
         helper.update_decryption_key(decryption_configs)
@@ -93,7 +94,7 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
             csv_client.quotechar = table_spec.get('quotechar') or "\""
             csv_client.encoding = table_spec.get('encoding')
             csv_client.sync(file_handle, [stream.to_dict()
-                            for stream in streams], state, modified_since)
+                            for stream in streams], state, modified_since, columns_to_update=columns_to_update)
         elif file_type in ["excel"]:
             excel_client = ExcelClient(file_path, '', table_spec.get('key_properties', []), has_header,
                                        collect_stats=collect_sync_stats, log_sync_update=log_sync_update,
