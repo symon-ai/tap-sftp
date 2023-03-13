@@ -15,7 +15,7 @@ terminaltables = "3.1.0"
 boto3 = "1.24.35"
 smart-open = "^6.1.0"
 python-gnupg = {git = "ssh://git@github.com/symon-ai/python-gnupg.git", tag = "0.4.9.1"}
-file-processors = {git = "ssh://git@github.com/symon-ai/file-processors.git", tag = "v1.0.17"}
+file-processors = {git = "ssh://git@github.com/symon-ai/file-processors.git", branch = "WP-14583"}
 
 [tool.poetry.dev-dependencies]
 tox = "3.25.1"

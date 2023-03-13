@@ -227,7 +227,7 @@ toml = ["tomli"]
 
 [[package]]
 name = "cryptography"
-version = "40.0.2"
+version = "39.0.2"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
 category = "main"
 optional = false
@@ -289,7 +289,7 @@ devel = ["colorama", "jsonschema", "json-spec", "pylint", "pytest", "pytest-benc
 
 [[package]]
 name = "file-processors"
-version = "1.0.17"
+version = "1.1.1"
 description = "File processors for singer tap and targets."
 category = "main"
 optional = false
@@ -317,8 +317,8 @@ xlrd = "2.0.1"
 [package.source]
 type = "git"
 url = "ssh://git@github.com/symon-ai/file-processors.git"
-reference = "v1.0.17"
-resolved_reference = "5f3acfe8cb1b4675da87f67899022d976a63e620"
+reference = "WP-14583"
+resolved_reference = "a51c371aa2da332686a40bebc1939f8a2f463842"
 
 [[package]]
 name = "filelock"
@@ -577,7 +577,7 @@ dev = ["unify (==0.5)", "nose", "ipdb", "ipython", "pylint (==2.11.1)"]
 
 [[package]]
 name = "platformdirs"
-version = "3.2.0"
+version = "3.1.1"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 category = "dev"
 optional = false
@@ -867,7 +867,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "virtualenv"
-version = "20.22.0"
+version = "20.21.0"
 description = "Virtual Python Environment builder"
 category = "dev"
 optional = false
@@ -932,7 +932,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "flake8 (<5)", "pytest-co
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.1"
-content-hash = "ce357f1e1ac86fa90503d0af5f16a64d215dd282f38845fb451bc079dcd8e25b"
+content-hash = "e162424766db267e85378aaf7ee5664a88fafbdd7aa3501c70c71a19a17241c9"
 
 [metadata.files]
 aiobotocore = []
