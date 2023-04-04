@@ -315,8 +315,8 @@ xlrd = "2.0.1"
 [package.source]
 type = "git"
 url = "ssh://git@github.com/symon-ai/file-processors.git"
-reference = "WP-15016"
-resolved_reference = "a1826ade672c98809f7348a6040609c51e1a92c4"
+reference = "v1.0.15"
+resolved_reference = "f774336ccaf241f18358144fcf8163757963b86a"
 
 [[package]]
 name = "filelock"
@@ -930,7 +930,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "flake8 (<5)", "pytest-co
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.1"
-content-hash = "d8162733c41e72cd62cb1f029a1bcd7cebee26ab3fcd5e17d438c38ecbde22fd"
+content-hash = "4f2fdf7e60dd17aa8bcd625fbaf4c0a72c8530da6a3a44568b0a989ee6aa484d"
 
 [metadata.files]
 aiobotocore = []
