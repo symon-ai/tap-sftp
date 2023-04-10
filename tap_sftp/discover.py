@@ -48,12 +48,10 @@ def discover_streams(config):
                         streams += csv_client.build_streams(file_handle, defaults.SAMPLE_SIZE, tap_stream_id=table_name)
                 elif file_type in ["excel"]:
                     with conn.get_file_handle(f, decryption_configs) as file_handle:
-                        excel_client = ExcelClient(file_path, '', table_spec.get(
-                            'key_properties', []), has_header)
+                        excel_client = ExcelClient(file_path, '', table_spec.get('key_properties', []), has_header)
                         streams += excel_client.build_streams(file_handle, defaults.SAMPLE_SIZE,
                                                               worksheets=table_spec.get('worksheets', []))
                 else:
-                    raise BaseException(
-                        f'file_type_error: Unsupported file type "{file_type}"')
+                    raise BaseException(f'file_type_error: Unsupported file type "{file_type}"')
 
     return streams
