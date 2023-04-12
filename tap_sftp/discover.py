@@ -16,7 +16,8 @@ def discover_streams(config):
 
     tables = config.get('tables')
     for table_spec in tables:
-        LOGGER.info('Sampling records to determine table JSON schema "%s".', table_spec.get('table_name'))
+        LOGGER.info('Sampling records to determine table JSON schema "%s".',
+                    table_spec.get('table_name'))
         has_header = table_spec.get('has_header')
         files = conn.get_files(table_spec.get('search_prefix'), table_spec.get('search_pattern'),
                                search_subdirectories=False)
@@ -27,15 +28,20 @@ def discover_streams(config):
             raise BaseException(
                 f'tap_sftp.max_filesize_error: File size limit exceeded the current limit of{max_file_size / 1024 / 1024} GB.')
         else:
-            sorted_files = sorted(files, key=lambda f: f['last_modified'], reverse=True)
+            sorted_files = sorted(
+                files, key=lambda f: f['last_modified'], reverse=True)
             for f in sorted_files:
                 file_path = f['filepath']
                 file_type = table_spec.get('file_type').lower()
                 if file_type in ["csv", "text"]:
                     table_name = table_spec.get('table_name')
-                    with conn.get_file_handle_for_sample(f, decryption_configs, defaults.SAMPLE_SIZE) as file_handle:
+                    skip_header_row = table_spec.get('skip_header_row', 0)
+                    skip_footer_row = table_spec.get('skip_footer_row', 0)
+                    # update sample size for get_file_handle_for_sample to write SAMPLE_SIZE rows excluding skipped rows
+                    sample_size = defaults.SAMPLE_SIZE + skip_header_row + skip_footer_row
+                    with conn.get_file_handle_for_sample(f, decryption_configs, sample_size) as file_handle:
                         csv_client = CSVClient(file_path, '',
-                                               table_spec.get('key_properties', []), has_header)
+                                               table_spec.get('key_properties', []), has_header, skip_header_row=skip_header_row, skip_footer_row=skip_footer_row)
                         csv_client.delimiter = table_spec.get('delimiter', ',')
                         csv_client.quotechar = table_spec.get('quotechar', '"')
                         csv_client.encoding = table_spec.get('encoding')
