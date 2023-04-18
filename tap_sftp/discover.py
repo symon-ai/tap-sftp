@@ -54,7 +54,7 @@ def discover_streams(config):
                             'key_properties', []), has_header)
                         streams += excel_client.build_streams(file_handle, defaults.SAMPLE_SIZE,
                                                               worksheets=table_spec.get('worksheets', []))
-                elif file_type in ["sdf"]:
+                elif file_type in ["fwf"]:
                     table_name = table_spec.get('table_name')
                     with conn.get_file_handle_for_sample(f, None, defaults.SAMPLE_SIZE) as file_handle:
                         skip_rows = table_spec.get('skip_rows', 0)

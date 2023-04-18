@@ -106,7 +106,7 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
                                        log_sync_update_interval=log_sync_update_interval)
             excel_client.sync(file_handle, [stream.to_dict()
                               for stream in streams], state, modified_since)
-        elif file_type in ["sdf"]:
+        elif file_type in ["fwf"]:
             skip_header_row = table_spec.get('skip_header_row', 0)
             skip_footer_row = table_spec.get('skip_footer_row', 0)
             column_specs = table_spec.get('column_specs')
