@@ -63,7 +63,7 @@ def main():
     for table in args.config.get('tables'):
         utils.check_config(table, REQUIRED_COMMON_TABLE_SPEC_CONFIG_KEYS)
         file_type = table.get("file_type")
-        if file_type in ["csv", "text", "sdf"]:
+        if file_type in ["csv", "text", "fwf", "sdf"]:
             utils.check_config(table, REQUIRED_CSV_TABLE_SPEC_CONFIG_KEYS)
 
     decrypt_configs = args.config.get('decryption_configs')
