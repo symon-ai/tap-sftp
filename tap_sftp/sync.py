@@ -83,6 +83,7 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
     log_sync_update = config.get('log_sync_update')
     log_sync_update_interval = config.get('log_sync_update_interval')
     columns_to_update = config.get('columns_to_update')
+    columns_to_rename = config.get('columns_to_rename')
 
     if decryption_configs:
         helper.update_decryption_key(decryption_configs)
@@ -103,14 +104,21 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
             excel_client.sync(file_handle, [stream.to_dict()
                               for stream in streams], state, modified_since)
         elif file_type in ["sdf"]:
-            skip_rows = table_spec.get('skip_rows', 0)
+            skip_header_row = table_spec.get('skip_header_row', 0)
+            skip_footer_row = table_spec.get('skip_footer_row', 0)
             column_specs = table_spec.get('column_specs')
             # we require column specs in config since discovery in sftp connector is mandatory
             if column_specs is None or len(column_specs) == 0:
                 raise Exception('No column specs found in config.')
             fwf_client = FWFClient(file_path, table_spec.get('table_name'), table_spec.get(
-                'key_properties', []), has_header, column_specs=column_specs, skip_rows=skip_rows)
+                'key_properties', []), has_header, column_specs=column_specs, skip_header_row=skip_header_row, skip_footer_row=skip_footer_row)
             fwf_client.delimiter = table_spec.get('delimiter', ' ')
             fwf_client.encoding = table_spec.get('encoding')
-            fwf_client.sync(file_handle, [stream.to_dict()
-                            for stream in streams], state, modified_since, columns_to_update=columns_to_update)
+            fwf_client.sync(
+                file_handle,
+                [stream.to_dict() for stream in streams],
+                state,
+                modified_since,
+                columns_to_update=columns_to_update,
+                columns_to_rename=columns_to_rename
+            )
