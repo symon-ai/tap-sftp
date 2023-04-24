@@ -45,6 +45,7 @@ def discover_streams(config):
                         csv_client.delimiter = table_spec.get('delimiter', ',')
                         csv_client.quotechar = table_spec.get('quotechar', '"')
                         csv_client.encoding = table_spec.get('encoding')
+                        csv_client.escapechar = table_spec.get('escapechar', '\\')
                         streams += csv_client.build_streams(file_handle, defaults.SAMPLE_SIZE, tap_stream_id=table_name)
                 elif file_type in ["excel"]:
                     with conn.get_file_handle(f, decryption_configs) as file_handle:

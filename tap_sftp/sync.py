@@ -95,6 +95,7 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
             csv_client.delimiter = table_spec.get('delimiter') or ","
             csv_client.quotechar = table_spec.get('quotechar') or "\""
             csv_client.encoding = table_spec.get('encoding')
+            csv_client.escapechar = table_spec.get('escapechar', '\\')
             csv_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since,
                             columns_to_update=columns_to_update)
         elif file_type in ["excel"]:
