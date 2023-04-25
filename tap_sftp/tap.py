@@ -4,6 +4,7 @@ import singer  # type: ignore
 from singer import utils
 from terminaltables import AsciiTable  # type: ignore
 from file_processors.utils.stat_collector import FILE_SYNC_STATS  # type: ignore
+from file_processors.utils.np_encoder import NpEncoder  # type: ignore
 from tap_sftp import discover
 from tap_sftp import sync
 
@@ -22,7 +23,7 @@ def do_discover(config):
     if not streams:
         raise Exception("No streams found")
     catalog = {"streams": streams}
-    json.dump(catalog, sys.stdout, indent=2)
+    json.dump(catalog, sys.stdout, indent=2, cls=NpEncoder)
     LOGGER.info("Finished discover")
 
 
@@ -62,7 +63,7 @@ def main():
     for table in args.config.get('tables'):
         utils.check_config(table, REQUIRED_COMMON_TABLE_SPEC_CONFIG_KEYS)
         file_type = table.get("file_type")
-        if file_type in ["csv", "text"]:
+        if file_type in ["csv", "text", "fwf"]:
             utils.check_config(table, REQUIRED_CSV_TABLE_SPEC_CONFIG_KEYS)
 
     decrypt_configs = args.config.get('decryption_configs')
