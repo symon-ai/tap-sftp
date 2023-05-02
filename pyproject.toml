@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tap-sftp"
-version = "2.2.0"
+version = "2.2.1"
 description = "Singer.io tap for extracting data"
 authors = ["Stitch"]
 classifiers = ["Programming Language :: Python :: 3 :: Only"]
