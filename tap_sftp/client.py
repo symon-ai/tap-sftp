@@ -11,6 +11,7 @@ import pytz  # type: ignore
 import singer  # type: ignore
 from paramiko.ssh_exception import AuthenticationException, SSHException  # type: ignore
 from file_processors.utils import decrypt  # type: ignore
+from file_processors.utils.symon_exception import SymonException # type: ignore
 from tap_sftp import helper
 
 LOGGER = singer.get_logger()
@@ -156,8 +157,7 @@ class SFTPConnection():
                         len(matching_files), prefix, search_pattern)
         else:
             # rather than returning None, we throw error instead so we can catch it
-            raise FileNotFoundError(
-                f'Found no files on specified SFTP server at "{prefix}" matching "{search_pattern}".')
+            raise SymonException(f'Sorry, we couldn\'t find any files on specified SFTP server at "{prefix}/{search_pattern}"', 'sftp.FileNotFoundError')
 
         for f in matching_files:
             LOGGER.info("Found file: %s", f['filepath'])

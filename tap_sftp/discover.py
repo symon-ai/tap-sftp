@@ -4,6 +4,7 @@ from tap_sftp import defaults, helper
 from file_processors.clients.csv_client import CSVClient  # type: ignore
 from file_processors.clients.excel_client import ExcelClient  # type: ignore
 from file_processors.clients.fwf_client import FWFClient  # type: ignore
+from file_processors.utils.symon_exception import SymonException # type: ignore
 
 LOGGER = singer.get_logger()
 
@@ -26,8 +27,7 @@ def discover_streams(config):
         if not files:
             return {}
         if any(f['file_size'] / 1024 > max_file_size for f in files):
-            raise BaseException(
-                f'tap_sftp.max_filesize_error: File size limit exceeded the current limit of{max_file_size / 1024 / 1024} GB.')
+            raise SymonException(f'Oops! The file size exceeds the current limit of {max_file_size / 1024 / 1024}GB.','sftp.MaxFilesizeError')
         else:
             sorted_files = sorted(
                 files, key=lambda f: f['last_modified'], reverse=True)
