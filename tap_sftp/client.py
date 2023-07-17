@@ -73,7 +73,9 @@ class SFTPConnection():
                 time.sleep(5)
                 LOGGER.info('Connection failed, retrying...')
                 if i >= (self.retries):
-                    raise ex
+                    if isinstance(ex, AuthenticationException):
+                        raise SymonException('Authentication failed. Please check your credentials.','sftp.authenticationError')
+                    raise SymonException('Failed to connect to SFTP server. Please check your port configuration and connectivity to your SFTP server.', 'sftp.serverError')
 
     @property
     def sftp(self):
