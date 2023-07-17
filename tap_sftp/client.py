@@ -98,7 +98,7 @@ class SFTPConnection():
         return [f for f in files if matcher.search(f["filepath"])]
 
     def is_empty(self, file_attr):
-        return file_attr.st_size == 0
+        return file_attr.get('file_size') == 0
 
     def is_directory(self, file_attr):
         return stat.S_ISDIR(file_attr.st_mode)
@@ -126,9 +126,6 @@ class SFTPConnection():
                 files += self.get_files_by_prefix(prefix +
                                                   '/' + file_attr.filename)
             else:
-                if self.is_empty(file_attr):
-                    continue
-
                 last_modified = file_attr.st_mtime
                 if last_modified is None:
                     LOGGER.warning("Cannot read m_time for file %s, defaulting to current epoch time",
@@ -161,8 +158,14 @@ class SFTPConnection():
             # rather than returning None, we throw error instead so we can catch it
             raise SymonException(f'Sorry, we couldn\'t find any files on specified SFTP server at "{prefix}/{search_pattern}"', 'sftp.FileNotFoundError')
 
+        empty_file_count = 0
         for f in matching_files:
+            if self.is_empty(f):
+                empty_file_count += 1
             LOGGER.info("Found file: %s", f['filepath'])
+
+        if empty_file_count == len(matching_files):
+            raise SymonException('File is empty.', 'EmptyFile')
 
         if modified_since is not None:
             matching_files = [
