@@ -103,9 +103,9 @@ def test_get_files_by_prefix(sftp_client):
     sftp_client.sftp.listdir_attr.side_effect = lambda \
         p: [] if p == f'{prefix}/{file_result5.filename}' else sftp_result
     matched_files = sftp_client.get_files_by_prefix(prefix)
-    assert len(matched_files) == 3
+    assert len(matched_files) == 4
     assert len([file for file in matched_files if
-                file['file_size'] == 0 or file['filepath'] == f'{prefix}/{file_result4.filename}']) == 0
+                file['file_size'] == 0 or file['filepath'] == f'{prefix}/{file_result4.filename}']) == 1
 
 
 @patch('tap_sftp.helper.load_file_decrypted')

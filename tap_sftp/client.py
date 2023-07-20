@@ -11,6 +11,7 @@ import pytz  # type: ignore
 import singer  # type: ignore
 from paramiko.ssh_exception import AuthenticationException, SSHException  # type: ignore
 from file_processors.utils import decrypt  # type: ignore
+from file_processors.utils.symon_exception import SymonException # type: ignore
 from tap_sftp import helper
 
 LOGGER = singer.get_logger()
@@ -72,7 +73,9 @@ class SFTPConnection():
                 time.sleep(5)
                 LOGGER.info('Connection failed, retrying...')
                 if i >= (self.retries):
-                    raise ex
+                    if isinstance(ex, AuthenticationException):
+                        raise SymonException('Authentication failed. Please check your credentials.','sftp.AuthenticationError')
+                    raise SymonException('Failed to connect to SFTP server. Please check your port configuration and connectivity to your SFTP server.', 'sftp.ServerError')
 
     @property
     def sftp(self):
@@ -95,7 +98,7 @@ class SFTPConnection():
         return [f for f in files if matcher.search(f["filepath"])]
 
     def is_empty(self, file_attr):
-        return file_attr.st_size == 0
+        return file_attr.get('file_size') == 0
 
     def is_directory(self, file_attr):
         return stat.S_ISDIR(file_attr.st_mode)
@@ -123,9 +126,6 @@ class SFTPConnection():
                 files += self.get_files_by_prefix(prefix +
                                                   '/' + file_attr.filename)
             else:
-                if self.is_empty(file_attr):
-                    continue
-
                 last_modified = file_attr.st_mtime
                 if last_modified is None:
                     LOGGER.warning("Cannot read m_time for file %s, defaulting to current epoch time",
@@ -156,11 +156,16 @@ class SFTPConnection():
                         len(matching_files), prefix, search_pattern)
         else:
             # rather than returning None, we throw error instead so we can catch it
-            raise FileNotFoundError(
-                f'Found no files on specified SFTP server at "{prefix}" matching "{search_pattern}".')
+            raise SymonException(f'Sorry, we couldn\'t find any files on specified SFTP server at "{prefix}/{search_pattern}"', 'sftp.FileNotFoundError')
 
+        empty_file_count = 0
         for f in matching_files:
+            if self.is_empty(f):
+                empty_file_count += 1
             LOGGER.info("Found file: %s", f['filepath'])
+
+        if empty_file_count == len(matching_files):
+            raise SymonException('File is empty.', 'EmptyFile')
 
         if modified_since is not None:
             matching_files = [

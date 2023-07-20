@@ -1,10 +1,12 @@
 import json
 import sys
 import singer  # type: ignore
+import traceback
 from singer import utils
 from terminaltables import AsciiTable  # type: ignore
 from file_processors.utils.stat_collector import FILE_SYNC_STATS  # type: ignore
 from file_processors.utils.np_encoder import NpEncoder  # type: ignore
+from file_processors.utils.symon_exception import SymonException # type: ignore
 from tap_sftp import discover
 from tap_sftp import sync
 
@@ -21,7 +23,7 @@ def do_discover(config):
     LOGGER.info("Starting discover")
     streams = discover.discover_streams(config)
     if not streams:
-        raise Exception("No streams found")
+        raise SymonException('File is empty.', 'EmptyFile')
     catalog = {"streams": streams}
     json.dump(catalog, sys.stdout, indent=2, cls=NpEncoder)
     LOGGER.info("Finished discover")
@@ -58,23 +60,56 @@ def do_sync(config, catalog, state):
 
 @singer.utils.handle_top_exception(LOGGER)
 def main():
-    args = utils.parse_args(REQUIRED_CONFIG_KEYS)
-    # validate tables config
-    for table in args.config.get('tables'):
-        utils.check_config(table, REQUIRED_COMMON_TABLE_SPEC_CONFIG_KEYS)
-        file_type = table.get("file_type")
-        if file_type in ["csv", "text", "fwf"]:
-            utils.check_config(table, REQUIRED_CSV_TABLE_SPEC_CONFIG_KEYS)
+    try:
+        # used for storing error info to write if error occurs
+        error_info = None
+        args = utils.parse_args(REQUIRED_CONFIG_KEYS)
+        # validate tables config
+        for table in args.config.get('tables'):
+            utils.check_config(table, REQUIRED_COMMON_TABLE_SPEC_CONFIG_KEYS)
+            file_type = table.get("file_type")
+            if file_type in ["csv", "text", "fwf"]:
+                utils.check_config(table, REQUIRED_CSV_TABLE_SPEC_CONFIG_KEYS)
 
-    decrypt_configs = args.config.get('decryption_configs')
-    if decrypt_configs:
-        # validate decryption configs
-        utils.check_config(decrypt_configs, REQUIRED_DECRYPT_CONFIG_KEYS)
+        decrypt_configs = args.config.get('decryption_configs')
+        if decrypt_configs:
+            # validate decryption configs
+            utils.check_config(decrypt_configs, REQUIRED_DECRYPT_CONFIG_KEYS)
 
-    if args.discover:
-        do_discover(args.config)
-    elif args.catalog or args.properties:
-        do_sync(args.config, args.catalog, args.state)
+        if args.discover:
+            do_discover(args.config)
+        elif args.catalog or args.properties:
+            do_sync(args.config, args.catalog, args.state)
+    except SymonException as e:
+        error_info = {
+            'message': str(e),
+            'code': e.code,
+            'traceback': traceback.format_exc()
+        }
+
+        if e.details is not None:
+            error_info['details'] = e.details
+        raise
+    except BaseException as e:
+        error_info = {
+            'message': str(e),
+            'traceback': traceback.format_exc()
+        }
+        raise
+    finally:
+        if error_info is not None:
+            error_file_path = args.config.get('error_file_path', None)
+            if error_file_path is not None:
+                try:
+                    with open(error_file_path, 'w', encoding='utf-8') as fp:
+                        json.dump(error_info, fp)
+                except:
+                    pass
+            # log error info as well in case file is corrupted
+            error_info_json = json.dumps(error_info)
+            error_start_marker = args.config.get('error_start_marker', '[tap_error_start]')
+            error_end_marker = args.config.get('error_end_marker', '[tap_error_end]')
+            LOGGER.info(f'{error_start_marker}{error_info_json}{error_end_marker}')
 
 
 if __name__ == "__main__":
