@@ -57,6 +57,21 @@ def do_sync(config, catalog, state):
         LOGGER.info("\n\n%s", table.table)
         LOGGER.info('Done syncing.')
 
+# def get_error_info(e):
+#     exc_type, exc_value, exc_traceback = sys.exc_info()
+
+#     msg = str(e)
+#     if exc_type is not None:
+#         error_type = exc_type.__qualname__
+#         error_module = exc_type.__module__
+
+#         if error_module not in ("__main__", "builtins"):
+#             msg = f'{error_module}.{error_type}: {msg}'
+
+#     tb = "".join(traceback.format_tb(exc_traceback))
+    
+#     return msg, tb
+
 
 @singer.utils.handle_top_exception(LOGGER)
 def main():
@@ -81,20 +96,36 @@ def main():
         elif args.catalog or args.properties:
             do_sync(args.config, args.catalog, args.state)
     except SymonException as e:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
         error_info = {
-            'message': str(e),
+            'message': traceback.format_exception_only(exc_type, exc_value)[-1],
             'code': e.code,
-            'traceback': traceback.format_exc()
+            'traceback': "".join(traceback.format_tb(exc_traceback))
         }
 
         if e.details is not None:
             error_info['details'] = e.details
         raise
     except BaseException as e:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
         error_info = {
-            'message': str(e),
-            'traceback': traceback.format_exc()
+            'message': traceback.format_exception_only(exc_type, exc_value)[-1],
+            'traceback': "".join(traceback.format_tb(exc_traceback))
         }
+        # print('---1---')
+        # exc_type, exc_value, exc_traceback = sys.exc_info()
+        # traceback.print_tb(exc_traceback)
+        # print('---2---')
+        # traceback.print_exception(*sys.exc_info())
+        # print('---format_exc---')
+        # print(traceback.format_exc())
+        # print('---format_exc done---')
+        # print('---format_exception_only---')
+        # exc_type, exc_value, exc_traceback = sys.exc_info()
+        # print(traceback.format_exception_only(exc_type, exc_value)[-1])
+        # print(traceback.format_exception_only(exc_type, exc_value)[-1] == msg)
+        # print(msg)
+        # print('---format_exception_only done---')
         raise
     finally:
         if error_info is not None:
