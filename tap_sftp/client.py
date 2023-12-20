@@ -148,6 +148,7 @@ class SFTPConnection():
             LOGGER.warning(
                 'Found no files on specified SFTP server at "%s"', prefix)
 
+        # for Symon import, we only import one file. search_pattern is escaped filename, force to match one file.
         matching_files = self.get_files_matching_pattern(
             files, f'^{search_pattern}$')
 
