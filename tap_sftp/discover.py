@@ -23,11 +23,12 @@ def discover_streams(config):
         has_header = table_spec.get('has_header')
         files = conn.get_files(table_spec.get('search_prefix'), table_spec.get('search_pattern'),
                                search_subdirectories=False)
-        max_file_size = config.get("max_file_size", defaults.MAX_FILE_SIZE)
+        max_file_size = config.get("max_file_size", defaults.MAX_FILE_SIZE_KB if decryption_configs is None else defaults.MAX_ENCRYPTED_FILE_SIZE_KB)
+        print(f'max_file_size: {max_file_size}')
         if not files:
             return {}
         if any(f['file_size'] / 1024 > max_file_size for f in files):
-            raise SymonException(f'Oops! The file size exceeds the current limit of {max_file_size / 1024 / 1024}GB.','sftp.MaxFilesizeError')
+            raise SymonException(f'Oops! The file size exceeds the current limit of {max_file_size / 1024 / 1024} GB.','sftp.MaxFilesizeError')
         else:
             sorted_files = sorted(
                 files, key=lambda f: f['last_modified'], reverse=True)

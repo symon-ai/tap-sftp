@@ -168,7 +168,7 @@ def test_discover_streams_with_large_file(mock_connection, mock_sftp_client):
         "tables": table_specs
     }
     files = [{"id": 1, "filepath": "/test_tmp/bin/test1.xlsx", "last_modified": date_modified_since_oldest,
-              "file_size": defaults.MAX_FILE_SIZE*1024+1}]
+              "file_size": defaults.MAX_FILE_SIZE_KB*1024+1}]
     mock_connection.return_value = mock_sftp_client
     mock_sftp_client.get_files.return_value = files
     with pytest.raises(BaseException):

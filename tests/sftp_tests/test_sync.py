@@ -209,7 +209,7 @@ def test_sync_stream_for_large_files(mock_connection, mock_sftp_client, mock_syn
         "decryption_configs": decryption_configs
     }
     files = [{"id": 1, "filepath": "/test_tmp/bin/test1.csv", "last_modified": date_modified_since_oldest,
-              "file_size": defaults.MAX_FILE_SIZE * 1024 + 1}]
+              "file_size": defaults.MAX_FILE_SIZE_KB * 1024 + 1}]
     state = {}
     catalog = Catalog.from_dict({"streams": streams_csv})
     collect_sync_stats = False
