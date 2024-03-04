@@ -59,9 +59,9 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
             sftp_client.close()
             return 0
 
-        max_file_size = config.get("max_file_size", defaults.MAX_FILE_SIZE)
+        max_file_size = config.get("max_file_size", defaults.MAX_FILE_SIZE_KB if config.get('decryption_configs') is None else defaults.MAX_ENCRYPTED_FILE_SIZE_KB)
         if any(f['file_size'] / 1024 > max_file_size for f in files):
-            raise SymonException(f'Oops! The file size exceeds the current limit of {max_file_size / 1024 / 1024}GB.','sftp.MaxFilesizeError')
+            raise SymonException(f'Oops! The file size exceeds the current limit of {max_file_size / 1024 / 1024} GB.','sftp.MaxFilesizeError')
         has_header = table_spec.get('has_header')
         for file in files:
             sync_file(config, file, streams, table_spec, state,
