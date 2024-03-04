@@ -214,6 +214,7 @@ class SFTPConnection():
                         f'tap_sftp.decryption_error: Decryption of file failed: {sftp_file_path}')
             else:
                 self.sftp.get(sftp_file_path, local_path)
+                LOGGER.info(f'File downloaded to: {local_path} with size: {os.path.getsize(local_path)} bytes.')
                 return open(local_path, 'rb')
 
     def get_file_handle_for_sample(self, f, decryption_configs=None, max_records=None):
