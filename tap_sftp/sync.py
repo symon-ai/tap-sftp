@@ -100,6 +100,9 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
             csv_client.escapechar = table_spec.get('escapechar', '\\')
             csv_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since,
                             columns_to_update=columns_to_update)
+            # for item in file_handle:
+            #     print(item)
+            LOGGER.info('Finished syncing file "%s".', file_path)
         elif file_type in ["excel"]:
             excel_client = ExcelClient(file_path, '', table_spec.get('key_properties', []), has_header,
                                        collect_stats=collect_sync_stats, log_sync_update=log_sync_update,

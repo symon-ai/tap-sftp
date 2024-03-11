@@ -54,10 +54,10 @@ class SFTPConnection():
             try:
                 LOGGER.info('Creating new connection to SFTP...')
                 self.transport = paramiko.Transport((self.host, self.port))
-                self.transport.use_compression(True)
-                self.transport.default_window_size = paramiko.common.MAX_WINDOW_SIZE
-                self.transport.packetizer.REKEY_BYTES = pow(2, 40)
-                self.transport.packetizer.REKEY_PACKETS = pow(2, 40)
+                # self.transport.use_compression(True)
+                # self.transport.default_window_size = paramiko.common.MAX_WINDOW_SIZE # 2147483647 #3 * 1024 * 1024 #paramiko.common.MAX_WINDOW_SIZE
+                # self.transport.packetizer.REKEY_BYTES = pow(2, 40)
+                # self.transport.packetizer.REKEY_PACKETS = pow(2, 40)
                 self.transport.connect(
                     username=self.username, password=self.password, hostkey=None, pkey=self.key)
                 self.__sftp = paramiko.SFTPClient.from_transport(
@@ -213,9 +213,15 @@ class SFTPConnection():
                     raise Exception(
                         f'tap_sftp.decryption_error: Decryption of file failed: {sftp_file_path}')
             else:
-                self.sftp.get(sftp_file_path, local_path)
-                LOGGER.info(f'File downloaded to: {local_path} with size: {os.path.getsize(local_path)} bytes.')
-                return open(local_path, 'rb')
+                # self.sftp.get(sftp_file_path, local_path)
+                # LOGGER.info(f'File downloaded to: {local_path} with size: {os.path.getsize(local_path)} bytes.')
+                # return open(local_path, 'rb')
+                sftp_file_handle = self.sftp.open(sftp_file_path, 'rb')
+                #sftp_file_handle.set_pipelined()
+                # Allow the transfer to fill up data in a background thread
+                sftp_file_handle.prefetch() # leads to large memory usage?
+                return sftp_file_handle
+    
 
     def get_file_handle_for_sample(self, f, decryption_configs=None, max_records=None):
         with tempfile.TemporaryDirectory() as tmp_dir_name:

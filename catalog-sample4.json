@@ -1,0 +1,131 @@
+{
+  "streams": [
+    {
+      "stream": "sample4-10MB.csv",
+      "tap_stream_id": "sample",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "Date": {
+            "type": ["null", "string"],
+            "format": "date-time"
+          },
+          "Text1": {
+            "type": ["null", "string"]
+          },
+          "Text2": {
+            "type": ["null", "string"]
+          },
+          "Text3": {
+            "type": ["null", "string"]
+          },
+          "Text4": {
+            "type": ["null", "string"]
+          },
+          "Text5": {
+            "type": ["null", "string"]
+          },
+          "Text6": {
+            "type": ["null", "string"]
+          },
+          "Text7": {
+            "type": ["null", "string"]
+          },
+          "Text8": {
+            "type": ["null", "string"]
+          },
+          "Number": {
+            "type": ["null", "number", "string"]
+          }
+        }
+      },
+      "metadata": [
+        {
+          "breadcrumb": [],
+          "metadata": {
+            "table-key-properties": [],
+            "forced-replication-method": "INCREMENTAL",
+            "inclusion": "available",
+            "src_file_type": "csv/text",
+            "compressed_file_name": "",
+            "selected": true,
+            "file_source": "/Data/PerformanceTest/sample4-10MB.csv"
+          }
+        },
+        {
+          "breadcrumb": ["properties", "Date"],
+          "metadata": {
+            "inclusion": "available",
+            "source_type": "string"
+          }
+        },
+        {
+          "breadcrumb": ["properties", "Text1"],
+          "metadata": {
+            "inclusion": "available",
+            "source_type": "string"
+          }
+        },
+        {
+          "breadcrumb": ["properties", "Text2"],
+          "metadata": {
+            "inclusion": "available",
+            "source_type": "string"
+          }
+        },
+        {
+          "breadcrumb": ["properties", "Text3"],
+          "metadata": {
+            "inclusion": "available",
+            "source_type": "string"
+          }
+        },
+        {
+          "breadcrumb": ["properties", "Text4"],
+          "metadata": {
+            "inclusion": "available",
+            "source_type": "string"
+          }
+        },
+        {
+          "breadcrumb": ["properties", "Text5"],
+          "metadata": {
+            "inclusion": "available",
+            "source_type": "string"
+          }
+        },
+        {
+          "breadcrumb": ["properties", "Text6"],
+          "metadata": {
+            "inclusion": "available",
+            "source_type": "string"
+          }
+        },
+        {
+          "breadcrumb": ["properties", "Text7"],
+          "metadata": {
+            "inclusion": "available",
+            "source_type": "string"
+          }
+        },
+        {
+          "breadcrumb": ["properties", "Text8"],
+          "metadata": {
+            "inclusion": "available",
+            "source_type": "string"
+          }
+        },
+        {
+          "breadcrumb": ["properties", "Number"],
+          "metadata": {
+            "inclusion": "available",
+            "source_type": "string"
+          }
+        }
+      ],
+      "column_date_format": {
+        "Date": "MM/DD/YYYY"
+      }
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import cProfile
 import json
 import sys
 import singer  # type: ignore
@@ -63,7 +64,9 @@ def do_sync(config, catalog, state):
 
 @singer.utils.handle_top_exception(LOGGER)
 def main():
-    try:
+    pr = cProfile.Profile()
+    pr.enable()
+    try:   
         # used for storing error info to write if error occurs
         error_info = None
         args = utils.parse_args(REQUIRED_CONFIG_KEYS)
@@ -120,7 +123,9 @@ def main():
                 # error occurred before args was parsed correctly, log the error
                 error_info_json = json.dumps(error_info)
                 LOGGER.info(f'{ERROR_START_MARKER}{error_info_json}{ERROR_END_MARKER}')
-
+    
+    pr.disable()
+    pr.dump_stats('tap_sftp_stats_csv_client_on_pre_process_on_s2.prof')
 
 if __name__ == "__main__":
     main()
