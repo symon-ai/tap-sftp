@@ -220,7 +220,7 @@ class SFTPConnection():
                 LOGGER.info(f'Using streaming mode: opening file handle to {sftp_file_path}')
                 sftp_file_handle = self.sftp.open(sftp_file_path, 'rb')
                 # Allow the transfer to fill up data in a background thread
-                sftp_file_handle.prefetch()
+                #sftp_file_handle.prefetch()
                 return sftp_file_handle
 
     def get_file_handle_for_sample(self, f, decryption_configs=None, max_records=None):
