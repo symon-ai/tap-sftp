@@ -213,8 +213,15 @@ class SFTPConnection():
                     raise Exception(
                         f'tap_sftp.decryption_error: Decryption of file failed: {sftp_file_path}')
             else:
-                self.sftp.get(sftp_file_path, local_path)
-                return open(local_path, 'rb')
+                # LOGGER.info(f'Using local download mode: Starting file download to: {local_path}')
+                # self.sftp.get(sftp_file_path, local_path)
+                # LOGGER.info(f'File downloaded to: {local_path} with size: {os.path.getsize(local_path)} bytes.')
+                # return open(local_path, 'rb')
+                LOGGER.info(f'Using streaming mode: opening file handle to {sftp_file_path}')
+                sftp_file_handle = self.sftp.open(sftp_file_path, 'rb')
+                # Allow the transfer to fill up data in a background thread
+                sftp_file_handle.prefetch()
+                return sftp_file_handle
 
     def get_file_handle_for_sample(self, f, decryption_configs=None, max_records=None):
         with tempfile.TemporaryDirectory() as tmp_dir_name:
