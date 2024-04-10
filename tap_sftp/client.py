@@ -150,7 +150,7 @@ class SFTPConnection():
 
         # for Symon import, we only import one file. search_pattern is escaped filename, force to match one file.
         matching_files = self.get_files_matching_pattern(
-            files, f'^{search_pattern}$')
+            files, f'^{search_pattern}.*$')
 
         if matching_files:
             LOGGER.info('Found %s files in "%s" matching "%s"',
