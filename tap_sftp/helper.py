@@ -68,3 +68,8 @@ def get_custom_metadata(mdata, attribute_name, default_value=''):
 def load_file_decrypted(src_file_object, key, gnupghome, passphrase, decrypt_path, max_records=None):
     capturer = GPGDataCapturer(decrypt_path, max_records)
     return decrypt.gpg_decrypt_to_file(src_file_object, key, gnupghome, passphrase, decrypt_path, capturer)
+
+def sort_files(files, dynamic):
+    if dynamic is not None and (dynamic == 'alphabeticalAscending' or dynamic == 'alphabeticalDescending'):
+        return sorted(files, key=lambda f: f['filepath'], reverse=(dynamic == 'alphabeticalDescending'))
+    return sorted(files, key=lambda f: f['last_modified'])

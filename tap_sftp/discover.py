@@ -29,7 +29,8 @@ def discover_streams(config):
         if any(f['file_size'] / 1024 > max_file_size for f in files):
             raise SymonException(f'Oops! The file size exceeds the current limit of {max_file_size / 1024 / 1024} GB.','sftp.MaxFilesizeError')
         else:
-            sorted_files = sorted(files, key=lambda f: f['last_modified'])
+            dynamic = config.get('dynamic')
+            sorted_files = helper.sort_files(files, dynamic)
             for f in sorted_files:
                 file_path = f['filepath']
                 file_type = table_spec.get('file_type').lower()

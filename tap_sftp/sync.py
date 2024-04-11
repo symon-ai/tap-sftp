@@ -54,7 +54,8 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
             modified_since,
             search_subdir
         )
-        sorted_files = sorted(files, key=lambda f: f['last_modified'])
+        dynamic = config.get('dynamic')
+        sorted_files = helper.sort_files(files, dynamic)
 
         if not sorted_files or len(sorted_files) == 0:
             sftp_client.close()
