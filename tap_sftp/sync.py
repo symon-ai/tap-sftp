@@ -8,7 +8,7 @@ from tap_sftp import helper
 from file_processors.clients.csv_client import CSVClient  # type: ignore
 from file_processors.clients.excel_client import ExcelClient  # type: ignore
 from file_processors.clients.fwf_client import FWFClient  # type: ignore
-from file_processors.utils.symon_exception import SymonException # type: ignore
+from file_processors.utils.symon_exception import SymonException  # type: ignore
 import re
 
 LOGGER = singer.get_logger()
@@ -59,9 +59,9 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
             sftp_client.close()
             return 0
 
-        max_file_size = config.get("max_file_size", defaults.MAX_FILE_SIZE_KB if config.get('decryption_configs') is None else defaults.MAX_ENCRYPTED_FILE_SIZE_KB)
-        if any(f['file_size'] / 1024 > max_file_size for f in files):
-            raise SymonException(f'Oops! The file size exceeds the current limit of {max_file_size / 1024 / 1024} GB.','sftp.MaxFilesizeError')
+        helper.validate_file_size(
+            config, config.get('decryption_configs'), table_spec, files)
+
         has_header = table_spec.get('has_header')
         for file in files:
             sync_file(config, file, streams, table_spec, state,
