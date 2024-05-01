@@ -34,9 +34,10 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
                 continue
             return 0
 
+        dynamic = config.get('dynamic')
         # regex match instead of direct equality as search_pattern could get escaped regex chars
         table_specs = [table_config for table_config in config.get('tables') if
-                       matches_key(table_config, key)]
+                       matches_key(table_config, key, dynamic)]
         if len(table_specs) == 0:
             LOGGER.info(
                 "No table configuration found for '%s', skipping stream", key)
@@ -48,6 +49,7 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
         table_spec = table_specs[0]
         modified_since = utils.strptime_to_utc(config.get('start_date'))
         search_subdir = config.get("search_subdirectories", True)
+
         files = sftp_client.get_files(
             table_spec.get("search_prefix"),
             table_spec.get("search_pattern"),
@@ -68,10 +70,17 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
                       modified_since, collect_sync_stats, has_header)
 
 
-def matches_key(table_config, key):
-    search_pattern = f"{re.escape(table_config.get('search_prefix'))}/{table_config.get('search_pattern')}"
-    matcher = re.compile(search_pattern)
-    return matcher.search(key) != None
+def matches_key(table_config, key, dynamic):
+    if dynamic is None:
+        search_pattern = f"{re.escape(table_config.get('search_prefix'))}/{table_config.get('search_pattern')}"
+        matcher = re.compile(search_pattern)
+        result = matcher.search(key) != None
+    else:
+        # file name is predetermined for dynamic import - we only check here to see if file still exist
+        search_pattern = f"{re.escape(table_config.get('search_prefix'))}/{table_config.get('table_name')}"
+        matcher = re.compile(search_pattern)
+        result = matcher.search(key) != None
+    return result
 
 
 def sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats, has_header):
