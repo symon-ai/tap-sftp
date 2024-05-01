@@ -73,11 +73,14 @@ def load_file_decrypted(src_file_object, key, gnupghome, passphrase, decrypt_pat
 
 
 def validate_file_size(config, decryption_configs, table_spec, files):
-    # if file is csv/txt and not encrypted, max file size does not apply
-    if (table_spec.get('file_type').lower() not in ["csv", "text"] or decryption_configs is not None):
-        max_file_size = config.get(
-            "max_file_size", defaults.MAX_FILE_SIZE_KB if decryption_configs is None else defaults.MAX_ENCRYPTED_FILE_SIZE_KB)
+    enable_import_file_copy = config.get('enable_import_file_copy', False)
 
-        if any(f['file_size'] / 1024 > max_file_size for f in files):
-            raise SymonException(
-                f'Oops! The file size exceeds the current limit of {max_file_size / 1024 / 1024} GB.', 'sftp.MaxFilesizeError')
+    if (enable_import_file_copy and table_spec.get('file_type').lower() in ["csv", "text"] and decryption_configs is None):
+        return
+
+    max_file_size = config.get(
+        "max_file_size", defaults.MAX_FILE_SIZE_KB if decryption_configs is None else defaults.MAX_ENCRYPTED_FILE_SIZE_KB)
+
+    if any(f['file_size'] / 1024 > max_file_size for f in files):
+        raise SymonException(
+            f'Oops! The file size exceeds the current limit of {max_file_size / 1024 / 1024} GB.', 'sftp.MaxFilesizeError')
