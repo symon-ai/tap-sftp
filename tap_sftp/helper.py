@@ -7,9 +7,9 @@ from zipfile import ZipFile
 from file_processors.utils.aws_secrets_manager import AWSSecretsManager  # type: ignore
 from file_processors.utils.aws_ssm import AWS_SSM  # type: ignore
 from paramiko.sftp_file import SFTPFile  # type: ignore
-from file_processors.utils import decrypt
-from file_processors.utils.capturer import GPGDataCapturer
-from file_processors.utils.symon_exception import SymonException
+from file_processors.utils import decrypt  # type: ignore
+from file_processors.utils.capturer import GPGDataCapturer  # type: ignore
+from file_processors.utils.symon_exception import SymonException  # type: ignore
 from tap_sftp import defaults  # type: ignore
 
 LOGGER = singer.get_logger()
