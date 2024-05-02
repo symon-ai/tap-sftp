@@ -76,9 +76,9 @@ def matches_key(table_config, key, dynamic):
         matcher = re.compile(search_pattern)
         result = matcher.search(key) != None
     else:
-        # file name is predetermined for dynamic import - we only check here to see if file still exist
+        # file name is predetermined for dynamic import - we only check here to see if file still exist at this point
         search_pattern = f"{re.escape(table_config.get('search_prefix'))}/{table_config.get('table_name')}"
-        matcher = re.compile(search_pattern)
+        matcher = re.compile(search_pattern, re.IGNORECASE)
         result = matcher.search(key) != None
     return result
 
