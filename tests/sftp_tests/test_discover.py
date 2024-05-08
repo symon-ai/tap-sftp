@@ -17,17 +17,17 @@ date_modified_since_recent = datetime.fromisoformat('2022-01-01 00:00:00')
 def test_discover_streams_encrypted_csv_file(mock_build_streams, mock_update_decryption_key, mock_connection, mock_sftp_client):
     tap_stream_id = "test1"
     table_specs = [{
-            "table_name": tap_stream_id,
-            "file_type": "csv",
-            "search_prefix": "/test_tmp/bin",
-            "search_pattern": "test1.csv",
-            "key_properties": []
-        }]
+        "table_name": tap_stream_id,
+        "file_type": "csv",
+        "search_prefix": "/test_tmp/bin",
+        "search_pattern": "test1.csv",
+        "key_properties": []
+    }]
     decryption_configs = {
-            "key_name": "key",
-            "gnupghome": "home",
-            "passphrase": "passphrase"
-        }
+        "key_name": "key",
+        "gnupghome": "home",
+        "passphrase": "passphrase"
+    }
     config = {
         "host": "host",
         "port": 22,
@@ -39,7 +39,8 @@ def test_discover_streams_encrypted_csv_file(mock_build_streams, mock_update_dec
         "tables": table_specs,
         "decryption_configs": decryption_configs
     }
-    streams = [{'tap_stream_id': tap_stream_id, 'schema': {"type": "object", "properties": {}}}]
+    streams = [{'tap_stream_id': tap_stream_id,
+                'schema': {"type": "object", "properties": {}}}]
     files = [{"id": 1, "filepath": "/test_tmp/bin/test1.csv", "last_modified": date_modified_since_oldest,
               "file_size": 12404}]
     sample_size = defaults.SAMPLE_SIZE
@@ -49,7 +50,8 @@ def test_discover_streams_encrypted_csv_file(mock_build_streams, mock_update_dec
     mock_build_streams.return_value = streams
     result_streams = discover_streams(config)
     mock_update_decryption_key.assert_called_with(decryption_configs)
-    mock_build_streams.assert_called_with(mock_open, sample_size, tap_stream_id=tap_stream_id)
+    mock_build_streams.assert_called_with(
+        mock_open, sample_size, tap_stream_id=tap_stream_id)
     assert result_streams == streams
 
 
@@ -60,19 +62,19 @@ def test_discover_streams_encrypted_csv_file(mock_build_streams, mock_update_dec
 def test_discover_streams_encrypted_excel_file(mock_build_streams, mock_update_decryption_key, mock_connection, mock_sftp_client):
     worksheets = ["sheet1"]
     table_specs = [{
-            "table_name": "test1",
-            "file_type": "excel",
-            "search_prefix": "/test_tmp/bin",
-            "search_pattern": "test1.xlsx",
-            "key_properties": [],
-            "has_header": True,
-            "worksheets": worksheets
-        }]
+        "table_name": "test1",
+        "file_type": "excel",
+        "search_prefix": "/test_tmp/bin",
+        "search_pattern": "test1.xlsx",
+        "key_properties": [],
+        "has_header": True,
+        "worksheets": worksheets
+    }]
     decryption_configs = {
-            "key_name": "key",
-            "gnupghome": "home",
-            "passphrase": "passphrase"
-        }
+        "key_name": "key",
+        "gnupghome": "home",
+        "passphrase": "passphrase"
+    }
     config = {
         "host": "host",
         "port": 22,
@@ -84,7 +86,8 @@ def test_discover_streams_encrypted_excel_file(mock_build_streams, mock_update_d
         "tables": table_specs,
         "decryption_configs": decryption_configs
     }
-    streams = [{'tap_stream_id': 'test1', 'schema': {"type": "object", "properties": {}}}]
+    streams = [{'tap_stream_id': 'test1', 'schema': {
+        "type": "object", "properties": {}}}]
     files = [{"id": 1, "filepath": "/test_tmp/bin/test1.xlsx", "last_modified": date_modified_since_oldest,
               "file_size": 12404}]
     sample_size = defaults.SAMPLE_SIZE
@@ -94,7 +97,8 @@ def test_discover_streams_encrypted_excel_file(mock_build_streams, mock_update_d
     mock_build_streams.return_value = streams
     result_streams = discover_streams(config)
     mock_update_decryption_key.assert_called_with(decryption_configs)
-    mock_build_streams.assert_called_with(mock_open, sample_size, worksheets=worksheets)
+    mock_build_streams.assert_called_with(
+        mock_open, sample_size, worksheets=worksheets)
     assert result_streams == streams
 
 
@@ -102,11 +106,11 @@ def test_discover_streams_encrypted_excel_file(mock_build_streams, mock_update_d
 @patch('tap_sftp.client.connection')
 def test_discover_streams_unsupported_file(mock_connection, mock_sftp_client):
     table_specs = [{
-            "table_name": "test1",
-            "file_type": "unknown",
-            "search_prefix": "/test_tmp/bin",
-            "search_pattern": "test1",
-        }]
+        "table_name": "test1",
+        "file_type": "unknown",
+        "search_prefix": "/test_tmp/bin",
+        "search_pattern": "test1",
+    }]
     config = {
         "host": "host",
         "port": 22,
@@ -128,11 +132,11 @@ def test_discover_streams_unsupported_file(mock_connection, mock_sftp_client):
 @patch('tap_sftp.client.connection')
 def test_discover_streams_with_no_matching_file_found(mock_connection, mock_sftp_client):
     table_specs = [{
-            "table_name": "test1",
-            "file_type": "unknown",
-            "search_prefix": "/test_tmp/bin",
-            "search_pattern": "test1",
-        }]
+        "table_name": "test1",
+        "file_type": "unknown",
+        "search_prefix": "/test_tmp/bin",
+        "search_pattern": "test1",
+    }]
     config = {
         "host": "host",
         "port": 22,
@@ -146,18 +150,18 @@ def test_discover_streams_with_no_matching_file_found(mock_connection, mock_sftp
     mock_connection.return_value = mock_sftp_client
     mock_sftp_client.get_files.return_value = files
     result_streams = discover_streams(config)
-    assert result_streams == {}
+    assert result_streams == []
 
 
 @patch('tap_sftp.client.SFTPConnection')
 @patch('tap_sftp.client.connection')
 def test_discover_streams_with_large_file(mock_connection, mock_sftp_client):
     table_specs = [{
-            "table_name": "test1.xlsx",
-            "file_type": "excel",
-            "search_prefix": "/test_tmp/bin",
-            "search_pattern": "test1",
-        }]
+        "table_name": "test1.xlsx",
+        "file_type": "excel",
+        "search_prefix": "/test_tmp/bin",
+        "search_pattern": "test1",
+    }]
     config = {
         "host": "host",
         "port": 22,
