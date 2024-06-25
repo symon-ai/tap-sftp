@@ -47,6 +47,8 @@ def sample_file(src_file_object, src_file_name, out_dir, max_records):
         with open(local_path, "wb") as out_file:
             record_number = 0
             for line in compressed_iterators:
+                if(b"\r\n" not in line):
+                    line = line.replace(b"\r", b"\n")
                 out_file.write(line)
                 record_number += 1
                 if record_number > max_records:
