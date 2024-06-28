@@ -1,9 +1,12 @@
 import singer  # type: ignore
 from tap_sftp import client
 from tap_sftp import defaults, helper
+# from tap_sftp.custom_file_iterator import CustomFileIterator
+
 from file_processors.clients.csv_client import CSVClient  # type: ignore
 from file_processors.clients.excel_client import ExcelClient  # type: ignore
 from file_processors.clients.fwf_client import FWFClient  # type: ignore
+from file_processors.utils.custom_file_iterator import CustomFileIterator # type: ignore
 
 LOGGER = singer.get_logger()
 
@@ -38,6 +41,7 @@ def discover_streams(config):
                 # update sample size for get_file_handle_for_sample to write SAMPLE_SIZE rows excluding skipped rows
                 sample_size = defaults.SAMPLE_SIZE + skip_header_row + skip_footer_row
                 with conn.get_file_handle_for_sample(f, decryption_configs, sample_size) as file_handle:
+                    file_handle = CustomFileIterator(file_handle)
                     csv_client = CSVClient(file_path, '',
                                            table_spec.get('key_properties', []), has_header, skip_header_row=skip_header_row, skip_footer_row=skip_footer_row)
                     csv_client.delimiter = table_spec.get('delimiter', ',')

@@ -3,11 +3,13 @@ from singer import utils, metadata
 import itertools
 from tap_sftp import client
 from tap_sftp import defaults
+# from tap_sftp.custom_file_iterator import CustomFileIterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tap_sftp import helper
 from file_processors.clients.csv_client import CSVClient  # type: ignore
 from file_processors.clients.excel_client import ExcelClient  # type: ignore
 from file_processors.clients.fwf_client import FWFClient  # type: ignore
+from file_processors.utils.custom_file_iterator import CustomFileIterator # type: ignore
 from file_processors.utils.symon_exception import SymonException  # type: ignore
 import re
 
@@ -60,10 +62,8 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
         if not files:
             sftp_client.close()
             return 0
-
         helper.validate_file_size(
             config, config.get('decryption_configs'), table_spec, files)
-
         has_header = table_spec.get('has_header')
         for file in files:
             sync_file(config, file, streams, table_spec, state,
@@ -97,6 +97,9 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
     if decryption_configs:
         helper.update_decryption_key(decryption_configs)
     with sftp_client.get_file_handle(file, decryption_configs) as file_handle:
+        # iterator = iter(lambda: file_handle.read().split(b"\r"), b'')
+        file_handle = CustomFileIterator(file_handle)
+        # how do I know when its \r or \r\n
         if file_type in ["csv", "text"]:
             skip_header_row = table_spec.get('skip_header_row', 0)
             skip_footer_row = table_spec.get('skip_footer_row', 0)
