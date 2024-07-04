@@ -1,7 +1,6 @@
 import singer  # type: ignore
 from tap_sftp import client
 from tap_sftp import defaults, helper
-# from tap_sftp.custom_file_iterator import CustomFileIterator
 
 from file_processors.clients.csv_client import CSVClient  # type: ignore
 from file_processors.clients.excel_client import ExcelClient  # type: ignore
@@ -41,14 +40,17 @@ def discover_streams(config):
                 # update sample size for get_file_handle_for_sample to write SAMPLE_SIZE rows excluding skipped rows
                 sample_size = defaults.SAMPLE_SIZE + skip_header_row + skip_footer_row
                 with conn.get_file_handle_for_sample(f, decryption_configs, sample_size) as file_handle:
-                    file_handle = CustomFileIterator(file_handle)
+                    wrapped_file_handle = CustomFileIterator(file_handle)
+                    if(wrapped_file_handle._return_end_char() != "\r"):
+                        wrapped_file_handle = file_handle
+
                     csv_client = CSVClient(file_path, '',
                                            table_spec.get('key_properties', []), has_header, skip_header_row=skip_header_row, skip_footer_row=skip_footer_row)
                     csv_client.delimiter = table_spec.get('delimiter', ',')
                     csv_client.quotechar = table_spec.get('quotechar', '"')
                     csv_client.encoding = table_spec.get('encoding')
                     streams += csv_client.build_streams(
-                        file_handle, defaults.SAMPLE_SIZE, tap_stream_id=table_name)
+                        wrapped_file_handle, defaults.SAMPLE_SIZE, tap_stream_id=table_name)
             elif file_type in ["excel"]:
                 with conn.get_file_handle(f, decryption_configs) as file_handle:
                     excel_client = ExcelClient(file_path, '', table_spec.get(

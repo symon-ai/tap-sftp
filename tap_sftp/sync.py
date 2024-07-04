@@ -3,7 +3,6 @@ from singer import utils, metadata
 import itertools
 from tap_sftp import client
 from tap_sftp import defaults
-# from tap_sftp.custom_file_iterator import CustomFileIterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tap_sftp import helper
 from file_processors.clients.csv_client import CSVClient  # type: ignore
@@ -97,9 +96,10 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
     if decryption_configs:
         helper.update_decryption_key(decryption_configs)
     with sftp_client.get_file_handle(file, decryption_configs) as file_handle:
-        # iterator = iter(lambda: file_handle.read().split(b"\r"), b'')
-        file_handle = CustomFileIterator(file_handle)
-        # how do I know when its \r or \r\n
+        wrapped_file_handle = CustomFileIterator(file_handle)
+        if(wrapped_file_handle._return_end_char() != "\r"):
+            wrapped_file_handle = file_handle
+
         if file_type in ["csv", "text"]:
             skip_header_row = table_spec.get('skip_header_row', 0)
             skip_footer_row = table_spec.get('skip_footer_row', 0)
@@ -110,7 +110,7 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
             csv_client.quotechar = table_spec.get('quotechar') or "\""
             csv_client.encoding = table_spec.get('encoding')
             csv_client.escapechar = table_spec.get('escapechar', '\\')
-            csv_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since,
+            csv_client.sync(wrapped_file_handle, [stream.to_dict() for stream in streams], state, modified_since,
                             columns_to_update=columns_to_update)
         elif file_type in ["excel"]:
             excel_client = ExcelClient(file_path, '', table_spec.get('key_properties', []), has_header,
