@@ -1,7 +1,6 @@
 import singer  # type: ignore
 from tap_sftp import client
 from tap_sftp import defaults, helper
-
 from file_processors.clients.csv_client import CSVClient  # type: ignore
 from file_processors.clients.excel_client import ExcelClient  # type: ignore
 from file_processors.clients.fwf_client import FWFClient  # type: ignore
