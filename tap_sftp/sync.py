@@ -98,6 +98,7 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
     with sftp_client.get_file_handle(file, decryption_configs) as file_handle:
         wrapped_file_handle = CustomFileIterator(file_handle)
         if(wrapped_file_handle._return_end_char() != "\r"):
+            file_handle.seek(0)
             wrapped_file_handle = file_handle
 
         if file_type in ["csv", "text"]:

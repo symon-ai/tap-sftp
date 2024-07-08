@@ -41,6 +41,7 @@ def discover_streams(config):
                 with conn.get_file_handle_for_sample(f, decryption_configs, sample_size) as file_handle:
                     wrapped_file_handle = CustomFileIterator(file_handle)
                     if(wrapped_file_handle._return_end_char() != "\r"):
+                        file_handle.seek(0)
                         wrapped_file_handle = file_handle
 
                     csv_client = CSVClient(file_path, '',
