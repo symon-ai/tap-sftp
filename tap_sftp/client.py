@@ -260,7 +260,6 @@ class SFTPConnection():
                     if file_type in ["csv", "text"]:
                         if not encoding:
                             enc = find_encoding.find_encoding_v2(sample_file)
-                        print(enc)
                         return open(sample_file, 'r', encoding=enc, newline="", errors="replace")
                     else:
                         return open(sample_file, 'rb')
