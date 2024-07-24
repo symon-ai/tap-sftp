@@ -769,7 +769,7 @@ devel = ["colorama", "json-spec", "jsonschema", "pylint", "pytest", "pytest-benc
 
 [[package]]
 name = "file-processors"
-version = "1.3.0"
+version = "1.4.0"
 description = "File processors for singer tap and targets."
 optional = false
 python-versions = "^3.7.1"
@@ -798,8 +798,8 @@ xlrd = "2.0.1"
 [package.source]
 type = "git"
 url = "ssh://git@github.com/symon-ai/file-processors.git"
-reference = "WP-21405_1"
-resolved_reference = "36e4eb81282df96391a3257f66a9ad979ff5ea2f"
+reference = "v1.4.0"
+resolved_reference = "e6fbb40a8c3357274a63eb708db84f1c20c5c0b7"
 
 [[package]]
 name = "filelock"
@@ -2516,4 +2516,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.1"
-content-hash = "18496ef8aa9ab3b0df7143ed2f8bded0680f340fcd1fd799a6400af3a0ca50a7"
+content-hash = "c676bacf6c39964b3d3c3998eb2a822d01dd53e52d3d8db517dfe376392f4433"
