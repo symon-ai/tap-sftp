@@ -176,6 +176,7 @@ class SFTPConnection():
 
     def get_file_handle(self, f, file_type, encoding, decryption_configs=None):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and returns a handle to the file. """
+        enc = encoding
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             sftp_file_path = f["filepath"]
             local_path = f'{tmp_dir_name}/{os.path.basename(sftp_file_path)}'
@@ -209,7 +210,6 @@ class SFTPConnection():
                                                                   f'{tmp_dir_name}/{original_file_name}')
                 try:
                     if file_type in ["csv", "text"]:
-                        enc = encoding
                         if not encoding:
                             enc = find_encoding.find_encoding_v2(decrypt_path)
                         return open(decrypt_path, 'r', encoding=enc, newline="", errors="replace")
@@ -221,7 +221,6 @@ class SFTPConnection():
             else:
                 self.sftp.get(sftp_file_path, local_path)
                 if file_type in ["csv", "text"]:
-                    enc = encoding
                     if not encoding:
                         enc = find_encoding.find_encoding_v2(local_path)
                     return open(local_path, 'r', encoding=enc, newline="", errors="replace")
@@ -229,6 +228,7 @@ class SFTPConnection():
                     return open(local_path, 'rb')
 
     def get_file_handle_for_sample(self, f, file_type, encoding, decryption_configs=None, max_records=None):
+        enc = encoding
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             sftp_file_path = f["filepath"]
             sftp_file_name = os.path.basename(sftp_file_path)
@@ -246,7 +246,6 @@ class SFTPConnection():
                                                              max_records)
                     try:
                         if file_type in ["csv", "text"]:
-                            enc = encoding
                             if not encoding:
                                 enc = find_encoding.find_encoding_v2(sample_file)
                             return open(sample_file, 'r', encoding=enc, newline="",errors="replace")
@@ -259,10 +258,10 @@ class SFTPConnection():
                     sample_file = helper.sample_file(
                         sftp_file_object, sftp_file_name, tmp_dir_name, max_records)
                     if file_type in ["csv", "text"]:
-                        enc = encoding
                         if not encoding:
                             enc = find_encoding.find_encoding_v2(sample_file)
-                        return open(sample_file, 'r', encoding=find_encoding.find_encoding_v2(sample_file), newline="", errors="replace")
+                        print(enc)
+                        return open(sample_file, 'r', encoding=enc, newline="", errors="replace")
                     else:
                         return open(sample_file, 'rb')
 
