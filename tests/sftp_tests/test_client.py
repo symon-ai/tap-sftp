@@ -136,7 +136,7 @@ def test_get_file_handle_for_encrypted_file_with_remote_decryption_config(mock_t
     }
     sftp_client.sftp.open.return_value.__enter__.return_value = mock_sftp_file
     mock_load_file_decrypted.return_value = decrypt_path
-    with sftp_client.get_file_handle(file, decryption_config) as file_handle:
+    with sftp_client.get_file_handle(file, "csv", None, decryption_config) as file_handle:
         mock_load_file_decrypted.assert_called_with(mock_sftp_file, decryption_config.get("key"),
                                                     decryption_config.get("gnupghome"),
                                                     decryption_config.get("passphrase"), decrypt_path)
@@ -164,7 +164,7 @@ def test_get_file_handle_for_unencrypted_file(mock_tempfile, mock_sftp_file, fil
     decryption_config = None
     sftp_client.sftp.open.return_value.__enter__.return_value = mock_sftp_file
     mock_open().return_value = file_handle
-    result_file_handle = sftp_client.get_file_handle(file, decryption_config)
+    result_file_handle = sftp_client.get_file_handle(file, "", None, decryption_config)
     sftp_client.sftp.get.assert_called_with(sftp_path, local_path)
     assert result_file_handle.name == local_path
 
@@ -199,7 +199,7 @@ def test_get_file_handle_for_encrypted_file_with_local_decryption_config(mock_te
 
     mock_decrypt_to_file.return_value = local_path
     mock_file_open.side_effect = lambda p, b, encoding=None: file_handle_unscoped if p == encrypt_path else file_handle_second_unscoped
-    returned_file_handle = sftp_client.get_file_handle(file, decryption_config)
+    returned_file_handle = sftp_client.get_file_handle(file, "xlsx", None, decryption_config)
     mock_decrypt_to_file.assert_called_with(file_handle_unscoped, decryption_config.get("key"),
                                             decryption_config.get("gnupghome"),
                                             decryption_config.get("passphrase"), local_path)
@@ -225,7 +225,7 @@ def test_get_file_handle_with_invalid_remote_file(mock_tempfile, sftp_client):
     }
 
     with pytest.raises(Exception):
-        sftp_client.get_file_handle(file, decryption_config)
+        sftp_client.get_file_handle(file, "csv", None, decryption_config)
 
 
 @pytest.mark.parametrize("file_handle", ["../data/fake_file.txt"], indirect=True)
@@ -258,7 +258,7 @@ def test_get_file_handle_for_sample_for_encrypted_file(mock_tempfile, mock_sftp_
     sftp_client.sftp.open.return_value.__enter__.return_value = mock_sftp_file
     mock_load_file_decrypted.return_value = decrypt_path
     mock_file_open.return_value = file_handle
-    returned_file_handle = sftp_client.get_file_handle_for_sample(file, decryption_config, max_records)
+    returned_file_handle = sftp_client.get_file_handle_for_sample(file, "text", None, decryption_config, max_records)
     mock_load_file_decrypted.assert_called_with(mock_sftp_file, decryption_config.get("key"),
                                                 decryption_config.get("gnupghome"),
                                                 decryption_config.get("passphrase"), decrypt_path, max_records)
@@ -289,7 +289,7 @@ def test_get_sampled_file_handle_for_unencrypted_file(mock_tempfile, mock_sftp_f
     sftp_client.sftp.open.return_value.__enter__.return_value = mock_sftp_file
     mock_sample_file.return_value = local_path
     mock_file_open.return_value = file_handle
-    returned_file_handle = sftp_client.get_file_handle_for_sample(file, decryption_config, max_records)
+    returned_file_handle = sftp_client.get_file_handle_for_sample(file, "text", None, decryption_config, max_records)
     mock_sample_file.assert_called_with(mock_sftp_file, file_name, tmp_dir_name, max_records)
     assert returned_file_handle.name == local_path
 
@@ -313,7 +313,7 @@ def test_get_sampled_file_handle_for_invalid_remote_file(mock_tempfile, sftp_cli
     }
 
     with pytest.raises(Exception):
-        sftp_client.get_file_handle_for_sample(file, decryption_config)
+        sftp_client.get_file_handle_for_sample(file, "", None, decryption_config)
 
 
 def test_get_files_matching_pattern(sftp_client):

@@ -96,7 +96,8 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
 
     if decryption_configs:
         helper.update_decryption_key(decryption_configs)
-    with sftp_client.get_file_handle(file, decryption_configs) as file_handle:
+
+    with sftp_client.get_file_handle(file, file_type, table_spec.get('encoding'), decryption_configs) as file_handle:
         if file_type in ["csv", "text"]:
             skip_header_row = table_spec.get('skip_header_row', 0)
             skip_footer_row = table_spec.get('skip_footer_row', 0)
