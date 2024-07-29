@@ -6,7 +6,7 @@ authors = ["Stitch"]
 classifiers = ["Programming Language :: Python :: 3 :: Only"]
 
 [tool.poetry.dependencies]
-python = "~3.8"
+python = "^3.8"
 pipelinewise-singer-python = "2.0.1"
 chardet = "4.0.0"
 paramiko = "3.4.0"

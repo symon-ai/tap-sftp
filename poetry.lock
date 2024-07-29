@@ -1290,6 +1290,7 @@ numpy = [
     {version = ">=1.17.3", markers = "(platform_machine != \"aarch64\" and platform_machine != \"arm64\") and python_version < \"3.10\""},
     {version = ">=1.19.2", markers = "platform_machine == \"aarch64\" and python_version < \"3.10\""},
     {version = ">=1.20.0", markers = "platform_machine == \"arm64\" and python_version < \"3.10\""},
+    {version = ">=1.21.0", markers = "python_version >= \"3.10\""},
 ]
 python-dateutil = ">=2.7.3"
 pytz = ">=2017.3"
@@ -2002,5 +2003,5 @@ multidict = ">=4.0"
 
 [metadata]
 lock-version = "2.0"
-python-versions = "~3.8"
-content-hash = "43058a8c4545dad93ba8b890d626bd882d221409f327c723c16050600d411a61"
+python-versions = "^3.8"
+content-hash = "6ad7b050b54ee86a4264e7c15e3ce38ffdd48146df9926cef2e2a42001629f18"
