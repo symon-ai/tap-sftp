@@ -798,8 +798,8 @@ xlrd = "2.0.1"
 [package.source]
 type = "git"
 url = "ssh://git@github.com/symon-ai/file-processors.git"
-reference = "v1.4.0"
-resolved_reference = "e6fbb40a8c3357274a63eb708db84f1c20c5c0b7"
+reference = "WP-22076"
+resolved_reference = "46454ebbe3641eb25398979c43092fb66bcf16a5"
 
 [[package]]
 name = "filelock"
@@ -2516,4 +2516,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.1"
-content-hash = "c676bacf6c39964b3d3c3998eb2a822d01dd53e52d3d8db517dfe376392f4433"
+content-hash = "1318e418c5d50316e2d38e60034d0311229aadd7b9fe0074db6e140a2e64f14f"
