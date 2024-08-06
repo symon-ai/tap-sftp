@@ -209,7 +209,7 @@ class SFTPConnection():
                                                                       'passphrase'),
                                                                   f'{tmp_dir_name}/{original_file_name}')
                 try:
-                    if file_type in ["csv", "text"]:
+                    if file_type in ["csv", "text", "fwf"]:
                         if not encoding:
                             enc = find_encoding.find_encoding_v2(decrypt_path)
                         return open(decrypt_path, 'r', encoding=enc, newline="", errors="replace")
@@ -220,7 +220,7 @@ class SFTPConnection():
                         f'tap_sftp.decryption_error: Decryption of file failed: {sftp_file_path}')
             else:
                 self.sftp.get(sftp_file_path, local_path)
-                if file_type in ["csv", "text"]:
+                if file_type in ["csv", "text", "fwf"]:
                     if not encoding:
                         enc = find_encoding.find_encoding_v2(local_path)
                     return open(local_path, 'r', encoding=enc, newline="", errors="replace")
@@ -245,7 +245,7 @@ class SFTPConnection():
                                                              f'{tmp_dir_name}/{original_file_name}',
                                                              max_records)
                     try:
-                        if file_type in ["csv", "text"]:
+                        if file_type in ["csv", "text", "fwf"]:
                             if not encoding:
                                 enc = find_encoding.find_encoding_v2(sample_file)
                             return open(sample_file, 'r', encoding=enc, newline="",errors="replace")
@@ -257,7 +257,7 @@ class SFTPConnection():
                 else:
                     sample_file = helper.sample_file(
                         sftp_file_object, sftp_file_name, tmp_dir_name, max_records)
-                    if file_type in ["csv", "text"]:
+                    if file_type in ["csv", "text", "fwf"]:
                         if not encoding:
                             enc = find_encoding.find_encoding_v2(sample_file)
                         return open(sample_file, 'r', encoding=enc, newline="", errors="replace")

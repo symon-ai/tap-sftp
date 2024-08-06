@@ -54,9 +54,10 @@ def discover_streams(config):
             elif file_type in ["fwf"]:
                 table_name = table_spec.get('table_name')
                 with conn.get_file_handle_for_sample(f, file_type, table_spec.get('encoding'), None, defaults.SAMPLE_SIZE) as file_handle:
-                    skip_rows = table_spec.get('skip_rows', 0)
+                    skip_header_row = table_spec.get('skip_header_row', 0)
+                    skip_footer_row = table_spec.get('skip_footer_row', 0)
                     fwf_client = FWFClient(file_path, '', table_spec.get(
-                        'key_properties', []), has_header, skip_rows=skip_rows)
+                'key_properties', []), has_header, skip_header_row=skip_header_row, skip_footer_row=skip_footer_row)
                     fwf_client.delimiter = table_spec.get('delimiter', ' ')
                     fwf_client.encoding = table_spec.get('encoding')
                     streams += fwf_client.build_streams(
