@@ -178,11 +178,12 @@ class SFTPConnection():
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and returns a handle to the file. """
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             sftp_file_path = f["filepath"]
+            sftp_file_name = os.path.basename(sftp_file_path)
+
             local_path = f'{tmp_dir_name}/{os.path.basename(sftp_file_path)}'
             if decryption_configs:
                 decrypt_remote = decryption_configs.get("decrypt_remote", True)
                 LOGGER.info(f'Decrypting file: {sftp_file_path}')
-                sftp_file_name = os.path.basename(sftp_file_path)
                 original_file_name = os.path.splitext(sftp_file_name)[0]
 
                 if not decrypt_remote:
@@ -208,21 +209,25 @@ class SFTPConnection():
                                                                       'passphrase'),
                                                                   f'{tmp_dir_name}/{original_file_name}')
                 try:
-                    if file_type in ["csv", "text"]:
-                        enc = find_encoding.find_encoding_v2(decrypt_path)
-                        return [open(decrypt_path, 'r', encoding=enc, newline=""), enc]
+                    decrypt_file = helper.get_file(
+                        decrypt_path, sftp_file_name, tmp_dir_name)
+                    if file_type in ["csv", "text", "fwf"]:
+                        enc = find_encoding.find_encoding_v2(decrypt_file)
+                        return open(decrypt_file, 'r', encoding=enc, newline="", errors="replace")
                     else:
-                        return [open(decrypt_path, 'rb')]
+                        return open(decrypt_file, 'rb')
                 except FileNotFoundError:
                     raise Exception(
                         f'tap_sftp.decryption_error: Decryption of file failed: {sftp_file_path}')
             else:
                 self.sftp.get(sftp_file_path, local_path)
-                if file_type in ["csv", "text"]:
-                    enc = find_encoding.find_encoding_v2(local_path)
-                    return [open(local_path, 'r', encoding=enc, newline=""), enc]
+                processed_file = helper.get_file(
+                        local_path, sftp_file_name, tmp_dir_name)
+                if file_type in ["csv", "text", "fwf"]:
+                    enc = find_encoding.find_encoding_v2(processed_file)
+                    return open(processed_file, 'r', encoding=enc, newline="",errors="replace")
                 else:
-                    return [open(local_path, 'rb')]
+                    return open(processed_file, 'rb')
 
     def get_file_handle_for_sample(self, f, file_type, decryption_configs=None, max_records=None):
         with tempfile.TemporaryDirectory() as tmp_dir_name:
@@ -241,22 +246,24 @@ class SFTPConnection():
                                                              f'{tmp_dir_name}/{original_file_name}',
                                                              max_records)
                     try:
-                        if file_type in ["csv", "text"]:
+                        sample_file = helper.sample_file(
+                            sample_file, sftp_file_name, tmp_dir_name, max_records)
+                        if file_type in ["csv", "text", "fwf"]:
                             enc = find_encoding.find_encoding_v2(sample_file)
-                            return [open(sample_file, 'r', encoding=enc, newline=""), enc]
+                            return open(sample_file, 'r', encoding=enc, newline="",errors="replace")
                         else:
-                            return [open(sample_file, 'rb')]
+                            return open(sample_file, 'rb')
                     except FileNotFoundError:
                         raise Exception(
                             f'Decryption of file failed: {sftp_file_path}')
                 else:
                     sample_file = helper.sample_file(
                         sftp_file_object, sftp_file_name, tmp_dir_name, max_records)
-                    if file_type in ["csv", "text"]:
+                    if file_type in ["csv", "text", "fwf"]:
                         enc = find_encoding.find_encoding_v2(sample_file)
-                        return [open(sample_file, 'r', encoding=find_encoding.find_encoding_v2(sample_file), newline=""), enc]
+                        return open(sample_file, 'r', encoding=find_encoding.find_encoding_v2(sample_file), newline="",errors="replace")
                     else:
-                        return [open(sample_file, 'rb')]
+                        return open(sample_file, 'rb')
 
     def get_files_matching_pattern(self, files, pattern):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and a regex pattern string, and returns

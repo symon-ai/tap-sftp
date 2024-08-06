@@ -38,6 +38,18 @@ def get_inner_file_extension_for_pgp_file(file_path):
         file_extension = os.path.splitext(os.path.splitext(file_path)[0])[1]
     return file_extension
 
+def get_file(src_file_object, src_file_name, out_dir):
+    compressed_iterables = compression.infer(src_file_object, src_file_name)
+    generated_files = []
+    for compressed_name, compressed_iterators in compressed_iterables:
+        local_path = f'{out_dir}/{src_file_name if (isinstance(compressed_iterators, SFTPFile) or not compressed_name) else compressed_name}'
+        with open(local_path, "wb") as out_file:
+            for line in compressed_iterators:
+                out_file.write(line)
+            generated_files.append(local_path)
+
+        return local_path
+    return ""
 
 def sample_file(src_file_object, src_file_name, out_dir, max_records):
     compressed_iterables = compression.infer(src_file_object, src_file_name)

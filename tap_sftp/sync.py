@@ -96,8 +96,7 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
 
     if decryption_configs:
         helper.update_decryption_key(decryption_configs)
-    file = sftp_client.get_file_handle(file, decryption_configs)
-    with file[0] as file_handle:
+    with sftp_client.get_file_handle(file, file_type, decryption_configs) as file_handle:
         if file_type in ["csv", "text"]:
             skip_header_row = table_spec.get('skip_header_row', 0)
             skip_footer_row = table_spec.get('skip_footer_row', 0)
@@ -108,7 +107,7 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
             csv_client.quotechar = table_spec.get('quotechar') or "\""
             csv_client.encoding = table_spec.get('encoding')
             csv_client.escapechar = table_spec.get('escapechar', '\\')
-            csv_client.sync(file_handle, file[1], [stream.to_dict() for stream in streams], state, modified_since,
+            csv_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since,
                             columns_to_update=columns_to_update)
         elif file_type in ["excel"]:
             excel_client = ExcelClient(file_path, '', table_spec.get('key_properties', []), has_header,
