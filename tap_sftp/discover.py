@@ -53,7 +53,7 @@ def discover_streams(config):
                                                           worksheets=table_spec.get('worksheets', []))
             elif file_type in ["fwf"]:
                 table_name = table_spec.get('table_name')
-                with conn.get_file_handle_for_sample(f, file_type, table_spec.get('encoding'), None, defaults.SAMPLE_SIZE) as file_handle:
+                with conn.get_file_handle_for_sample(f, file_type, table_spec.get('encoding'), decryption_configs, defaults.SAMPLE_SIZE) as file_handle:
                     skip_header_row = table_spec.get('skip_header_row', 0)
                     skip_footer_row = table_spec.get('skip_footer_row', 0)
                     fwf_client = FWFClient(file_path, '', table_spec.get(
