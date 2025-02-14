@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+backoff = "==1.11.1"
+boto3 = "==1.24.35"
+chardet = "==4.0.0"
+paramiko = "==3.4.0"
+pipelinewise-singer-python = "==2.0.1"
+smart-open = "==6.4.0"
+terminaltables = "==3.1.0"
+file-processors = {ref = "f29c8c70643780482e2040e536031ff86563499b", git = "ssh://git@github.com/symon-ai/file-processors"}
+python-gnupg = {ref = "c6a5406826be5b4ea58cb10e5496c1e9a00b9417", git = "ssh://****@github.com/symon-ai/python-gnupg.git"}
+
+[dev-packages]
+tox = "==3.25.1"
+pytest = "==7.1.3"
+coverage = "==6.4.4"
+mypy = "==0.971"
+pytest-cov = ">=3.0.0"
+
+[requires]
+python_version = "^3.8"
