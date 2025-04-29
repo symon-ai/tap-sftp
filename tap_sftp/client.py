@@ -140,7 +140,7 @@ class SFTPConnection():
 
         return files
 
-    def get_files(self, prefix, search_pattern, modified_since=None, search_subdirectories=True):
+    def get_files(self, prefix, search_pattern, modified_since=None, search_subdirectories=True, merge=False):
         files = self.get_files_by_prefix(prefix, search_subdirectories)
         if files:
             LOGGER.info('Found %s files in "%s"', len(files), prefix)

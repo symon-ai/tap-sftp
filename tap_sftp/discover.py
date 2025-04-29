@@ -14,6 +14,8 @@ def discover_streams(config):
     decryption_configs = config.get('decryption_configs')
     if decryption_configs:
         helper.update_decryption_key(decryption_configs)
+    merged_opt = config.get('merge')
+    check_schema = None
 
     tables = config.get('tables')
     for table_spec in tables:
@@ -65,5 +67,17 @@ def discover_streams(config):
             else:
                 raise BaseException(
                     f'file_type_error: Unsupported file type "{file_type}"')
+
+        if merged_opt:
+            if check_schema == None:
+                check_schema = streams[-1]["schema"]
+                print(check_schema)
+            else:
+                merged_opt = helper.check_merge(check_schema, streams[-1]["schema"])
+                if merged_opt:
+                    check_schema = streams[-1]
+                else:
+                    raise BaseException(
+                        f'file_type_error: Merge requires same schema and columns')
 
     return streams

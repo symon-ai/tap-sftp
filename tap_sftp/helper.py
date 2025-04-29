@@ -84,3 +84,22 @@ def validate_file_size(config, decryption_configs, table_spec, files):
     if any(f['file_size'] / 1024 > max_file_size for f in files):
         raise SymonException(
             f'Oops! The file size exceeds the current limit of {max_file_size / 1024 / 1024} GB.', 'sftp.MaxFilesizeError')
+
+
+def deep_equal(a, b):
+    if isinstance(a, dict) and isinstance(b, dict):
+        if set(a.keys()) != set(b.keys()):
+            return False
+        
+        return all(deep_equal(a[k], b[k]) for k in a)
+    elif isinstance(a, list) and isinstance(b, list):
+        return sorted(a) == sorted(b)
+    else:
+        return a == b
+
+
+def check_merge(schema1, schema2):
+    if not schema1 or not schema2:
+        return False
+
+    return deep_equal(schema1, schema2)
