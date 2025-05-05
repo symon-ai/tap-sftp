@@ -71,7 +71,6 @@ def discover_streams(config):
         if merged_opt:
             if check_schema == None:
                 check_schema = streams[-1]["schema"]
-                print(check_schema)
             else:
                 merged_opt = helper.check_merge(check_schema, streams[-1]["schema"])
                 if merged_opt:

@@ -3,6 +3,7 @@ from singer import utils, metadata
 import itertools
 from tap_sftp import client
 from tap_sftp import defaults
+from contextlib import ExitStack
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tap_sftp import helper
 from file_processors.clients.csv_client import CSVClient  # type: ignore
@@ -19,6 +20,8 @@ def stream_is_selected(mdata):
 
 
 def sync_stream(config, catalog, state, collect_sync_stats=False):
+    files_arr = []
+
     sftp_client = client.connection(config)
     stream_groups = itertools.groupby(catalog.streams, key=lambda stream: helper.get_custom_metadata(
         singer.metadata.to_map(stream.metadata), 'file_source'))
@@ -38,7 +41,6 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
         # regex match instead of direct equality as search_pattern could get escaped regex chars
         table_specs = [table_config for table_config in config.get('tables') if
                        matches_key(table_config, key, dynamic)]
-        table_specs_arr.append(table_specs)
         if len(table_specs) == 0:
             LOGGER.info(
                 "No table configuration found for '%s', skipping stream", key)
@@ -66,18 +68,21 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
             config, config.get('decryption_configs'), table_spec, files)
 
         has_header = table_spec.get('has_header')
-
-        if(config.get('merge') and len(files) > 1):
-            sync_multi_file(config, files, table_spec, state, modified_since, collect_sync_stats, has_header)
+        if(config.get('merge')):
+            files_arr.append({
+                "files": files,
+                "streams": streams,
+                "table_spec": table_spec,
+                "has_header": has_header,
+                "modified_since": modified_since
+            })
         else:
             for file in files:
-                # Add a main file that the other files will add too?
-                # Catch first file and add to the list
-                sync_file(config, file, table_spec, state,
-                        modified_since, collect_sync_stats, has_header)
-
-
-
+                sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats, has_header)
+    
+    if(config.get('merge')):
+        print(files_arr)
+        sync_multi_file(config, files_arr, state, collect_sync_stats)
 
 def matches_key(table_config, key, dynamic):
     if dynamic is None:
@@ -92,12 +97,12 @@ def matches_key(table_config, key, dynamic):
     return result
 
 
-def sync_multi_file(config, files, table_spec, state, modified_since, collect_sync_stats, has_header)
-    file_path = file["filepath"]
+def sync_multi_file(config, files_arr, state, collect_sync_stats):
+    file_path = files_arr[0]["files"]["filepath"]
     LOGGER.info('Syncing file "%s".', file_path)
     sftp_client = client.connection(config)
     decryption_configs = config.get('decryption_configs')
-    file_type = table_spec.get('file_type').lower()
+    file_type = files_arr[0]["table_spec"].get('file_type').lower()
     log_sync_update = config.get('log_sync_update')
     log_sync_update_interval = config.get('log_sync_update_interval')
     columns_to_update = config.get('columns_to_update')
@@ -106,44 +111,27 @@ def sync_multi_file(config, files, table_spec, state, modified_since, collect_sy
     if decryption_configs:
         helper.update_decryption_key(decryption_configs)
 
-    with sftp_client.get_file_handle(file, file_type, table_spec.get('encoding'), decryption_configs) as file_handle:
+    with ExitStack() as stack:
+        file_handles = [
+            (stack.enter_context(
+                sftp_client.get_file_handle(f, files["table_spec"].get('file_type').lower(), files["table_spec"].get('encoding'), decryption_configs)
+            ) for f in files["files"]
+            )for files in files_arr
+        ]
         if file_type in ["csv", "text"]:
             skip_header_row = table_spec.get('skip_header_row', 0)
             skip_footer_row = table_spec.get('skip_footer_row', 0)
-            csv_client = CSVClient(file_path, table_spec.get('table_name'), table_spec.get('key_properties', []),
-                                   has_header, collect_stats=collect_sync_stats, log_sync_update=log_sync_update,
+            csv_client = CSVClient(file_path, files_arr[0]["table_spec"].get('table_name'), files_arr[0]["table_spec"].get('key_properties', []),
+                                   files_arr[0]["has_header"], collect_stats=collect_sync_stats, log_sync_update=log_sync_update,
                                    log_sync_update_interval=log_sync_update_interval, skip_header_row=skip_header_row, skip_footer_row=skip_footer_row)
-            csv_client.delimiter = table_spec.get('delimiter') or ","
-            csv_client.quotechar = table_spec.get('quotechar') or "\""
-            csv_client.encoding = table_spec.get('encoding')
-            csv_client.escapechar = table_spec.get('escapechar', '\\')
-            csv_client.sync(file_handle, [stream.to_dict() for stream in streams], state, modified_since,
+            csv_client.delimiter = files_arr[0]["table_spec"].get('delimiter') or ","
+            csv_client.quotechar = files_arr[0]["table_spec"].get('quotechar') or "\""
+            csv_client.encoding = files_arr[0]["table_spec"].get('encoding')
+            csv_client.escapechar = files_arr[0]["table_spec"].get('escapechar', '\\')
+
+            csv_client.sync_multi_process(file_handles, [(stream.to_dict() for stream in streams["streams"]) for streams in files_arr], state, files_arr[0]["modified_since"],
                             columns_to_update=columns_to_update)
-        elif file_type in ["excel"]:
-            excel_client = ExcelClient(file_path, '', table_spec.get('key_properties', []), has_header,
-                                       collect_stats=collect_sync_stats, log_sync_update=log_sync_update,
-                                       log_sync_update_interval=log_sync_update_interval)
-            excel_client.sync(file_handle, [stream.to_dict()
-                              for stream in streams], state, modified_since)
-        elif file_type in ["fwf"]:
-            skip_header_row = table_spec.get('skip_header_row', 0)
-            skip_footer_row = table_spec.get('skip_footer_row', 0)
-            column_specs = table_spec.get('column_specs')
-            # we require column specs in config since discovery in sftp connector is mandatory
-            if column_specs is None or len(column_specs) == 0:
-                raise Exception('No column specs found in config.')
-            fwf_client = FWFClient(file_path, table_spec.get('table_name'), table_spec.get(
-                'key_properties', []), has_header, column_specs=column_specs, skip_header_row=skip_header_row, skip_footer_row=skip_footer_row)
-            fwf_client.delimiter = table_spec.get('delimiter', ' ')
-            fwf_client.encoding = table_spec.get('encoding')
-            fwf_client.sync(
-                file_handle,
-                [stream.to_dict() for stream in streams],
-                state,
-                modified_since,
-                columns_to_update=columns_to_update,
-                columns_to_rename=columns_to_rename
-            )
+
 
 def sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats, has_header):
     file_path = file["filepath"]
