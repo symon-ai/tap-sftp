@@ -1,3 +1,4 @@
+import json
 import singer  # type: ignore
 from singer import utils, metadata
 import itertools
@@ -81,7 +82,6 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
                 sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats, has_header)
     
     if(config.get('merge')):
-        print(files_arr)
         sync_multi_file(config, files_arr, state, collect_sync_stats)
 
 def matches_key(table_config, key, dynamic):
@@ -98,7 +98,7 @@ def matches_key(table_config, key, dynamic):
 
 
 def sync_multi_file(config, files_arr, state, collect_sync_stats):
-    file_path = files_arr[0]["files"]["filepath"]
+    file_path = files_arr[0]["files"][0]["filepath"]
     LOGGER.info('Syncing file "%s".', file_path)
     sftp_client = client.connection(config)
     decryption_configs = config.get('decryption_configs')
@@ -107,30 +107,33 @@ def sync_multi_file(config, files_arr, state, collect_sync_stats):
     log_sync_update_interval = config.get('log_sync_update_interval')
     columns_to_update = config.get('columns_to_update')
     columns_to_rename = config.get('columns_to_rename')
-
+    table_spec = files_arr[0]["table_spec"]
     if decryption_configs:
         helper.update_decryption_key(decryption_configs)
 
-    with ExitStack() as stack:
-        file_handles = [
-            (stack.enter_context(
-                sftp_client.get_file_handle(f, files["table_spec"].get('file_type').lower(), files["table_spec"].get('encoding'), decryption_configs)
-            ) for f in files["files"]
-            )for files in files_arr
-        ]
-        if file_type in ["csv", "text"]:
-            skip_header_row = table_spec.get('skip_header_row', 0)
-            skip_footer_row = table_spec.get('skip_footer_row', 0)
-            csv_client = CSVClient(file_path, files_arr[0]["table_spec"].get('table_name'), files_arr[0]["table_spec"].get('key_properties', []),
-                                   files_arr[0]["has_header"], collect_stats=collect_sync_stats, log_sync_update=log_sync_update,
-                                   log_sync_update_interval=log_sync_update_interval, skip_header_row=skip_header_row, skip_footer_row=skip_footer_row)
-            csv_client.delimiter = files_arr[0]["table_spec"].get('delimiter') or ","
-            csv_client.quotechar = files_arr[0]["table_spec"].get('quotechar') or "\""
-            csv_client.encoding = files_arr[0]["table_spec"].get('encoding')
-            csv_client.escapechar = files_arr[0]["table_spec"].get('escapechar', '\\')
+    file_handles = []
+    for files in files_arr:
+        for f in files["files"]:
+            file_handles.append(sftp_client.get_file_handle(
+                    f,
+                    files["table_spec"].get('file_type').lower(),
+                    files["table_spec"].get('encoding'),
+                    decryption_configs
+                ))
 
-            csv_client.sync_multi_process(file_handles, [(stream.to_dict() for stream in streams["streams"]) for streams in files_arr], state, files_arr[0]["modified_since"],
-                            columns_to_update=columns_to_update)
+    if file_type in ["csv", "text"]:
+        skip_header_row = table_spec.get('skip_header_row', 0)
+        skip_footer_row = table_spec.get('skip_footer_row', 0)
+        csv_client = CSVClient(file_path, files_arr[0]["table_spec"].get('table_name'), files_arr[0]["table_spec"].get('key_properties', []),
+                                files_arr[0]["has_header"], collect_stats=collect_sync_stats, log_sync_update=log_sync_update,
+                                log_sync_update_interval=log_sync_update_interval, skip_header_row=skip_header_row, skip_footer_row=skip_footer_row)
+        csv_client.delimiter = files_arr[0]["table_spec"].get('delimiter') or ","
+        csv_client.quotechar = files_arr[0]["table_spec"].get('quotechar') or "\""
+        csv_client.encoding = files_arr[0]["table_spec"].get('encoding')
+        csv_client.escapechar = files_arr[0]["table_spec"].get('escapechar', '\\')
+
+        csv_client.sync_multi_process(file_handles, [(stream.to_dict() for stream in streams["streams"]) for streams in files_arr], state, files_arr[0]["modified_since"],
+                        columns_to_update=columns_to_update)
 
 
 def sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats, has_header):
