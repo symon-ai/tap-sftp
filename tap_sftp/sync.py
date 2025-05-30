@@ -134,6 +134,11 @@ def sync_multi_file(config, files_arr, state, collect_sync_stats):
 
         csv_client.sync_multi_process(file_handles, [(stream.to_dict() for stream in streams["streams"]) for streams in files_arr], state, files_arr[0]["modified_since"],
                         columns_to_update=columns_to_update)
+    elif file_type in ["excel"]:
+        excel_client = ExcelClient(file_path, '', table_spec.get('key_properties', []), has_header,
+                                       collect_stats=collect_sync_stats, log_sync_update=log_sync_update,
+                                       log_sync_update_interval=log_sync_update_interval)
+        excel_client.sync_multi_process(file_handles, [(stream.to_dict() for stream in streams["streams"]) for streams in files_arr], state, files_arr[0]["modified_since"])
 
 
 def sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats, has_header):
