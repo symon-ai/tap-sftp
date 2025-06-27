@@ -923,7 +923,7 @@ yarl = "1.15.2"
 type = "git"
 url = "ssh://git@github.com/symon-ai/file-processors.git"
 reference = "WP-26777"
-resolved_reference = "bccbdd1abc4bd6e51500ed2f63bbad2a976d82e9"
+resolved_reference = "387bdd74e4194c24a889156c2ac9a5bfe114caf9"
 
 [[package]]
 name = "filelock"
