@@ -19,6 +19,8 @@ def stream_is_selected(mdata):
 
 
 def sync_stream(config, catalog, state, collect_sync_stats=False):
+    LOGGER.info('Received config:', config)
+    LOGGER.info('Received catalog:', catalog)
     sftp_client = client.connection(config)
     stream_groups = itertools.groupby(catalog.streams, key=lambda stream: helper.get_custom_metadata(
         singer.metadata.to_map(stream.metadata), 'file_source'))
@@ -78,6 +80,7 @@ def matches_key(table_config, key, dynamic):
     else:
         # file name is predetermined for dynamic import - we only check here to see if file still exist at this point
         search_pattern = f"{re.escape(table_config.get('search_prefix'))}/{table_config.get('table_name')}"
+        LOGGER.info('Checking if file "%s" exists for table "%s".', key, table_config.get('table_name'))
         matcher = re.compile(search_pattern, re.IGNORECASE)
         result = matcher.search(key) != None
     return result
