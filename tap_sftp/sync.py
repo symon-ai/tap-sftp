@@ -19,8 +19,8 @@ def stream_is_selected(mdata):
 
 
 def sync_stream(config, catalog, state, collect_sync_stats=False):
-    LOGGER.info('Received config:', config)
-    LOGGER.info('Received catalog:', catalog)
+    LOGGER.info('Received config: %s', config)
+    LOGGER.info('Received catalog: %s', catalog)
     sftp_client = client.connection(config)
     stream_groups = itertools.groupby(catalog.streams, key=lambda stream: helper.get_custom_metadata(
         singer.metadata.to_map(stream.metadata), 'file_source'))
