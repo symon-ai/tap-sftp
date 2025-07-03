@@ -19,8 +19,6 @@ def stream_is_selected(mdata):
 
 
 def sync_stream(config, catalog, state, collect_sync_stats=False):
-    LOGGER.info('Received config: %s', config)
-    LOGGER.info('Received catalog: %s', catalog)
     sftp_client = client.connection(config)
     stream_groups = itertools.groupby(catalog.streams, key=lambda stream: helper.get_custom_metadata(
         singer.metadata.to_map(stream.metadata), 'file_source'))
@@ -81,7 +79,7 @@ def matches_key(table_config, key, dynamic):
         table_name = table_config.get('table_name')
         # if table_name starts with *, then add dot to the start of the table_name as it was removed in the config to avoid having output file with dot at the start
         if table_name.startswith('*'):
-            LOGGER.info(f'Table name {table_name} starts with "*", adding dot to the start of the table_name.')
+            LOGGER.info(f'Table name {table_name} starts with "*", adding dot to the start of the table name.')
             table_name= '.' + table_name
         # file name is predetermined for dynamic import - we only check here to see if file still exist at this point
         search_pattern = f"{re.escape(table_config.get('search_prefix'))}/{table_name}"
