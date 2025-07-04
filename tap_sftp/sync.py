@@ -76,8 +76,14 @@ def matches_key(table_config, key, dynamic):
         matcher = re.compile(search_pattern)
         result = matcher.search(key) != None
     else:
+        table_name = table_config.get('table_name')
+        # if table_name starts with *, then add dot to the start of the table_name as it was removed in the config to avoid having output file with dot at the start
+        if table_name.startswith('*'):
+            LOGGER.info(f'Table name {table_name} starts with "*", adding dot to the start of the table name.')
+            table_name= '.' + table_name
         # file name is predetermined for dynamic import - we only check here to see if file still exist at this point
-        search_pattern = f"{re.escape(table_config.get('search_prefix'))}/{table_config.get('table_name')}"
+        search_pattern = f"{re.escape(table_config.get('search_prefix'))}/{table_name}"
+        LOGGER.info('Checking if file "%s" exists for table "%s".', key, table_name)
         matcher = re.compile(search_pattern, re.IGNORECASE)
         result = matcher.search(key) != None
     return result
