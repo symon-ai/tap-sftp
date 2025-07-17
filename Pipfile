@@ -11,7 +11,7 @@ paramiko = "==3.4.0"
 pipelinewise-singer-python = "==2.0.1"
 smart-open = "==6.4.0"
 terminaltables = "==3.1.0"
-file-processors = {git = "ssh://git@github.com/symon-ai/file-processors", branch="veracode_scan_update"}
+file-processors = {git = "ssh://git@github.com/symon-ai/file-processors", tag="v4.0.0"}
 python-gnupg = {git = "ssh://git@github.com/symon-ai/python-gnupg.git", ref = "0.4.9.1"}
 
 [dev-packages]
