@@ -967,7 +967,7 @@ yarl = "1.15.2"
 
 [package.source]
 type = "git"
-url = "ssh://git@github.com/symon-ai/file-processors"
+url = "ssh://git@github.com/symon-ai/file-processors.git"
 reference = "v4.0.0"
 resolved_reference = "fc1489ba5f26ab70a1f75b7a2f65e16db3fc3ade"
 
@@ -2865,4 +2865,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.9.1,<4.0"
-content-hash = "b88379b2c40865321851e3571f0f181f262a53b9f619a7f3bbfbc0850cfe633a"
+content-hash = "e3978406565fed8f297fc92d964e148bf18c3b2fa3ee3430d2105d123a0bfa02"
