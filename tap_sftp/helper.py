@@ -27,8 +27,12 @@ def update_decryption_key(decryption_configs):
         secret_manager = AWSSecretsManager(os.environ.get('AWS_REGION'))
         secret = secret_manager.get_secret(decryption_configs.get('key_name'))
         secret_json = json.loads(secret)
+        print('---secret_json---')
+        print(secret_json)
         decryption_configs['key'] = base64.b64decode(
             secret_json['privateKeyEncoded'])
+        print('---decryption_configs[key]---')
+        print(decryption_configs['key'])
         decryption_configs['passphrase'] = secret_json['passphrase']
 
 
@@ -67,9 +71,9 @@ def get_custom_metadata(mdata, attribute_name, default_value=''):
     return mdata.get((), {}).get(attribute_name, default_value)
 
 
-def load_file_decrypted(src_file_object, key, gnupghome, passphrase, decrypt_path, max_records=None):
+def load_file_decrypted(src_file_object, key, gnupghome, passphrase, decrypt_path, sign_key=None, max_records=None):
     capturer = GPGDataCapturer(decrypt_path, max_records)
-    return decrypt.gpg_decrypt_to_file(src_file_object, key, gnupghome, passphrase, decrypt_path, capturer)
+    return decrypt.gpg_decrypt_to_file(src_file_object, key, gnupghome, passphrase, decrypt_path, capturer, sign_key)
 
 
 def validate_file_size(config, decryption_configs, table_spec, files):

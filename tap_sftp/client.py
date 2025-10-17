@@ -182,6 +182,8 @@ class SFTPConnection():
             local_path = f'{tmp_dir_name}/{os.path.basename(sftp_file_path)}'
             if decryption_configs:
                 decrypt_remote = decryption_configs.get("decrypt_remote", True)
+                print('---decrypt_remote---')
+                print(decrypt_remote)
                 LOGGER.info(f'Decrypting file: {sftp_file_path}')
                 sftp_file_name = os.path.basename(sftp_file_path)
                 original_file_name = os.path.splitext(sftp_file_name)[0]
@@ -196,7 +198,10 @@ class SFTPConnection():
                                                                        'gnupghome'),
                                                                    decryption_configs.get(
                                                                        'passphrase'),
-                                                                   f'{tmp_dir_name}/{original_file_name}')
+                                                                   f'{tmp_dir_name}/{original_file_name}',
+                                                                   None,
+                                                                   decryption_configs.get('sign_key', None)
+                                                                   )
                 else:
                     with self.sftp.open(sftp_file_path, 'rb', 32768) as src_file_object:
                         src_file_object.prefetch()
@@ -234,6 +239,8 @@ class SFTPConnection():
             sftp_file_name = os.path.basename(sftp_file_path)
             with self.sftp.open(sftp_file_path, "rb") as sftp_file_object:
                 if decryption_configs:
+                    print('---decryption_configs---')
+                    print(decryption_configs)
                     original_file_name = os.path.splitext(sftp_file_name)[0]
                     sample_file = helper.load_file_decrypted(sftp_file_object,
                                                              decryption_configs.get(
@@ -243,6 +250,7 @@ class SFTPConnection():
                                                              decryption_configs.get(
                                                                  'passphrase'),
                                                              f'{tmp_dir_name}/{original_file_name}',
+                                                             decryption_configs.get('sign_key', None),
                                                              max_records)
                     try:
                         if file_type in ["csv", "text", "fwf"]:
