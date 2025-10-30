@@ -973,8 +973,8 @@ yarl = "1.15.2"
 [package.source]
 type = "git"
 url = "ssh://git@github.com/symon-ai/file-processors.git"
-reference = "WP-27562"
-resolved_reference = "1521e7a4f3fa3e3f15e09333e72ed66d2b80f1b8"
+reference = "v3.3.0"
+resolved_reference = "3c5df2c28eb3fd48d7edc5dd1deecdb5fc32fa4d"
 
 [[package]]
 name = "filelock"
@@ -2862,4 +2862,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.9.0 || >3.9.0,<3.9.1 || >3.9.1,<4.0"
-content-hash = "96193096d60317a41a1e573a45dd40ef92754187ac6885de45c5b94ec1334356"
+content-hash = "44c8905e4f2102f0813bdc51b198afac0ef4f2f74f5f80c9b24629deabd33096"
