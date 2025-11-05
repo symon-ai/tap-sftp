@@ -130,6 +130,7 @@ def test_get_file_handle_for_encrypted_file_with_remote_decryption_config(mock_t
     file = {"id": 1, "filepath": sftp_path, "last_modified": date_modified_since_oldest, "file_size": 12404}
     decryption_config = {
         "key": "key",
+        "sign_key": "sign_key",
         "gnupghome": "home",
         "passphrase": "passphrase",
         "decrypt_remote": True
@@ -139,7 +140,10 @@ def test_get_file_handle_for_encrypted_file_with_remote_decryption_config(mock_t
     with sftp_client.get_file_handle(file, "csv", None, decryption_config) as file_handle:
         mock_load_file_decrypted.assert_called_with(mock_sftp_file, decryption_config.get("key"),
                                                     decryption_config.get("gnupghome"),
-                                                    decryption_config.get("passphrase"), decrypt_path)
+                                                    decryption_config.get("passphrase"),
+                                                    decrypt_path,
+                                                    None,
+                                                    decryption_config.get("sign_key"))
         assert file_handle.name == decrypt_path
         mock_sftp_file.prefetch.assert_called_with()
 
@@ -192,6 +196,7 @@ def test_get_file_handle_for_encrypted_file_with_local_decryption_config(mock_te
     file = {"id": 1, "filepath": sftp_path, "last_modified": date_modified_since_oldest, "file_size": 12404}
     decryption_config = {
         "key": "key",
+        "sign_key": "sign_key",
         "gnupghome": "home",
         "passphrase": "passphrase",
         "decrypt_remote": False
@@ -202,7 +207,10 @@ def test_get_file_handle_for_encrypted_file_with_local_decryption_config(mock_te
     returned_file_handle = sftp_client.get_file_handle(file, "xlsx", None, decryption_config)
     mock_decrypt_to_file.assert_called_with(file_handle_unscoped, decryption_config.get("key"),
                                             decryption_config.get("gnupghome"),
-                                            decryption_config.get("passphrase"), local_path)
+                                            decryption_config.get("passphrase"),
+                                            local_path,
+                                            None,
+                                            decryption_config.get("sign_key"))
     assert returned_file_handle.name == local_path
 
 
@@ -250,6 +258,7 @@ def test_get_file_handle_for_sample_for_encrypted_file(mock_tempfile, mock_sftp_
     file = {"id": 1, "filepath": sftp_path, "last_modified": date_modified_since_oldest, "file_size": 12404}
     decryption_config = {
         "key": "key",
+        "sign_key": "sign_key",
         "gnupghome": "home",
         "passphrase": "passphrase",
         "decrypt_remote": False
@@ -261,7 +270,10 @@ def test_get_file_handle_for_sample_for_encrypted_file(mock_tempfile, mock_sftp_
     returned_file_handle = sftp_client.get_file_handle_for_sample(file, "text", None, decryption_config, max_records)
     mock_load_file_decrypted.assert_called_with(mock_sftp_file, decryption_config.get("key"),
                                                 decryption_config.get("gnupghome"),
-                                                decryption_config.get("passphrase"), decrypt_path, max_records)
+                                                decryption_config.get("passphrase"),
+                                                decrypt_path,
+                                                max_records,
+                                                decryption_config.get("sign_key"))
     assert returned_file_handle.name == decrypt_path
 
 

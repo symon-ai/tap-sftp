@@ -249,7 +249,7 @@ class SFTPConnection():
                                                                  'passphrase'),
                                                              f'{tmp_dir_name}/{original_file_name}',
                                                              max_records,
-                                                             decryption_configs.get('sign_key', None),)
+                                                             decryption_configs.get('sign_key', None))
                     try:
                         if file_type in ["csv", "text", "fwf"]:
                             if not encoding:
