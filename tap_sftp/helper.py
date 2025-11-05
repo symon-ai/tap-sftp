@@ -67,9 +67,9 @@ def get_custom_metadata(mdata, attribute_name, default_value=''):
     return mdata.get((), {}).get(attribute_name, default_value)
 
 
-def load_file_decrypted(src_file_object, key, gnupghome, passphrase, decrypt_path, max_records=None):
+def load_file_decrypted(src_file_object, key, gnupghome, passphrase, decrypt_path, max_records=None, sign_key=None):
     capturer = GPGDataCapturer(decrypt_path, max_records)
-    return decrypt.gpg_decrypt_to_file(src_file_object, key, gnupghome, passphrase, decrypt_path, capturer)
+    return decrypt.gpg_decrypt_to_file(src_file_object, key, gnupghome, passphrase, decrypt_path, capturer, sign_key)
 
 
 def validate_file_size(config, decryption_configs, table_spec, files):
