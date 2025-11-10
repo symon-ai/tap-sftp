@@ -196,7 +196,10 @@ class SFTPConnection():
                                                                        'gnupghome'),
                                                                    decryption_configs.get(
                                                                        'passphrase'),
-                                                                   f'{tmp_dir_name}/{original_file_name}')
+                                                                   f'{tmp_dir_name}/{original_file_name}',
+                                                                   None,
+                                                                   decryption_configs.get('sign_key', None)
+                                                                   )
                 else:
                     with self.sftp.open(sftp_file_path, 'rb', 32768) as src_file_object:
                         src_file_object.prefetch()
@@ -207,7 +210,9 @@ class SFTPConnection():
                                                                       'gnupghome'),
                                                                   decryption_configs.get(
                                                                       'passphrase'),
-                                                                  f'{tmp_dir_name}/{original_file_name}')
+                                                                  f'{tmp_dir_name}/{original_file_name}',
+                                                                  None,
+                                                                  decryption_configs.get('sign_key', None))
                 try:
                     if file_type in ["csv", "text", "fwf"]:
                         if not encoding:
@@ -243,7 +248,8 @@ class SFTPConnection():
                                                              decryption_configs.get(
                                                                  'passphrase'),
                                                              f'{tmp_dir_name}/{original_file_name}',
-                                                             max_records)
+                                                             max_records,
+                                                             decryption_configs.get('sign_key', None))
                     try:
                         if file_type in ["csv", "text", "fwf"]:
                             if not encoding:

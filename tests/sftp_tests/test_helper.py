@@ -100,6 +100,7 @@ def test_get_inner_file_extension_for_pgp_file():
 def test_load_file_decrypted(mock_GPGDataCapturer, mock_gpg_decrypt_to_file):
     src_file_object = mock_open()
     key = 'key'
+    sign_key = 'sign_key'
     gnupghome = 'home'
     passphrase = 'pass'
     decrypt_path = '/test_dir/test1.csv'
@@ -107,6 +108,6 @@ def test_load_file_decrypted(mock_GPGDataCapturer, mock_gpg_decrypt_to_file):
     mocked_capturer = Mock()
     mock_GPGDataCapturer.return_value = mocked_capturer
     helper.load_file_decrypted(
-        src_file_object, key, gnupghome, passphrase, decrypt_path, max_records)
+        src_file_object, key, gnupghome, passphrase, decrypt_path, max_records, sign_key)
     mock_gpg_decrypt_to_file.assert_called_with(
-        src_file_object, key, gnupghome, passphrase, decrypt_path, mocked_capturer)
+        src_file_object, key, gnupghome, passphrase, decrypt_path, mocked_capturer, sign_key)
