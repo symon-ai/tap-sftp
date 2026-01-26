@@ -24,13 +24,13 @@ cryptography = {version = "==46.0.3", markers = "python_full_version > \"3.13.0\
 deepdiff = {version = "==8.6.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 et-xmlfile = {version = "==2.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 fastjsonschema = {version = "==2.14.5", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-file-processors = {ref = "WP-29106", git = "ssh://git@github.com/symon-ai/file-processors.git", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+file-processors = {ref = "v4.0.0", git = "ssh://git@github.com/symon-ai/file-processors.git", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 frozenlist = {version = "==1.8.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 fsspec = {version = "==2026.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 idna = {version = "==3.11", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-jmespath = {version = "==1.0.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+jmespath = {version = "==1.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 jsonschema = {version = "==2.6.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-multidict = {version = "==6.7.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+multidict = {version = "==6.7.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 numpy = {version = "==2.4.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 openpyxl = {version = "==3.1.5", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 orderly-set = {version = "==5.5.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
