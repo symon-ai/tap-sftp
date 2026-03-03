@@ -54,3 +54,9 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+pubring.kbx
+
+# local files
+local_data/**
+requirements.txt
+.python-version
