@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 aiobotocore = {version = "==3.1.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 aiohappyeyeballs = {version = "==2.6.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-aiohttp = {version = "==3.13.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+aiohttp = {version = "==3.13.4", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 aioitertools = {version = "==0.13.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 aiosignal = {version = "==1.4.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 attrs = {version = "==25.4.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
