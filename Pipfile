@@ -44,7 +44,7 @@ pynacl = {version = "==1.6.2", markers = "python_full_version > \"3.13.0\" and p
 python-dateutil = {version = "==2.9.0.post0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 python-gnupg = {ref = "0.4.9.1", git = "ssh://git@github.com/symon-ai/python-gnupg.git", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 pytz = {version = "==2025.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-requests = {version = "==2.32.5", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+requests = {version = "==2.33.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 s3fs = {version = "==2026.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 s3transfer = {version = "==0.16.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 simplejson = {version = "==3.20.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
