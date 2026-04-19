@@ -31,7 +31,7 @@ jobs:
     - name: Update poetry lock file
       run: |
         pip install poetry
-        poetry lock --no-update
+        poetry lock
 
     - name: Poetry Install
       uses: knowsuchagency/poetry-install@v2
