@@ -637,11 +637,11 @@
         },
         "deepdiff": {
             "hashes": [
-                "sha256:ec56d7a769ca80891b5200ec7bd41eec300ced91ebcc7797b41eb2b3f3ff643a",
-                "sha256:ee8708a7f7d37fb273a541fa24ad010ed484192cd0c4ffc0fa0ed5e2d4b9e78b"
+                "sha256:4872005306237b5b50829803feff58a1dfd20b2b357a55de22e7ded65b2008a7",
+                "sha256:b1ae0dd86290d86a03de5fbee728fde43095c1472ae4974bdab23ab4656305bd"
             ],
             "markers": "python_full_version > '3.13.0' and python_version < '4.0'",
-            "version": "==8.6.1"
+            "version": "==9.0.0"
         },
         "et-xmlfile": {
             "hashes": [

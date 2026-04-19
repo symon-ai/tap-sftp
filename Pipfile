@@ -21,7 +21,7 @@ chardet = {version = "==5.2.0", markers = "python_full_version > \"3.13.0\" and 
 charset-normalizer = {version = "==3.4.4", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 ciso8601 = {version = "==2.3.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 cryptography = {version = "==46.0.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-deepdiff = {version = "==8.6.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+deepdiff = {version = "==9.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 et-xmlfile = {version = "==2.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 fastjsonschema = {version = "==2.14.5", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 file-processors = {ref = "v4.0.0", git = "ssh://git@github.com/symon-ai/file-processors.git", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
