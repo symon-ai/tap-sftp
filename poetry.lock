@@ -850,17 +850,17 @@ test-randomorder = ["pytest-randomly"]
 
 [[package]]
 name = "deepdiff"
-version = "8.6.1"
+version = "9.0.0"
 description = "Deep Difference and Search of any Python object/data. Recreate objects by adding adding deltas to each other."
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 files = [
-    {file = "deepdiff-8.6.1-py3-none-any.whl", hash = "sha256:ee8708a7f7d37fb273a541fa24ad010ed484192cd0c4ffc0fa0ed5e2d4b9e78b"},
-    {file = "deepdiff-8.6.1.tar.gz", hash = "sha256:ec56d7a769ca80891b5200ec7bd41eec300ced91ebcc7797b41eb2b3f3ff643a"},
+    {file = "deepdiff-9.0.0-py3-none-any.whl", hash = "sha256:b1ae0dd86290d86a03de5fbee728fde43095c1472ae4974bdab23ab4656305bd"},
+    {file = "deepdiff-9.0.0.tar.gz", hash = "sha256:4872005306237b5b50829803feff58a1dfd20b2b357a55de22e7ded65b2008a7"},
 ]
 
 [package.dependencies]
-orderly-set = ">=5.4.1,<6"
+orderly-set = ">=5.5.0,<6"
 
 [package.extras]
 cli = ["click (>=8.1.0,<8.2.0)", "pyyaml (>=6.0.0,<6.1.0)"]
@@ -921,7 +921,7 @@ awswrangler = "^3.15.0"
 backoff = "2.2.1"
 boto3 = "^1.42.19"
 chardet = "5.2.0"
-deepdiff = "8.6.1"
+deepdiff = "9.0.0"
 fastjsonschema = "~2.14.1"
 openpyxl = "3.1.5"
 pandas = "2.3.3"
