@@ -1,6 +1,7 @@
 import singer  # type: ignore
 from singer import utils, metadata
 import itertools
+from xlrd import XLRDError  # type: ignore
 from tap_sftp import client
 from tap_sftp import defaults
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -120,8 +121,21 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
             excel_client = ExcelClient(file_path, '', table_spec.get('key_properties', []), has_header,
                                        collect_stats=collect_sync_stats, log_sync_update=log_sync_update,
                                        log_sync_update_interval=log_sync_update_interval)
-            excel_client.sync(file_handle, [stream.to_dict()
-                              for stream in streams], state, modified_since)
+            try:
+                excel_client.sync(file_handle, [stream.to_dict()
+                                  for stream in streams], state, modified_since)
+            except XLRDError as ex:
+                if 'Unsupported format' in str(ex) or 'Expected BOF record' in str(ex):
+                    raise SymonException(
+                        f'The Excel file "{file_path}" could not be read. '
+                        f'It may be in an unsupported .xls format. '
+                        f'Please try re-saving the file as .xlsx and re-uploading.',
+                        'excel.UnsupportedXlsFormat'
+                    ) from ex
+                raise SymonException(
+                    f'The Excel file "{file_path}" could not be read: {ex}',
+                    'excel.ReadError'
+                ) from ex
         elif file_type in ["fwf"]:
             skip_header_row = table_spec.get('skip_header_row', 0)
             skip_footer_row = table_spec.get('skip_footer_row', 0)

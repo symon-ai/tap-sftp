@@ -2,8 +2,9 @@ from datetime import datetime
 from unittest.mock import patch, mock_open
 from tap_sftp import defaults
 from tap_sftp.discover import discover_streams
+from file_processors.utils.symon_exception import SymonException
 import pytest
-from tests.configuration.fixtures import sftp_client, file_handle
+from tests.configuration.fixtures import sftp_client, file_handle, get_full_file_path
 
 date_modified_since_oldest = datetime.fromisoformat('1970-01-01 00:00:00')
 date_modified_since_old = datetime.fromisoformat('2016-01-01 00:00:00')
@@ -177,3 +178,38 @@ def test_discover_streams_with_large_file(mock_connection, mock_sftp_client):
     mock_sftp_client.get_files.return_value = files
     with pytest.raises(BaseException):
         discover_streams(config)
+
+
+@patch('tap_sftp.client.SFTPConnection')
+@patch('tap_sftp.client.connection')
+def test_discover_streams_corrupted_xls_raises_symon_exception(mock_connection, mock_sftp_client):
+    file_path = "/test_tmp/bin/corrupted.xls"
+    table_specs = [{
+        "table_name": "test1",
+        "file_type": "excel",
+        "search_prefix": "/test_tmp/bin",
+        "search_pattern": "corrupted.xls",
+        "key_properties": [],
+        "has_header": True,
+    }]
+    config = {
+        "host": "host",
+        "port": 22,
+        "username": "user",
+        "password": "password",
+        "search_subdirectories": True,
+        "start_date": "1800-01-01",
+        "tables": table_specs
+    }
+    files = [{"id": 1, "filepath": file_path, "last_modified": date_modified_since_oldest,
+              "file_size": 4096}]
+    corrupted_xls_path = get_full_file_path('../data/corrupted.xls')
+    mock_connection.return_value = mock_sftp_client
+    mock_sftp_client.get_files.return_value = files
+    mock_sftp_client.get_file_handle.return_value.__enter__ = lambda self: open(corrupted_xls_path, 'rb')
+    mock_sftp_client.get_file_handle.return_value.__exit__ = lambda self, *args: None
+
+    with pytest.raises(SymonException) as exc_info:
+        discover_streams(config)
+    assert exc_info.value.code == 'excel.UnsupportedXlsFormat'
+    assert 'Please try re-saving the file as .xlsx' in str(exc_info.value)

@@ -1,9 +1,11 @@
 import singer  # type: ignore
+from xlrd import XLRDError  # type: ignore
 from tap_sftp import client
 from tap_sftp import defaults, helper
 from file_processors.clients.csv_client import CSVClient  # type: ignore
 from file_processors.clients.excel_client import ExcelClient  # type: ignore
 from file_processors.clients.fwf_client import FWFClient  # type: ignore
+from file_processors.utils.symon_exception import SymonException  # type: ignore
 
 LOGGER = singer.get_logger()
 
@@ -49,8 +51,21 @@ def discover_streams(config):
                 with conn.get_file_handle(f, file_type, table_spec.get('encoding'), decryption_configs) as file_handle:
                     excel_client = ExcelClient(file_path, '', table_spec.get(
                         'key_properties', []), has_header)
-                    streams += excel_client.build_streams(file_handle, defaults.SAMPLE_SIZE,
-                                                          worksheets=table_spec.get('worksheets', []))
+                    try:
+                        streams += excel_client.build_streams(file_handle, defaults.SAMPLE_SIZE,
+                                                              worksheets=table_spec.get('worksheets', []))
+                    except XLRDError as ex:
+                        if 'Unsupported format' in str(ex) or 'Expected BOF record' in str(ex):
+                            raise SymonException(
+                                f'The Excel file "{file_path}" could not be read. '
+                                f'It may be in an unsupported .xls format. '
+                                f'Please try re-saving the file as .xlsx and re-uploading.',
+                                'excel.UnsupportedXlsFormat'
+                            ) from ex
+                        raise SymonException(
+                            f'The Excel file "{file_path}" could not be read: {ex}',
+                            'excel.ReadError'
+                        ) from ex
             elif file_type in ["fwf"]:
                 table_name = table_spec.get('table_name')
                 with conn.get_file_handle_for_sample(f, file_type, table_spec.get('encoding'), None, defaults.SAMPLE_SIZE) as file_handle:
