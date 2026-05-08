@@ -180,6 +180,7 @@ class SFTPConnection():
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             sftp_file_path = f["filepath"]
             local_path = f'{tmp_dir_name}/{os.path.basename(sftp_file_path)}'
+            file_size = f.get("file_size")
             if decryption_configs:
                 decrypt_remote = decryption_configs.get("decrypt_remote", True)
                 LOGGER.info(f'Decrypting file: {sftp_file_path}')
@@ -187,7 +188,7 @@ class SFTPConnection():
                 original_file_name = os.path.splitext(sftp_file_name)[0]
 
                 if not decrypt_remote:
-                    self.sftp.get(sftp_file_path, local_path)
+                    self._download_file_without_prefetch(sftp_file_path, local_path, file_size)
                     with open(local_path, 'rb') as src_file_object:
                         decrypt_path = decrypt.gpg_decrypt_to_file(src_file_object,
                                                                    decryption_configs.get(
@@ -224,13 +225,31 @@ class SFTPConnection():
                     raise Exception(
                         f'tap_sftp.decryption_error: Decryption of file failed: {sftp_file_path}')
             else:
-                self.sftp.get(sftp_file_path, local_path)
+                self._download_file_without_prefetch(sftp_file_path, local_path, file_size)
                 if file_type in ["csv", "text", "fwf"]:
                     if not encoding:
                         enc = find_encoding.find_encoding_v2(local_path)
                     return open(local_path, 'r', encoding=enc, newline="", errors="replace")
                 else:
                     return open(local_path, 'rb')
+
+    def _download_file_without_prefetch(self, sftp_file_path, local_path, file_size=None):
+        start_time = time.monotonic()
+        LOGGER.info(
+            "Downloading SFTP file without Paramiko prefetch: remote=%s, local=%s, remote_size_bytes=%s",
+            sftp_file_path,
+            local_path,
+            file_size
+        )
+        self.sftp.get(sftp_file_path, local_path, prefetch=False)
+        elapsed_seconds = time.monotonic() - start_time
+        local_size = os.path.getsize(local_path)
+        LOGGER.info(
+            "Downloaded SFTP file: remote=%s, local_size_bytes=%s, elapsed_seconds=%.2f",
+            sftp_file_path,
+            local_size,
+            elapsed_seconds
+        )
 
     def get_file_handle_for_sample(self, f, file_type, encoding, decryption_configs=None, max_records=None):
         enc = encoding
