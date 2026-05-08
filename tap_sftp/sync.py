@@ -1,7 +1,6 @@
 import singer  # type: ignore
 from singer import utils, metadata
 import itertools
-from xlrd import XLRDError  # type: ignore
 from tap_sftp import client
 from tap_sftp import defaults
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -124,8 +123,13 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
             try:
                 excel_client.sync(file_handle, [stream.to_dict()
                                   for stream in streams], state, modified_since)
-            except XLRDError as ex:
-                if 'Unsupported format' in str(ex) or 'Expected BOF record' in str(ex):
+            except SymonException:
+                raise
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except BaseException as ex:
+                error_msg = str(ex)
+                if any(s in error_msg for s in ('Unsupported format', 'Expected BOF record', 'little-endian')):
                     raise SymonException(
                         f'The Excel file "{file_path}" could not be read. '
                         f'It may be in an unsupported .xls format. '

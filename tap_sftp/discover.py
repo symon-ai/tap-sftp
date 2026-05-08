@@ -1,5 +1,4 @@
 import singer  # type: ignore
-from xlrd import XLRDError  # type: ignore
 from tap_sftp import client
 from tap_sftp import defaults, helper
 from file_processors.clients.csv_client import CSVClient  # type: ignore
@@ -54,8 +53,13 @@ def discover_streams(config):
                     try:
                         streams += excel_client.build_streams(file_handle, defaults.SAMPLE_SIZE,
                                                               worksheets=table_spec.get('worksheets', []))
-                    except XLRDError as ex:
-                        if 'Unsupported format' in str(ex) or 'Expected BOF record' in str(ex):
+                    except SymonException:
+                        raise
+                    except (KeyboardInterrupt, SystemExit):
+                        raise
+                    except BaseException as ex:
+                        error_msg = str(ex)
+                        if any(s in error_msg for s in ('Unsupported format', 'Expected BOF record', 'little-endian')):
                             raise SymonException(
                                 f'The Excel file "{file_path}" could not be read. '
                                 f'It may be in an unsupported .xls format. '
