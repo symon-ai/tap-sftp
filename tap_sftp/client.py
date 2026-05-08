@@ -17,6 +17,8 @@ from tap_sftp import helper
 LOGGER = singer.get_logger()
 logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 
+SFTP_TRANSPORT_WINDOW_SIZE = 2 * 1024 * 1024
+
 
 def handle_backoff(details):
     LOGGER.warn(
@@ -55,7 +57,7 @@ class SFTPConnection():
                 LOGGER.info('Creating new connection to SFTP...')
                 self.transport = paramiko.Transport((self.host, self.port))
                 self.transport.use_compression(True)
-                self.transport.default_window_size = paramiko.common.MAX_WINDOW_SIZE
+                self.transport.default_window_size = SFTP_TRANSPORT_WINDOW_SIZE
                 self.transport.packetizer.REKEY_BYTES = pow(2, 40)
                 self.transport.packetizer.REKEY_PACKETS = pow(2, 40)
                 self.transport.connect(
