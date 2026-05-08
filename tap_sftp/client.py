@@ -18,6 +18,7 @@ LOGGER = singer.get_logger()
 logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 
 SFTP_TRANSPORT_WINDOW_SIZE = 2 * 1024 * 1024
+LARGE_FILE_ENCODING_DETECTION_LIMIT = 100 * 1024 * 1024
 
 
 def handle_backoff(details):
@@ -218,8 +219,11 @@ class SFTPConnection():
                                                                   decryption_configs.get('sign_key', None))
                 try:
                     if file_type in ["csv", "text", "fwf"]:
-                        if not encoding:
-                            enc = find_encoding.find_encoding_v2(decrypt_path)
+                        enc = self._get_text_encoding(
+                            decrypt_path,
+                            encoding,
+                            os.path.getsize(decrypt_path)
+                        )
                         return open(decrypt_path, 'r', encoding=enc, newline="", errors="replace")
                     else:
                         return open(decrypt_path, 'rb')
@@ -229,11 +233,26 @@ class SFTPConnection():
             else:
                 self._download_file_without_prefetch(sftp_file_path, local_path, file_size)
                 if file_type in ["csv", "text", "fwf"]:
-                    if not encoding:
-                        enc = find_encoding.find_encoding_v2(local_path)
+                    enc = self._get_text_encoding(local_path, encoding, file_size)
                     return open(local_path, 'r', encoding=enc, newline="", errors="replace")
                 else:
                     return open(local_path, 'rb')
+
+    @staticmethod
+    def _get_text_encoding(local_path, configured_encoding, file_size=None):
+        if configured_encoding:
+            return configured_encoding
+
+        local_file_size = file_size or os.path.getsize(local_path)
+        if local_file_size >= LARGE_FILE_ENCODING_DETECTION_LIMIT:
+            LOGGER.info(
+                "Defaulting large SFTP text file to utf-8 encoding: local=%s, file_size_bytes=%s",
+                local_path,
+                local_file_size
+            )
+            return 'utf-8'
+
+        return find_encoding.find_encoding_v2(local_path)
 
     def _download_file_without_prefetch(self, sftp_file_path, local_path, file_size=None):
         start_time = time.monotonic()
