@@ -58,14 +58,6 @@ def discover_streams(config):
                     except (KeyboardInterrupt, SystemExit):
                         raise
                     except BaseException as ex:
-                        error_msg = str(ex)
-                        if any(s in error_msg for s in ('Unsupported format', 'Expected BOF record', 'little-endian')):
-                            raise SymonException(
-                                f'The Excel file "{file_path}" could not be read. '
-                                f'It may be in an unsupported .xls format. '
-                                f'Please try re-saving the file as .xlsx and re-uploading.',
-                                'excel.UnsupportedXlsFormat'
-                            ) from ex
                         raise SymonException(
                             f'The Excel file "{file_path}" could not be read: {ex}',
                             'excel.ReadError'
