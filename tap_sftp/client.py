@@ -17,7 +17,7 @@ from tap_sftp import helper
 LOGGER = singer.get_logger()
 logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 
-SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS = 512
+SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS = 256
 
 
 def handle_backoff(details):
