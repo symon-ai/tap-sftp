@@ -19,7 +19,6 @@ logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 
 SFTP_TRANSPORT_WINDOW_SIZE = 2 * 1024 * 1024
 SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS = 256
-LARGE_FILE_ENCODING_DETECTION_LIMIT = 100 * 1024 * 1024
 
 
 def handle_backoff(details):
@@ -244,15 +243,21 @@ class SFTPConnection():
             return configured_encoding
 
         local_file_size = file_size or os.path.getsize(local_path)
-        if local_file_size >= LARGE_FILE_ENCODING_DETECTION_LIMIT:
-            LOGGER.info(
-                "Defaulting large SFTP text file to utf-8 encoding: local=%s, file_size_bytes=%s",
-                local_path,
-                local_file_size
-            )
-            return 'utf-8'
-
-        return find_encoding.find_encoding_v2(local_path)
+        start_time = time.monotonic()
+        LOGGER.info(
+            "Detecting SFTP text file encoding: local=%s, file_size_bytes=%s",
+            local_path,
+            local_file_size
+        )
+        detected_encoding = find_encoding.find_encoding_v2(local_path)
+        elapsed_seconds = time.monotonic() - start_time
+        LOGGER.info(
+            "Detected SFTP text file encoding: local=%s, encoding=%s, elapsed_seconds=%.2f",
+            local_path,
+            detected_encoding,
+            elapsed_seconds
+        )
+        return detected_encoding
 
     def _download_file_with_bounded_prefetch(self, sftp_file_path, local_path, file_size=None):
         start_time = time.monotonic()
