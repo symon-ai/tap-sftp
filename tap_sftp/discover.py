@@ -57,8 +57,13 @@ def discover_streams(config):
                         raise
                     except BaseException as ex:
                         raise SymonException(
-                            f'The Excel file "{file_path}" could not be read: {ex}',
-                            'excel.ReadError'
+                            f'The Excel file "{file_path}" could not be read, please try re-uploading the file or contact an administrator.',
+                            'excel.ReadError',
+                            {
+                                "error": {
+                                    "message": f"The Excel file \"{file_path}\" could not be read: {ex}"
+                                }
+                            }
                         ) from ex
             elif file_type in ["fwf"]:
                 table_name = table_spec.get('table_name')
