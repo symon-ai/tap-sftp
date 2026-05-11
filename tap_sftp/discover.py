@@ -55,8 +55,6 @@ def discover_streams(config):
                                                               worksheets=table_spec.get('worksheets', []))
                     except SymonException:
                         raise
-                    except (KeyboardInterrupt, SystemExit):
-                        raise
                     except BaseException as ex:
                         raise SymonException(
                             f'The Excel file "{file_path}" could not be read: {ex}',

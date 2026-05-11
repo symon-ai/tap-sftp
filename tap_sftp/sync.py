@@ -125,8 +125,6 @@ def sync_file(config, file, streams, table_spec, state, modified_since, collect_
                                   for stream in streams], state, modified_since)
             except SymonException:
                 raise
-            except (KeyboardInterrupt, SystemExit):
-                raise
             except BaseException as ex:
                 raise SymonException(
                     f'The Excel file "{file_path}" could not be read: {ex}',
