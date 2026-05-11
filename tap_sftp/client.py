@@ -17,6 +17,9 @@ from tap_sftp import helper
 LOGGER = singer.get_logger()
 logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 
+SFTP_TRANSPORT_WINDOW_SIZE = 2 * 1024 * 1024
+SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS = 256
+
 
 def handle_backoff(details):
     LOGGER.warn(
@@ -55,7 +58,7 @@ class SFTPConnection():
                 LOGGER.info('Creating new connection to SFTP...')
                 self.transport = paramiko.Transport((self.host, self.port))
                 self.transport.use_compression(True)
-                self.transport.default_window_size = paramiko.common.MAX_WINDOW_SIZE
+                self.transport.default_window_size = SFTP_TRANSPORT_WINDOW_SIZE
                 self.transport.packetizer.REKEY_BYTES = pow(2, 40)
                 self.transport.packetizer.REKEY_PACKETS = pow(2, 40)
                 self.transport.connect(
@@ -176,10 +179,10 @@ class SFTPConnection():
 
     def get_file_handle(self, f, file_type, encoding, decryption_configs=None):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and returns a handle to the file. """
-        enc = encoding
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             sftp_file_path = f["filepath"]
             local_path = f'{tmp_dir_name}/{os.path.basename(sftp_file_path)}'
+            file_size = f.get("file_size")
             if decryption_configs:
                 decrypt_remote = decryption_configs.get("decrypt_remote", True)
                 LOGGER.info(f'Decrypting file: {sftp_file_path}')
@@ -187,7 +190,7 @@ class SFTPConnection():
                 original_file_name = os.path.splitext(sftp_file_name)[0]
 
                 if not decrypt_remote:
-                    self.sftp.get(sftp_file_path, local_path)
+                    self._download_file_with_bounded_prefetch(sftp_file_path, local_path, file_size)
                     with open(local_path, 'rb') as src_file_object:
                         decrypt_path = decrypt.gpg_decrypt_to_file(src_file_object,
                                                                    decryption_configs.get(
@@ -215,8 +218,11 @@ class SFTPConnection():
                                                                   decryption_configs.get('sign_key', None))
                 try:
                     if file_type in ["csv", "text", "fwf"]:
-                        if not encoding:
-                            enc = find_encoding.find_encoding_v2(decrypt_path)
+                        enc = self._get_text_encoding(
+                            decrypt_path,
+                            encoding,
+                            os.path.getsize(decrypt_path)
+                        )
                         return open(decrypt_path, 'r', encoding=enc, newline="", errors="replace")
                     else:
                         return open(decrypt_path, 'rb')
@@ -224,13 +230,58 @@ class SFTPConnection():
                     raise Exception(
                         f'tap_sftp.decryption_error: Decryption of file failed: {sftp_file_path}')
             else:
-                self.sftp.get(sftp_file_path, local_path)
+                self._download_file_with_bounded_prefetch(sftp_file_path, local_path, file_size)
                 if file_type in ["csv", "text", "fwf"]:
-                    if not encoding:
-                        enc = find_encoding.find_encoding_v2(local_path)
+                    enc = self._get_text_encoding(local_path, encoding, file_size)
                     return open(local_path, 'r', encoding=enc, newline="", errors="replace")
                 else:
                     return open(local_path, 'rb')
+
+    @staticmethod
+    def _get_text_encoding(local_path, configured_encoding, file_size=None):
+        if configured_encoding:
+            return configured_encoding
+
+        local_file_size = file_size or os.path.getsize(local_path)
+        start_time = time.monotonic()
+        LOGGER.info(
+            "Detecting SFTP text file encoding: local=%s, file_size_bytes=%s",
+            local_path,
+            local_file_size
+        )
+        detected_encoding = find_encoding.find_encoding_v2(local_path)
+        elapsed_seconds = time.monotonic() - start_time
+        LOGGER.info(
+            "Detected SFTP text file encoding: local=%s, encoding=%s, elapsed_seconds=%.2f",
+            local_path,
+            detected_encoding,
+            elapsed_seconds
+        )
+        return detected_encoding
+
+    def _download_file_with_bounded_prefetch(self, sftp_file_path, local_path, file_size=None):
+        start_time = time.monotonic()
+        LOGGER.info(
+            "Downloading SFTP file with bounded Paramiko prefetch: remote=%s, local=%s, remote_size_bytes=%s, max_concurrent_prefetch_requests=%s",
+            sftp_file_path,
+            local_path,
+            file_size,
+            SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS
+        )
+        self.sftp.get(
+            sftp_file_path,
+            local_path,
+            prefetch=True,
+            max_concurrent_prefetch_requests=SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS
+        )
+        elapsed_seconds = time.monotonic() - start_time
+        local_size = os.path.getsize(local_path)
+        LOGGER.info(
+            "Downloaded SFTP file: remote=%s, local_size_bytes=%s, elapsed_seconds=%.2f",
+            sftp_file_path,
+            local_size,
+            elapsed_seconds
+        )
 
     def get_file_handle_for_sample(self, f, file_type, encoding, decryption_configs=None, max_records=None):
         enc = encoding
