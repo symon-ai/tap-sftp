@@ -67,7 +67,7 @@ toml = {version = "==0.10.2", markers = "python_full_version > \"3.13.0\" and py
 tox = {version = "==3.25.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 typing-extensions = {version = "==4.15.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 tzdata = {version = "==2025.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-urllib3 = {version = "==2.6.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+urllib3 = {version = "==2.7.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 virtualenv = {version = "==21.2.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 wrapt = {version = "==2.1.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 xlrd = {version = "==2.0.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
