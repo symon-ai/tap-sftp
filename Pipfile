@@ -10,7 +10,7 @@ aiohttp = {version = "==3.13.5", markers = "python_full_version > \"3.13.0\" and
 aioitertools = {version = "==0.13.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 aiosignal = {version = "==1.4.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 attrs = {version = "==26.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-awswrangler = {version = "==3.15.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+awswrangler = {version = "==3.16.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 backoff = {version = "==2.2.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 bcrypt = {version = "==5.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 boto3 = {version = "==1.42.70", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
@@ -45,7 +45,7 @@ platformdirs = {version = "==4.9.4", markers = "python_full_version > \"3.13.0\"
 pluggy = {version = "==1.6.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 propcache = {version = "==0.4.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 py = {version = "==1.11.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-pyarrow = {version = "==22.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+pyarrow = {version = "==23.0.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 pycparser = {version = "==3.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\" and platform_python_implementation != \"PyPy\" and implementation_name != \"PyPy\""}
 pygments = {version = "==2.20.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 pynacl = {version = "==1.6.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tap-sftp"
-version = "5.6.0"
+version = "5.7.0"
 description = "Singer.io tap for extracting data"
 authors = ["Stitch"]
 classifiers = ["Programming Language :: Python :: 3 :: Only"]
@@ -16,6 +16,7 @@ boto3 = "^1.42.19"
 smart-open = "^7.5.0"
 python-gnupg = {git = "ssh://git@github.com/symon-ai/python-gnupg.git", tag = "v0.5.0"}
 file-processors = {git = "ssh://git@github.com/symon-ai/file-processors.git", tag = "v4.3.0"}
+pyarrow = "==23.0.1"
 
 [tool.poetry.dev-dependencies]
 tox = "3.25.1"
