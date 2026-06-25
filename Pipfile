@@ -4,74 +4,74 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-aiobotocore = {version = "==3.3.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-aiohappyeyeballs = {version = "==2.6.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-aiohttp = {version = "==3.13.5", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+filelock = {version = "==3.25.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+iniconfig = {version = "==2.3.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+mypy-extensions = {version = "==1.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+mypy = {version = "==0.971", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+platformdirs = {version = "==4.9.4", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+pluggy = {version = "==1.6.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+py = {version = "==1.11.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+pygments = {version = "==2.20.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+pytest-cov = {version = "==3.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+pytest = {version = "==9.0.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+python-discovery = {version = "==1.2.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+toml = {version = "==0.10.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+tox = {version = "==3.25.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+virtualenv = {version = "==21.2.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+aiobotocore = {version = "==3.7.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+aiohappyeyeballs = {version = "==2.6.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+aiohttp = {version = "==3.14.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 aioitertools = {version = "==0.13.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 aiosignal = {version = "==1.4.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 attrs = {version = "==26.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-awswrangler = {version = "==3.15.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+awswrangler = {version = "==3.17.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 backoff = {version = "==2.2.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 bcrypt = {version = "==5.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-boto3 = {version = "==1.42.70", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-botocore = {version = "==1.42.70", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-certifi = {version = "==2026.2.25", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+boto3 = {version = "==1.43.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+botocore = {version = "==1.43.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+certifi = {version = "==2026.6.17", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 cffi = {version = "==2.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\" and platform_python_implementation != \"PyPy\""}
 chardet = {version = "==5.2.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-charset-normalizer = {version = "==3.4.6", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+charset-normalizer = {version = "==3.4.7", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 ciso8601 = {version = "==2.3.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-cryptography = {version = "==46.0.6", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-deepdiff = {version = "==9.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+cryptography = {version = "==49.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+deepdiff = {version = "==8.6.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 et-xmlfile = {version = "==2.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 fastjsonschema = {version = "==2.14.5", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-file-processors = {ref = "2698804b4ee54bc67c7670689f0662bdce4869e6", git = "ssh://git@github.com/symon-ai/file-processors.git", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-filelock = {version = "==3.25.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+file-processors = {ref = "v4.6.0", git = "ssh://git@github.com/symon-ai/file-processors.git", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 frozenlist = {version = "==1.8.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 fsspec = {version = "==2026.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-idna = {version = "==3.11", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-iniconfig = {version = "==2.3.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+idna = {version = "==3.18", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 jmespath = {version = "==1.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 jsonschema = {version = "==2.6.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 multidict = {version = "==6.7.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-mypy-extensions = {version = "==1.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-mypy = {version = "==0.971", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-numpy = {version = "==2.4.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+numpy = {version = "==2.5.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 openpyxl = {version = "==3.1.5", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 orderly-set = {version = "==5.5.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-packaging = {version = "==26.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+packaging = {version = "==26.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 pandas = {version = "==2.3.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 paramiko = {version = "==3.4.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-platformdirs = {version = "==4.9.4", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-pluggy = {version = "==1.6.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-propcache = {version = "==0.4.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-py = {version = "==1.11.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-pyarrow = {version = "==22.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+propcache = {version = "==0.5.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+pyarrow = {version = "==24.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 pycparser = {version = "==3.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\" and platform_python_implementation != \"PyPy\" and implementation_name != \"PyPy\""}
-pygments = {version = "==2.20.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 pynacl = {version = "==1.6.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-pytest-cov = {version = "==3.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-pytest = {version = "==9.0.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 python-dateutil = {version = "==2.9.0.post0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-python-discovery = {version = "==1.2.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-python-gnupg = {ref = "76adb1556bd5c5ea960634c7f6e7783ec1dccfe6", git = "ssh://git@github.com/symon-ai/python-gnupg.git", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-pytz = {version = "==2026.1.post1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-requests = {version = "==2.33.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+python-gnupg = {ref = "v0.5.0", git = "ssh://git@github.com/symon-ai/python-gnupg.git", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+pytz = {version = "==2026.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+requests = {version = "==2.34.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 s3fs = {version = "==2026.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-s3transfer = {version = "==0.16.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+s3transfer = {version = "==0.17.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 simplejson = {version = "==3.20.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 singer-python = {version = "==6.3.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 six = {version = "==1.17.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-smart-open = {version = "==7.5.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+smart-open = {version = "==7.6.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 terminaltables = {version = "==3.1.10", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-toml = {version = "==0.10.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-tox = {version = "==3.25.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 typing-extensions = {version = "==4.15.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-tzdata = {version = "==2025.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+tzdata = {version = "==2026.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 urllib3 = {version = "==2.7.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-virtualenv = {version = "==21.2.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-wrapt = {version = "==2.1.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+wrapt = {version = "==2.2.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 xlrd = {version = "==2.0.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-yarl = {version = "==1.23.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+yarl = {version = "==1.24.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 
 [dev-packages]
 

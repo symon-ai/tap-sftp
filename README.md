@@ -158,8 +158,9 @@ python -m pip install --user pipenv
 ```
 
 # 2. Generate Pipfile and Pipfile.lock from requirements.txt (make sure you pass in right version of python)
+```
 pipenv install --python 3.13 -r requirements.txt
-
+```
 
 ## License
 
