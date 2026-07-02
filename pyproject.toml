@@ -17,6 +17,9 @@ smart-open = "^7.5.0"
 python-gnupg = {git = "ssh://git@github.com/symon-ai/python-gnupg.git", tag = "v0.6.0"}
 file-processors = {git = "ssh://git@github.com/symon-ai/file-processors.git", tag = "v4.7.1"}
 
+[tool.poetry.group.dev]
+optional = true
+
 [tool.poetry.group.dev.dependencies]
 tox = "3.25.1"
 pytest = "9.0.3"
