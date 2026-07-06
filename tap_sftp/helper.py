@@ -73,9 +73,7 @@ def load_file_decrypted(src_file_object, key, gnupghome, passphrase, decrypt_pat
 
 
 def validate_file_size(config, decryption_configs, table_spec, files):
-    enable_import_file_copy = config.get('enable_import_file_copy', False)
-
-    if (enable_import_file_copy and table_spec.get('file_type').lower() in ["csv", "text"] and decryption_configs is None):
+    if table_spec.get('file_type').lower() in ["csv", "text"] and decryption_configs is None:
         return
 
     max_file_size = config.get(
