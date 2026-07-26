@@ -20,6 +20,19 @@ logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 SFTP_TRANSPORT_WINDOW_SIZE = 2 * 1024 * 1024
 SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS = 256
 
+# Matches CR, LF, and other ASCII control characters (except space/tab) that
+# could be abused to forge or inject log entries (CWE-117).
+_LOG_UNSAFE_CHARS = re.compile(r'[\r\n\x00-\x08\x0b\x0c\x0e-\x1f\x7f]')
+
+
+def _sanitize_for_log(value):
+    """Neutralize CR/LF/newline and other control characters in
+    untrusted (e.g. SFTP-server-supplied) values before they are written to a
+    log record, to prevent log forging / log injection (CWE-117)."""
+    if value is None:
+        return value
+    return _LOG_UNSAFE_CHARS.sub('', str(value))
+
 
 def handle_backoff(details):
     LOGGER.warn(
@@ -132,7 +145,7 @@ class SFTPConnection():
                 last_modified = file_attr.st_mtime
                 if last_modified is None:
                     LOGGER.warning("Cannot read m_time for file %s, defaulting to current epoch time",
-                                   os.path.join(prefix, file_attr.filename))
+                                   _sanitize_for_log(os.path.join(prefix, file_attr.filename)))
                     last_modified = datetime.utcnow().timestamp()
 
                 # NB: SFTP specifies path characters to be '/'
@@ -166,7 +179,7 @@ class SFTPConnection():
         for f in matching_files:
             if self.is_empty(f):
                 empty_file_count += 1
-            LOGGER.info("Found file: %s", f['filepath'])
+            LOGGER.info("Found file: %s", _sanitize_for_log(f['filepath']))
 
         if empty_file_count == len(matching_files):
             raise SymonException('File is empty.', 'EmptyFile')
@@ -185,7 +198,7 @@ class SFTPConnection():
             file_size = f.get("file_size")
             if decryption_configs:
                 decrypt_remote = decryption_configs.get("decrypt_remote", True)
-                LOGGER.info(f'Decrypting file: {sftp_file_path}')
+                LOGGER.info('Decrypting file: %s', _sanitize_for_log(sftp_file_path))
                 sftp_file_name = os.path.basename(sftp_file_path)
                 original_file_name = os.path.splitext(sftp_file_name)[0]
 

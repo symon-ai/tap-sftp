@@ -5,6 +5,7 @@ from unittest.mock import patch, mock_open
 import pytest
 import stat
 from paramiko.sftp_attr import SFTPAttributes
+from tap_sftp.client import _sanitize_for_log
 from tests.configuration.fixtures import get_sample_file_path, sftp_client, get_full_file_path, file_handle_unscoped, \
     file_handle_second_unscoped, file_handle
 
@@ -340,6 +341,46 @@ def test_get_files_matching_pattern(sftp_client):
     matched_files = sftp_client.get_files_matching_pattern(files, search_pattern)
     assert len(matched_files) == 7
     assert len([file for file in matched_files if file["id"] in [1, 2, 3, 4, 5, 7, 9]]) == 7
+
+
+def test_sanitize_for_log_strips_crlf_and_control_chars():
+    """CWE-117: CR/LF/newlines and other control characters in untrusted
+    values must be neutralized so an attacker cannot forge log lines."""
+    injected = "orders.csv\r\nERROR forged log entry\x00\x1b[31m"
+    sanitized = _sanitize_for_log(injected)
+    assert "\r" not in sanitized
+    assert "\n" not in sanitized
+    assert "\x00" not in sanitized
+    assert "\x1b" not in sanitized
+    # benign characters are preserved
+    assert sanitized == "orders.csvERROR forged log entry[31m"
+
+
+def test_sanitize_for_log_preserves_none_and_benign_values():
+    assert _sanitize_for_log(None) is None
+    assert _sanitize_for_log("normal_file.csv") == "normal_file.csv"
+
+
+def test_get_files_by_prefix_sanitizes_filename_in_missing_mtime_warning(sftp_client):
+    """CWE-117 regression: when an SFTP-server-supplied filename with a null
+    m_time contains CR/LF injection, the warning log argument must be
+    sanitized (no raw newlines forwarded to the log record)."""
+    prefix = "/Data"
+    malicious = SFTPAttributes()
+    malicious.filename = "evil.csv\r\nWARNING injected forged log line"
+    malicious.st_size = 100
+    malicious.st_mode = stat.S_IFREG
+    malicious.st_mtime = None
+
+    sftp_client.sftp.listdir_attr.return_value = [malicious]
+
+    with patch('tap_sftp.client.LOGGER') as mock_logger:
+        sftp_client.get_files_by_prefix(prefix, search_subdirectories=False)
+        assert mock_logger.warning.called
+        logged_arg = mock_logger.warning.call_args.args[1]
+        assert "\r" not in logged_arg
+        assert "\n" not in logged_arg
+        assert "injected forged log line" in logged_arg
 
 
 
