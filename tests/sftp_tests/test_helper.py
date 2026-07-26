@@ -89,6 +89,39 @@ def test_sample_file_for_compressed_file(mock_compression_infer, mock_open_file,
     assert mock_ZipFile.return_value.__enter__().write.call_count == 2
 
 
+@pytest.mark.parametrize("file_handle_second", ["../data/fake_file.txt"], indirect=True)
+@pytest.mark.parametrize("file_handle", ["../data/fake_file.txt"], indirect=True)
+@patch('zipfile.ZipFile.__new__')
+@patch('builtins.open')
+@patch('file_processors.utils.compression.infer')
+def test_sample_file_writes_sanitized_arcname(mock_compression_infer, mock_open_file, mock_ZipFile, file_handle, file_handle_second):
+    # Regression for WP-32464 (CWE-80): the archive entry must be written
+    # with a sanitized base-name arcname, never the raw (source-supplied)
+    # on-disk path, so untrusted input cannot control the archive entry name.
+    compressed_file1 = 'test1.csv'
+    compressed_file2 = 'test2.csv'
+    src_file_object = None
+    mock_compression_infer.return_value = [
+        (compressed_file1, file_handle), (compressed_file2, file_handle_second)]
+    src_file_name = "Archive.csv.zip"
+    out_dir = "/test_tmp/bin"
+    max_records = 1
+    mock_ZipFile.return_value.__enter__.return_value = Mock()
+    helper.sample_file(src_file_object, src_file_name, out_dir, max_records)
+
+    zip_write = mock_ZipFile.return_value.__enter__().write
+    assert zip_write.call_count == 2
+    for call in zip_write.call_args_list:
+        # arcname must be present and be only the base name (no directory
+        # separators / no leaked absolute path).
+        arcname = call.kwargs.get('arcname')
+        assert arcname is not None
+        assert '/' not in arcname
+        assert not arcname.startswith(out_dir)
+    written_arcnames = {call.kwargs.get('arcname') for call in zip_write.call_args_list}
+    assert written_arcnames == {compressed_file1, compressed_file2}
+
+
 def test_get_inner_file_extension_for_pgp_file():
     file_path = '/test_tmp/bin/test1.csv.pgp'
     extension = helper.get_inner_file_extension_for_pgp_file(file_path)
