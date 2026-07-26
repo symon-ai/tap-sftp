@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 import singer  # type: ignore
 import traceback
@@ -21,6 +22,25 @@ LOGGER = singer.get_logger()
 # for symon error logging
 ERROR_START_MARKER = '[tap_error_start]'
 ERROR_END_MARKER = '[tap_error_end]'
+
+
+def _resolve_contained_path(user_path, base_dir=None):
+    """Validate and contain a user-supplied file path (CWE-73 remediation).
+
+    Resolves ``user_path`` against ``base_dir`` (the current working directory
+    by default), fully canonicalizes it (following symlinks and collapsing any
+    ``..`` traversal sequences), and confirms the result stays within
+    ``base_dir``. Returns the safe absolute path, or ``None`` if the path
+    escapes the allowed base directory (i.e. a path-traversal attempt).
+    """
+    if not user_path:
+        return None
+    base_dir = os.path.realpath(base_dir if base_dir is not None else os.getcwd())
+    resolved = os.path.realpath(os.path.join(base_dir, user_path))
+    if resolved != base_dir and not resolved.startswith(base_dir + os.sep):
+        return None
+    return resolved
+
 
 def do_discover(config):
     LOGGER.info("Starting discover")
@@ -105,9 +125,12 @@ def main():
         if error_info is not None:
             try:
                 error_file_path = args.config.get('error_file_path', None)
-                if error_file_path is not None:
+                # CWE-73: contain the user-supplied path within an allowed base
+                # directory before opening it, rejecting path-traversal input.
+                safe_error_file_path = _resolve_contained_path(error_file_path)
+                if safe_error_file_path is not None:
                     try:
-                        with open(error_file_path, 'w', encoding='utf-8') as fp:
+                        with open(safe_error_file_path, 'w', encoding='utf-8') as fp:
                             json.dump(error_info, fp)
                     except:
                         pass
