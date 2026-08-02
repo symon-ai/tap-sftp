@@ -10,6 +10,8 @@ from file_processors.utils.aws_secrets_manager import AWSSecretsManager  # type:
 from file_processors.utils.aws_ssm import AWS_SSM  # type: ignore
 from paramiko.sftp_file import SFTPFile  # type: ignore
 from file_processors.utils.capturer import GPGDataCapturer  # type: ignore
+from file_processors.utils.symon_exception import SymonException  # type: ignore
+import os
 
 
 @patch('file_processors.utils.aws_ssm.AWS_SSM.get_parameter_value')
@@ -87,6 +89,75 @@ def test_sample_file_for_compressed_file(mock_compression_infer, mock_open_file,
     assert result_file == file_path
     assert mock_open_file.return_value.__enter__().write.call_count == 4
     assert mock_ZipFile.return_value.__enter__().write.call_count == 2
+
+
+@pytest.mark.parametrize("malicious_name", [
+    "../evil.csv",
+    "../../etc/passwd",
+    "/etc/passwd",
+    "subdir/../../evil.csv",
+])
+@patch('builtins.open')
+@patch('file_processors.utils.compression.infer')
+def test_sample_file_contains_path_traversal(mock_compression_infer, mock_open_file, malicious_name):
+    # WP-33376: a malicious src_file_name containing ../ or an absolute path
+    # must not allow writing outside out_dir (CWE-73 path traversal). The
+    # untrusted name is reduced to its basename and confined to out_dir.
+    src_file_object = None
+    mock_compression_infer.return_value = [('', [b"row"])]
+    out_dir = "/test_tmp/bin"
+    out_dir_real = os.path.realpath(out_dir)
+    result_file = helper.sample_file(src_file_object, malicious_name, out_dir, 1)
+    # The write path must stay inside out_dir, never escape it.
+    assert os.path.commonpath([out_dir_real, result_file]) == out_dir_real
+    written_path = mock_open_file.call_args[0][0]
+    assert os.path.commonpath([out_dir_real, written_path]) == out_dir_real
+    assert ".." not in os.path.relpath(written_path, out_dir_real)
+
+
+@pytest.mark.parametrize("malicious_compressed_name", [
+    "../evil.csv",
+    "/etc/passwd",
+])
+@patch('builtins.open')
+@patch('file_processors.utils.compression.infer')
+def test_sample_file_contains_path_traversal_in_archive_member(mock_compression_infer, mock_open_file, malicious_compressed_name):
+    # WP-33376: a malicious archive member (compressed_name) containing ../ or
+    # an absolute path must also be confined to out_dir (CWE-73 path traversal).
+    src_file_object = None
+    mock_compression_infer.return_value = [
+        (malicious_compressed_name, [b"row"])]
+    out_dir = "/test_tmp/bin"
+    out_dir_real = os.path.realpath(out_dir)
+    result_file = helper.sample_file(src_file_object, "Archive.zip", out_dir, 1)
+    assert os.path.commonpath([out_dir_real, result_file]) == out_dir_real
+    written_path = mock_open_file.call_args[0][0]
+    assert os.path.commonpath([out_dir_real, written_path]) == out_dir_real
+
+
+def test_contain_path_within_dir_keeps_legitimate_name():
+    # WP-33376: a legitimate file name still lands inside out_dir under a safe name.
+    out_dir = "/test_tmp/bin"
+    result = helper.contain_path_within_dir(out_dir, "test1.csv")
+    assert result == os.path.join(os.path.realpath(out_dir), "test1.csv")
+
+
+def test_contain_path_within_dir_neutralizes_traversal():
+    # WP-33376: escaping names are reduced to a safe basename inside out_dir.
+    out_dir = "/test_tmp/bin"
+    out_dir_real = os.path.realpath(out_dir)
+    assert helper.contain_path_within_dir(
+        out_dir, "../../evil.csv") == os.path.join(out_dir_real, "evil.csv")
+    assert helper.contain_path_within_dir(
+        out_dir, "/etc/passwd") == os.path.join(out_dir_real, "passwd")
+
+
+def test_contain_path_within_dir_rejects_degenerate_name():
+    # WP-33376: a name that reduces to no basename (e.g. bare '..') is rejected.
+    with pytest.raises(SymonException):
+        helper.contain_path_within_dir("/test_tmp/bin", "..")
+    with pytest.raises(SymonException):
+        helper.contain_path_within_dir("/test_tmp/bin", "../")
 
 
 def test_get_inner_file_extension_for_pgp_file():
