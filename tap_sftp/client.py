@@ -20,6 +20,23 @@ logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 SFTP_TRANSPORT_WINDOW_SIZE = 2 * 1024 * 1024
 SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS = 256
 
+# Matches ASCII C0 control characters (including CR and LF) plus DEL.
+_LOG_CONTROL_CHAR_RE = re.compile(r"[\x00-\x1f\x7f]")
+
+
+def _sanitize_for_log(value):
+    """Neutralize CR/LF and other control characters in user-supplied values
+    before they are interpolated into log records.
+
+    Prevents CWE-117 (log injection / log forging) where tainted data such as
+    SFTP file paths, prefixes, or search patterns could otherwise inject forged
+    log entries. Returns the value unchanged when it is None so callers can pass
+    optional fields directly.
+    """
+    if value is None:
+        return value
+    return _LOG_CONTROL_CHAR_RE.sub(" ", str(value))
+
 
 def handle_backoff(details):
     LOGGER.warn(
@@ -96,7 +113,7 @@ class SFTPConnection():
 
     def match_files_for_table(self, files, table_name, search_pattern):
         LOGGER.info("Searching for files for table '%s', matching pattern: %s",
-                    table_name, search_pattern)
+                    _sanitize_for_log(table_name), _sanitize_for_log(search_pattern))
         matcher = re.compile(search_pattern)
         return [f for f in files if matcher.search(f["filepath"])]
 
@@ -132,7 +149,7 @@ class SFTPConnection():
                 last_modified = file_attr.st_mtime
                 if last_modified is None:
                     LOGGER.warning("Cannot read m_time for file %s, defaulting to current epoch time",
-                                   os.path.join(prefix, file_attr.filename))
+                                   _sanitize_for_log(os.path.join(prefix, file_attr.filename)))
                     last_modified = datetime.utcnow().timestamp()
 
                 # NB: SFTP specifies path characters to be '/'
@@ -146,10 +163,10 @@ class SFTPConnection():
     def get_files(self, prefix, search_pattern, modified_since=None, search_subdirectories=True):
         files = self.get_files_by_prefix(prefix, search_subdirectories)
         if files:
-            LOGGER.info('Found %s files in "%s"', len(files), prefix)
+            LOGGER.info('Found %s files in "%s"', len(files), _sanitize_for_log(prefix))
         else:
             LOGGER.warning(
-                'Found no files on specified SFTP server at "%s"', prefix)
+                'Found no files on specified SFTP server at "%s"', _sanitize_for_log(prefix))
 
         # for Symon import, we only import one file. search_pattern is escaped filename, force to match one file.
         matching_files = self.get_files_matching_pattern(
@@ -157,7 +174,7 @@ class SFTPConnection():
 
         if matching_files:
             LOGGER.info('Found %s files in "%s" matching "%s"',
-                        len(matching_files), prefix, search_pattern)
+                        len(matching_files), _sanitize_for_log(prefix), _sanitize_for_log(search_pattern))
         else:
             # rather than returning None, we throw error instead so we can catch it
             raise SymonException(f'Sorry, we couldn\'t find any files on specified SFTP server at "{prefix}/{search_pattern}"', 'sftp.FileNotFoundError')
@@ -166,7 +183,7 @@ class SFTPConnection():
         for f in matching_files:
             if self.is_empty(f):
                 empty_file_count += 1
-            LOGGER.info("Found file: %s", f['filepath'])
+            LOGGER.info("Found file: %s", _sanitize_for_log(f['filepath']))
 
         if empty_file_count == len(matching_files):
             raise SymonException('File is empty.', 'EmptyFile')
@@ -185,7 +202,7 @@ class SFTPConnection():
             file_size = f.get("file_size")
             if decryption_configs:
                 decrypt_remote = decryption_configs.get("decrypt_remote", True)
-                LOGGER.info(f'Decrypting file: {sftp_file_path}')
+                LOGGER.info('Decrypting file: %s', _sanitize_for_log(sftp_file_path))
                 sftp_file_name = os.path.basename(sftp_file_path)
                 original_file_name = os.path.splitext(sftp_file_name)[0]
 
@@ -246,14 +263,14 @@ class SFTPConnection():
         start_time = time.monotonic()
         LOGGER.info(
             "Detecting SFTP text file encoding: local=%s, file_size_bytes=%s",
-            local_path,
+            _sanitize_for_log(local_path),
             local_file_size
         )
         detected_encoding = find_encoding.find_encoding_v2(local_path)
         elapsed_seconds = time.monotonic() - start_time
         LOGGER.info(
             "Detected SFTP text file encoding: local=%s, encoding=%s, elapsed_seconds=%.2f",
-            local_path,
+            _sanitize_for_log(local_path),
             detected_encoding,
             elapsed_seconds
         )
@@ -263,8 +280,8 @@ class SFTPConnection():
         start_time = time.monotonic()
         LOGGER.info(
             "Downloading SFTP file with bounded Paramiko prefetch: remote=%s, local=%s, remote_size_bytes=%s, max_concurrent_prefetch_requests=%s",
-            sftp_file_path,
-            local_path,
+            _sanitize_for_log(sftp_file_path),
+            _sanitize_for_log(local_path),
             file_size,
             SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS
         )
@@ -278,7 +295,7 @@ class SFTPConnection():
         local_size = os.path.getsize(local_path)
         LOGGER.info(
             "Downloaded SFTP file: remote=%s, local_size_bytes=%s, elapsed_seconds=%.2f",
-            sftp_file_path,
+            _sanitize_for_log(sftp_file_path),
             local_size,
             elapsed_seconds
         )
@@ -325,7 +342,7 @@ class SFTPConnection():
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and a regex pattern string, and returns
             files matching that pattern. """
         matcher = re.compile(pattern)
-        LOGGER.info(f"Searching for files for matching pattern: {pattern}")
+        LOGGER.info("Searching for files for matching pattern: %s", _sanitize_for_log(pattern))
         return [f for f in files if matcher.search(os.path.basename(f["filepath"]))]
 
 
