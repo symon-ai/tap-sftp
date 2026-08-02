@@ -39,11 +39,26 @@ def get_inner_file_extension_for_pgp_file(file_path):
     return file_extension
 
 
+def _safe_output_path(out_dir, file_name):
+    # CWE-73: `file_name` is derived from user/remote-supplied SFTP filenames, so it
+    # must never be trusted to build an output path. Strip any directory components
+    # and verify the resolved path stays contained within `out_dir`, otherwise a
+    # crafted name (e.g. "../../evil" or an absolute path) could write outside out_dir.
+    safe_name = os.path.basename(file_name)
+    resolved_dir = os.path.realpath(out_dir)
+    resolved_path = os.path.realpath(os.path.join(resolved_dir, safe_name))
+    if not safe_name or safe_name in ('.', '..') or os.path.commonpath([resolved_dir, resolved_path]) != resolved_dir:
+        raise SymonException(
+            f'Oops! The file name "{file_name}" is invalid.', 'sftp.InvalidFileNameError')
+    return os.path.join(out_dir, safe_name)
+
+
 def sample_file(src_file_object, src_file_name, out_dir, max_records):
     compressed_iterables = compression.infer(src_file_object, src_file_name)
     generated_files = []
     for compressed_name, compressed_iterators in compressed_iterables:
-        local_path = f'{out_dir}/{src_file_name if (isinstance(compressed_iterators, SFTPFile) or not compressed_name) else compressed_name}'
+        chosen_name = src_file_name if (isinstance(compressed_iterators, SFTPFile) or not compressed_name) else compressed_name
+        local_path = _safe_output_path(out_dir, chosen_name)
         with open(local_path, "wb") as out_file:
             record_number = 0
             for line in compressed_iterators:
@@ -56,7 +71,7 @@ def sample_file(src_file_object, src_file_name, out_dir, max_records):
     if len(generated_files) == 1:
         return generated_files[0]
 
-    final_file = f'{out_dir}/{src_file_name}'
+    final_file = _safe_output_path(out_dir, src_file_name)
     with ZipFile(final_file, "w") as out_file:
         for path in generated_files:
             out_file.write(path)
