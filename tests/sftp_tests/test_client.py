@@ -5,6 +5,7 @@ from unittest.mock import patch, mock_open
 import pytest
 import stat
 from paramiko.sftp_attr import SFTPAttributes
+from tap_sftp.client import sanitize_for_log
 from tests.configuration.fixtures import get_sample_file_path, sftp_client, get_full_file_path, file_handle_unscoped, \
     file_handle_second_unscoped, file_handle
 
@@ -340,6 +341,45 @@ def test_get_files_matching_pattern(sftp_client):
     matched_files = sftp_client.get_files_matching_pattern(files, search_pattern)
     assert len(matched_files) == 7
     assert len([file for file in matched_files if file["id"] in [1, 2, 3, 4, 5, 7, 9]]) == 7
+
+
+def test_sanitize_for_log_neutralizes_crlf():
+    """WP-33397: CR/LF in a user-/config-controlled value must be neutralized
+    so an attacker cannot forge additional log lines (CWE-117)."""
+    tainted = "/uploads\r\nWARNING Fake forged log entry"
+    sanitized = sanitize_for_log(tainted)
+    assert "\r" not in sanitized
+    assert "\n" not in sanitized
+    # No embedded newlines means the value stays on a single log line.
+    assert len(sanitized.splitlines()) == 1
+    assert sanitized == "/uploads  WARNING Fake forged log entry"
+
+
+def test_sanitize_for_log_passes_through_clean_values():
+    """A normal prefix path is logged unchanged aside from control-char removal."""
+    assert sanitize_for_log("/data/in") == "/data/in"
+    # Non-string values are returned as-is (defensive).
+    assert sanitize_for_log(None) is None
+
+
+@patch('tap_sftp.client.SFTPConnection.get_files_by_prefix')
+@patch('tap_sftp.client.LOGGER')
+def test_get_files_sanitizes_prefix_in_no_files_warning(mock_logger, mock_get_files_by_prefix, sftp_client):
+    """WP-33397: when no files are found, the tainted `prefix` passed to
+    LOGGER.warning must be neutralized (no CR/LF) to prevent log forging."""
+    tainted_prefix = "/uploads\r\nWARNING Injected forged line"
+    mock_get_files_by_prefix.return_value = []
+    with pytest.raises(Exception):
+        # get_files raises SymonException once no matching files exist; we only
+        # care that the warning sink received a sanitized prefix.
+        sftp_client.get_files(tainted_prefix, "anything.csv")
+
+    warning_calls = [c for c in mock_logger.warning.call_args_list
+                     if 'Found no files' in c.args[0]]
+    assert len(warning_calls) == 1
+    logged_prefix = warning_calls[0].args[1]
+    assert "\r" not in logged_prefix
+    assert "\n" not in logged_prefix
 
 
 
