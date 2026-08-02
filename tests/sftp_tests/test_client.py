@@ -342,6 +342,25 @@ def test_get_files_matching_pattern(sftp_client):
     assert len([file for file in matched_files if file["id"] in [1, 2, 3, 4, 5, 7, 9]]) == 7
 
 
+def test_sanitize_for_log_neutralizes_crlf_and_control_chars():
+    """WP-33395 (CWE-117): user-supplied values embedded in log entries must
+    have CR/LF and other control characters neutralized so an attacker cannot
+    forge additional log lines via a crafted SFTP prefix / search pattern."""
+    from tap_sftp.client import sanitize_for_log
+
+    tainted_prefix = "/data\r\nINFO forged fake log entry\tinjected"
+    sanitized = sanitize_for_log(tainted_prefix)
+
+    # No carriage returns / newlines survive -> single log line.
+    assert "\r" not in sanitized
+    assert "\n" not in sanitized
+    assert "\t" not in sanitized
+    assert "\n" not in sanitized.splitlines()[0]
+    assert len(sanitized.splitlines()) == 1
+    # Control chars are replaced (not dropped), benign text preserved.
+    assert sanitized == "/data__INFO forged fake log entry_injected"
+
+
 
 
 
