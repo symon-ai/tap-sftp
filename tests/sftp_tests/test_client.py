@@ -328,6 +328,39 @@ def test_get_sampled_file_handle_for_invalid_remote_file(mock_tempfile, sftp_cli
         sftp_client.get_file_handle_for_sample(file, "", None, decryption_config)
 
 
+def test_safe_local_path_contains_normal_file(sftp_client):
+    """WP-33424 - a normal remote file resolves to a path inside the base dir."""
+    base_dir = get_full_file_path("../data")
+    sftp_path = "/sftp_path/fake_file.txt"
+    local_path = sftp_client._safe_local_path(base_dir, sftp_path)
+    assert local_path == f'{base_dir}/fake_file.txt'
+
+
+def test_safe_local_path_strips_traversal_components(sftp_client):
+    """WP-33424 - directory components smuggled into the remote filename are stripped
+    so the download path is always contained inside the base dir."""
+    base_dir = get_full_file_path("../data")
+    traversal_path = "/sftp_path/../../../../etc/passwd"
+    local_path = sftp_client._safe_local_path(base_dir, traversal_path)
+    # only the bare basename is joined onto the base dir - no escape
+    assert local_path == f'{base_dir}/passwd'
+    assert os.path.realpath(local_path).startswith(os.path.realpath(base_dir) + os.sep)
+
+
+def test_safe_local_path_rejects_escaping_symlink(sftp_client, tmp_path):
+    """WP-33424 - a resolved download path that escapes the base dir (e.g. via a
+    symlink inside it pointing outside) is rejected instead of being read."""
+    base_dir = tmp_path / "download"
+    base_dir.mkdir()
+    outside_file = tmp_path / "secret.txt"
+    outside_file.write_text("top secret")
+    # a symlink inside the base dir whose name matches the remote basename but
+    # which resolves to a file OUTSIDE the base dir
+    (base_dir / "secret.txt").symlink_to(outside_file)
+    with pytest.raises(Exception):
+        sftp_client._safe_local_path(str(base_dir), "/sftp_path/secret.txt")
+
+
 def test_get_files_matching_pattern(sftp_client):
     search_pattern = "test2(.*)"
     matched_files = sftp_client.get_files_matching_pattern(files, search_pattern)
