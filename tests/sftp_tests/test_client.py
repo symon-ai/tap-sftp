@@ -5,6 +5,7 @@ from unittest.mock import patch, mock_open
 import pytest
 import stat
 from paramiko.sftp_attr import SFTPAttributes
+from tap_sftp.client import sanitize_for_log
 from tests.configuration.fixtures import get_sample_file_path, sftp_client, get_full_file_path, file_handle_unscoped, \
     file_handle_second_unscoped, file_handle
 
@@ -386,3 +387,22 @@ def test_get_files_matching_pattern(sftp_client):
 #             mock_decrypt_to_file.assert_called_with(enc_file_handle, decryption_config.get("key"),
 #                                                         decryption_config.get("gnupghome"),
 #                                                         decryption_config.get("passphrase"), decrypt_path)
+
+
+def test_sanitize_for_log_neutralizes_crlf():
+    """WP-33401: CWE-117 log forging - CR/LF in an SFTP-supplied filepath must
+    not survive into the sanitized value used for logging."""
+    malicious = "/upload/evil.csv\r\nINFO Injected fake log line"
+    sanitized = sanitize_for_log(malicious)
+    assert '\r' not in sanitized
+    assert '\n' not in sanitized
+    assert '\\r\\n' in sanitized
+    # legitimate path characters are preserved
+    assert '/upload/evil.csv' in sanitized
+
+
+def test_sanitize_for_log_strips_control_chars_and_preserves_plain_path():
+    assert sanitize_for_log("/data/orders.csv") == "/data/orders.csv"
+    assert '\t' not in sanitize_for_log("a\tb")
+    # non-printable control char (e.g. NUL / bell) is replaced, not passed through
+    assert '\x07' not in sanitize_for_log("file\x07name")
