@@ -314,6 +314,8 @@ class SFTPConnection():
             with self.sftp.open(sftp_file_path, "rb") as sftp_file_object:
                 if decryption_configs:
                     original_file_name = os.path.splitext(sftp_file_name)[0]
+                    decrypt_target_path = self._sanitize_local_path(
+                        tmp_dir_name, f'{tmp_dir_name}/{original_file_name}')
                     sample_file = helper.load_file_decrypted(sftp_file_object,
                                                              decryption_configs.get(
                                                                  'key'),
@@ -321,7 +323,7 @@ class SFTPConnection():
                                                                  'gnupghome'),
                                                              decryption_configs.get(
                                                                  'passphrase'),
-                                                             f'{tmp_dir_name}/{original_file_name}',
+                                                             decrypt_target_path,
                                                              max_records,
                                                              decryption_configs.get('sign_key', None))
                     try:
@@ -335,6 +337,8 @@ class SFTPConnection():
                         raise Exception(
                             f'Decryption of file failed: {sftp_file_path}')
                 else:
+                    self._sanitize_local_path(
+                        tmp_dir_name, f'{tmp_dir_name}/{sftp_file_name}')
                     sample_file = helper.sample_file(
                         sftp_file_object, sftp_file_name, tmp_dir_name, max_records)
                     if file_type in ["csv", "text", "fwf"]:

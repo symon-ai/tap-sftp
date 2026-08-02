@@ -358,6 +358,55 @@ def test_sanitize_local_path_rejects_absolute_path_escape(sftp_client):
         SFTPConnection._sanitize_local_path(base_dir, "/etc/passwd")
 
 
+@patch('tap_sftp.helper.load_file_decrypted')
+@patch('paramiko.sftp_file.SFTPFile')
+@patch('tempfile.TemporaryDirectory.__enter__')
+def test_get_file_handle_for_sample_rejects_traversal_filename_encrypted(mock_tempfile, mock_sftp_file,
+                                                                         mock_load_file_decrypted, sftp_client):
+    """WP-33413 (CWE-73): the sample flow constructs the local decrypt target from
+    the user-supplied SFTP filename. A traversal-crafted filename must be rejected
+    (via _sanitize_local_path) before any decrypt/open on the filesystem, and the
+    decryption helper must never be reached."""
+    from file_processors.utils.symon_exception import SymonException
+    tmp_dir_name = get_full_file_path("../data")
+    # basename resolves to '..', so '{tmp_dir_name}/..' escapes the download dir
+    sftp_path = "/sftp_path/.."
+    mock_tempfile.return_value = tmp_dir_name
+    file = {"id": 1, "filepath": sftp_path, "last_modified": date_modified_since_oldest, "file_size": 12404}
+    decryption_config = {
+        "key": "key",
+        "sign_key": "sign_key",
+        "gnupghome": "home",
+        "passphrase": "passphrase",
+        "decrypt_remote": False
+    }
+    sftp_client.sftp.open.return_value.__enter__.return_value = mock_sftp_file
+    with pytest.raises(SymonException):
+        sftp_client.get_file_handle_for_sample(file, "text", None, decryption_config, 500)
+    mock_load_file_decrypted.assert_not_called()
+
+
+@patch('tap_sftp.helper.sample_file')
+@patch('paramiko.sftp_file.SFTPFile')
+@patch('tempfile.TemporaryDirectory.__enter__')
+def test_get_file_handle_for_sample_rejects_traversal_filename_unencrypted(mock_tempfile, mock_sftp_file,
+                                                                           mock_sample_file, sftp_client):
+    """WP-33413 (CWE-73): the unencrypted sample flow passes the user-supplied SFTP
+    filename into helper.sample_file, which builds a local path from it. A traversal-
+    crafted filename must be rejected before helper.sample_file writes to disk."""
+    from file_processors.utils.symon_exception import SymonException
+    tmp_dir_name = get_full_file_path("../data")
+    # basename resolves to '..', so '{tmp_dir_name}/..' escapes the download dir
+    sftp_path = "/sftp_path/.."
+    mock_tempfile.return_value = tmp_dir_name
+    file = {"id": 1, "filepath": sftp_path, "last_modified": date_modified_since_oldest, "file_size": 12404}
+    decryption_config = None
+    sftp_client.sftp.open.return_value.__enter__.return_value = mock_sftp_file
+    with pytest.raises(SymonException):
+        sftp_client.get_file_handle_for_sample(file, "text", None, decryption_config, 500)
+    mock_sample_file.assert_not_called()
+
+
 def test_get_files_matching_pattern(sftp_client):
     search_pattern = "test2(.*)"
     matched_files = sftp_client.get_files_matching_pattern(files, search_pattern)
