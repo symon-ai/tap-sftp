@@ -328,6 +328,36 @@ def test_get_sampled_file_handle_for_invalid_remote_file(mock_tempfile, sftp_cli
         sftp_client.get_file_handle_for_sample(file, "", None, decryption_config)
 
 
+def test_sanitize_local_path_allows_path_inside_download_dir(sftp_client):
+    """WP-33413 (CWE-73): a normal local path that resolves inside the temp
+    download directory is accepted and returned unchanged."""
+    from tap_sftp.client import SFTPConnection
+    base_dir = "/tmp/sftp_download"
+    candidate = f'{base_dir}/orders.csv'
+    assert SFTPConnection._sanitize_local_path(base_dir, candidate) == candidate
+
+
+def test_sanitize_local_path_rejects_traversal_outside_download_dir(sftp_client):
+    """WP-33413 (CWE-73): a traversal-style path that escapes the temp download
+    directory is rejected before it can reach os.path.getsize()/open()."""
+    from tap_sftp.client import SFTPConnection
+    from file_processors.utils.symon_exception import SymonException
+    base_dir = "/tmp/sftp_download"
+    candidate = f'{base_dir}/../../etc/passwd'
+    with pytest.raises(SymonException):
+        SFTPConnection._sanitize_local_path(base_dir, candidate)
+
+
+def test_sanitize_local_path_rejects_absolute_path_escape(sftp_client):
+    """WP-33413 (CWE-73): an absolute path outside the download directory is
+    rejected rather than used as a filesystem target."""
+    from tap_sftp.client import SFTPConnection
+    from file_processors.utils.symon_exception import SymonException
+    base_dir = "/tmp/sftp_download"
+    with pytest.raises(SymonException):
+        SFTPConnection._sanitize_local_path(base_dir, "/etc/passwd")
+
+
 def test_get_files_matching_pattern(sftp_client):
     search_pattern = "test2(.*)"
     matched_files = sftp_client.get_files_matching_pattern(files, search_pattern)
