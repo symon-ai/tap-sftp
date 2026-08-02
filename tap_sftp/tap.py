@@ -9,6 +9,7 @@ from file_processors.utils.np_encoder import NpEncoder  # type: ignore
 from file_processors.utils.symon_exception import SymonException # type: ignore
 from tap_sftp import discover
 from tap_sftp import sync
+from tap_sftp import helper
 
 REQUIRED_CONFIG_KEYS = ["username", "port", "host", "tables", "start_date"]
 REQUIRED_DECRYPT_CONFIG_KEYS = ['key_name']
@@ -50,8 +51,8 @@ def do_sync(config, catalog, state):
 
         for table_name, table_data in FILE_SYNC_STATS.items():
             for filepath, file_data in table_data['files'].items():
-                rows.append([table_name,
-                             filepath,
+                rows.append([helper.sanitize_for_log(table_name),
+                             helper.sanitize_for_log(filepath),
                              file_data['row_count'],
                              file_data['last_modified']])
 

@@ -35,7 +35,7 @@ def sanitize_for_log(value):
 def update_decryption_key(decryption_configs):
     storage_type = decryption_configs.get(
         'key_storage_type', 'AWS_Secrets_Manager')
-    LOGGER.info(f'Using key storage type "{storage_type}"')
+    LOGGER.info(f'Using key storage type "{sanitize_for_log(storage_type)}"')
     if storage_type == "AWS_SSM":
         decryption_configs['key'] = AWS_SSM.get_parameter_value(
             decryption_configs.get('key_name'))

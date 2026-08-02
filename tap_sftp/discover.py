@@ -18,7 +18,7 @@ def discover_streams(config):
     tables = config.get('tables')
     for table_spec in tables:
         LOGGER.info('Sampling records to determine table JSON schema "%s".',
-                    table_spec.get('table_name'))
+                    helper.sanitize_for_log(table_spec.get('table_name')))
         has_header = table_spec.get('has_header')
         files = conn.get_files(table_spec.get('search_prefix'), table_spec.get('search_pattern'),
                                search_subdirectories=False)

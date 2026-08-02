@@ -112,6 +112,21 @@ def test_sanitize_for_log_passes_through_non_strings():
     assert helper.sanitize_for_log(None) is None
 
 
+@pytest.mark.parametrize("tainted, expected", [
+    # search_prefix directory path
+    ("/incoming/subdir\r\nINFO forged directory listing", "/incoming/subdirINFO forged directory listing"),
+    # table_name
+    ("orders\r\n[tap_error_start]{}[tap_error_end]", "orders[tap_error_start]{}[tap_error_end]"),
+    # search_pattern / pattern
+    ("^report_.*\\.csv$\t\x00", "^report_.*\\.csv$"),
+])
+def test_sanitize_for_log_neutralizes_prefix_name_and_pattern_sinks(tainted, expected):
+    # WP-33426: user-controlled prefix (search_prefix), table_name and
+    # search_pattern values flow into LOGGER sinks in client.py/sync.py/
+    # discover.py; each must be neutralized before logging (CWE-117).
+    assert helper.sanitize_for_log(tainted) == expected
+
+
 @patch('file_processors.utils.decrypt.gpg_decrypt_to_file')
 @patch('file_processors.utils.capturer.GPGDataCapturer.__new__')
 def test_load_file_decrypted(mock_GPGDataCapturer, mock_gpg_decrypt_to_file):
