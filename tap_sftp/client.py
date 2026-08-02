@@ -20,12 +20,48 @@ logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 SFTP_TRANSPORT_WINDOW_SIZE = 2 * 1024 * 1024
 SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS = 256
 
+# Base directory the user-supplied private key file must resolve within.
+# Defaults to the invoking user's home directory (matching the historical
+# os.path.expanduser semantics), and can be overridden by the deployment via
+# the TAP_SFTP_PRIVATE_KEY_DIR environment variable when keys are staged
+# elsewhere. Used to constrain external control of the key file path (CWE-73).
+PRIVATE_KEY_ALLOWED_DIR = os.environ.get("TAP_SFTP_PRIVATE_KEY_DIR") or "~"
+
 
 def handle_backoff(details):
     LOGGER.warn(
         "SSH Connection closed unexpectedly. Waiting {wait} seconds and retrying...".format(
             **details)
     )
+
+
+def validate_private_key_file(private_key_file):
+    """Centralized validation of the user-supplied private key file path.
+
+    Prevents external control of file name / path (CWE-73) by rejecting
+    malformed / traversal input and confining the resolved path to an
+    expected, safe base directory before it is used to open a file.
+    Returns the validated, canonical absolute path.
+    """
+    if not isinstance(private_key_file, str) or not private_key_file.strip():
+        raise SymonException(
+            'The provided private key file path is invalid.', 'sftp.InvalidPrivateKeyFile')
+
+    # Null bytes can truncate the path at the OS layer, bypassing checks.
+    if '\x00' in private_key_file:
+        raise SymonException(
+            'The provided private key file path is invalid.', 'sftp.InvalidPrivateKeyFile')
+
+    allowed_dir = os.path.realpath(os.path.expanduser(PRIVATE_KEY_ALLOWED_DIR))
+    resolved_path = os.path.realpath(os.path.expanduser(private_key_file))
+
+    # Reject any path that resolves outside the allowed base directory
+    # (e.g. via "../" traversal or absolute paths to sensitive files).
+    if os.path.commonpath([resolved_path, allowed_dir]) != allowed_dir:
+        raise SymonException(
+            'The provided private key file path is not allowed.', 'sftp.InvalidPrivateKeyFile')
+
+    return resolved_path
 
 
 class SFTPConnection():
@@ -40,7 +76,7 @@ class SFTPConnection():
         self.retries = 5
         self.__sftp = None
         if private_key_file:
-            key_path = os.path.expanduser(private_key_file)
+            key_path = validate_private_key_file(private_key_file)
             self.key = paramiko.RSAKey.from_private_key_file(key_path)
 
     # If connection is snapped during connect flow, retry up to a

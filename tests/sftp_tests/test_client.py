@@ -5,6 +5,9 @@ from unittest.mock import patch, mock_open
 import pytest
 import stat
 from paramiko.sftp_attr import SFTPAttributes
+from file_processors.utils.symon_exception import SymonException
+from tap_sftp import client as sftp_client_module
+from tap_sftp.client import SFTPConnection, validate_private_key_file
 from tests.configuration.fixtures import get_sample_file_path, sftp_client, get_full_file_path, file_handle_unscoped, \
     file_handle_second_unscoped, file_handle
 
@@ -340,6 +343,55 @@ def test_get_files_matching_pattern(sftp_client):
     matched_files = sftp_client.get_files_matching_pattern(files, search_pattern)
     assert len(matched_files) == 7
     assert len([file for file in matched_files if file["id"] in [1, 2, 3, 4, 5, 7, 9]]) == 7
+
+
+@pytest.mark.parametrize("malicious_key_file", [
+    "../../../../etc/passwd",
+    "/etc/passwd",
+    "~/../../etc/shadow",
+    "keys/../../../etc/passwd",
+])
+@patch('paramiko.RSAKey.from_private_key_file')
+def test_private_key_file_traversal_is_rejected(mock_from_private_key_file, malicious_key_file, tmp_path, monkeypatch):
+    """Testing scenario -
+            CWE-73: a private_key_file that resolves outside the allowed key directory (via path
+            traversal or an absolute path to a sensitive file) must be rejected with a SymonException
+            and must never reach paramiko.RSAKey.from_private_key_file."""
+    monkeypatch.setattr(sftp_client_module, 'PRIVATE_KEY_ALLOWED_DIR', str(tmp_path))
+    with pytest.raises(SymonException) as exc_info:
+        SFTPConnection('host', 'user', private_key_file=malicious_key_file)
+    assert exc_info.value.code == 'sftp.InvalidPrivateKeyFile'
+    mock_from_private_key_file.assert_not_called()
+
+
+@patch('paramiko.RSAKey.from_private_key_file')
+def test_private_key_file_within_allowed_dir_is_accepted(mock_from_private_key_file, tmp_path, monkeypatch):
+    """Testing scenario -
+            CWE-73: a normal private_key_file located inside the allowed key directory is validated,
+            canonicalized, and passed through to paramiko.RSAKey.from_private_key_file."""
+    monkeypatch.setattr(sftp_client_module, 'PRIVATE_KEY_ALLOWED_DIR', str(tmp_path))
+    key_file = tmp_path / "id_rsa"
+    key_file.write_text("dummy-key")
+    sentinel_key = object()
+    mock_from_private_key_file.return_value = sentinel_key
+
+    conn = SFTPConnection('host', 'user', private_key_file=str(key_file))
+
+    expected_path = os.path.realpath(str(key_file))
+    mock_from_private_key_file.assert_called_once_with(expected_path)
+    assert conn.key is sentinel_key
+
+
+@patch('paramiko.RSAKey.from_private_key_file')
+def test_private_key_file_null_byte_is_rejected(mock_from_private_key_file, tmp_path, monkeypatch):
+    """Testing scenario -
+            CWE-73: a private_key_file containing a null byte (used to truncate the path at the OS
+            layer and bypass validation) must be rejected with a SymonException."""
+    monkeypatch.setattr(sftp_client_module, 'PRIVATE_KEY_ALLOWED_DIR', str(tmp_path))
+    with pytest.raises(SymonException) as exc_info:
+        validate_private_key_file(f"{tmp_path}/id_rsa\x00.txt")
+    assert exc_info.value.code == 'sftp.InvalidPrivateKeyFile'
+    mock_from_private_key_file.assert_not_called()
 
 
 
