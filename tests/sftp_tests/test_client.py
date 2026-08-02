@@ -5,6 +5,7 @@ from unittest.mock import patch, mock_open
 import pytest
 import stat
 from paramiko.sftp_attr import SFTPAttributes
+from file_processors.utils.symon_exception import SymonException
 from tests.configuration.fixtures import get_sample_file_path, sftp_client, get_full_file_path, file_handle_unscoped, \
     file_handle_second_unscoped, file_handle
 
@@ -326,6 +327,38 @@ def test_get_sampled_file_handle_for_invalid_remote_file(mock_tempfile, sftp_cli
 
     with pytest.raises(Exception):
         sftp_client.get_file_handle_for_sample(file, "", None, decryption_config)
+
+
+def test_safe_local_path_allows_normal_filename(sftp_client, tmp_path):
+    """WP-33406 (CWE-73): a legitimate remote filename must resolve to a path
+    inside the temp directory, preserving existing behavior."""
+    tmp_dir_name = str(tmp_path)
+    local_path = sftp_client._safe_local_path(tmp_dir_name, "/sftp_path/orders.csv")
+    assert local_path == os.path.join(tmp_dir_name, "orders.csv")
+    assert os.path.realpath(local_path).startswith(os.path.realpath(tmp_dir_name))
+
+
+@pytest.mark.parametrize("malicious_name", [
+    "../../etc/passwd",
+    "../secret.csv",
+    "foo/../../bar.csv",
+])
+def test_safe_local_path_neutralizes_traversal(sftp_client, tmp_path, malicious_name):
+    """WP-33406 (CWE-73): traversal-style remote names must be neutralized to a
+    plain basename anchored inside the temp directory - they must never escape it."""
+    tmp_dir_name = str(tmp_path)
+    local_path = sftp_client._safe_local_path(tmp_dir_name, malicious_name)
+    tmp_dir_real = os.path.realpath(tmp_dir_name)
+    assert os.path.commonpath([tmp_dir_real, os.path.realpath(local_path)]) == tmp_dir_real
+    assert os.sep not in os.path.relpath(local_path, tmp_dir_name)
+
+
+@pytest.mark.parametrize("malicious_name", ["..", ".", ""])
+def test_safe_local_path_rejects_invalid_names(sftp_client, tmp_path, malicious_name):
+    """WP-33406 (CWE-73): empty / '.' / '..' derived names must be rejected
+    rather than producing a bogus local path."""
+    with pytest.raises(SymonException):
+        sftp_client._safe_local_path(str(tmp_path), malicious_name)
 
 
 def test_get_files_matching_pattern(sftp_client):

@@ -177,17 +177,45 @@ class SFTPConnection():
 
         return matching_files
 
+    @staticmethod
+    def _safe_local_path(tmp_dir_name, remote_name):
+        """Build a local destination path inside ``tmp_dir_name`` from a remote,
+        user-influenced filename, guarding against path manipulation / traversal
+        (CWE-73). Only the basename component is used, empty / '.' / '..' /
+        separator-bearing names are rejected, and the resolved path is asserted to
+        stay within ``tmp_dir_name`` before it is ever handed to open() / sftp.get()
+        / os.path.getsize(). Behavior is identical for legitimate filenames."""
+        file_name = os.path.basename(remote_name)
+        if (
+            not file_name
+            or file_name in ('.', '..')
+            or os.sep in file_name
+            or (os.altsep and os.altsep in file_name)
+        ):
+            raise SymonException(
+                f'Invalid file name derived from remote path: {remote_name}',
+                'sftp.InvalidFilePath')
+        local_path = os.path.join(tmp_dir_name, file_name)
+        tmp_dir_real = os.path.realpath(tmp_dir_name)
+        local_path_real = os.path.realpath(local_path)
+        if os.path.commonpath([tmp_dir_real, local_path_real]) != tmp_dir_real:
+            raise SymonException(
+                f'Resolved file path escapes the temporary directory: {remote_name}',
+                'sftp.InvalidFilePath')
+        return local_path
+
     def get_file_handle(self, f, file_type, encoding, decryption_configs=None):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and returns a handle to the file. """
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             sftp_file_path = f["filepath"]
-            local_path = f'{tmp_dir_name}/{os.path.basename(sftp_file_path)}'
+            local_path = self._safe_local_path(tmp_dir_name, sftp_file_path)
             file_size = f.get("file_size")
             if decryption_configs:
                 decrypt_remote = decryption_configs.get("decrypt_remote", True)
                 LOGGER.info(f'Decrypting file: {sftp_file_path}')
                 sftp_file_name = os.path.basename(sftp_file_path)
                 original_file_name = os.path.splitext(sftp_file_name)[0]
+                decrypt_local_path = self._safe_local_path(tmp_dir_name, original_file_name)
 
                 if not decrypt_remote:
                     self._download_file_with_bounded_prefetch(sftp_file_path, local_path, file_size)
@@ -199,7 +227,7 @@ class SFTPConnection():
                                                                        'gnupghome'),
                                                                    decryption_configs.get(
                                                                        'passphrase'),
-                                                                   f'{tmp_dir_name}/{original_file_name}',
+                                                                   decrypt_local_path,
                                                                    None,
                                                                    decryption_configs.get('sign_key', None)
                                                                    )
@@ -213,7 +241,7 @@ class SFTPConnection():
                                                                       'gnupghome'),
                                                                   decryption_configs.get(
                                                                       'passphrase'),
-                                                                  f'{tmp_dir_name}/{original_file_name}',
+                                                                  decrypt_local_path,
                                                                   None,
                                                                   decryption_configs.get('sign_key', None))
                 try:
@@ -287,10 +315,15 @@ class SFTPConnection():
         enc = encoding
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             sftp_file_path = f["filepath"]
-            sftp_file_name = os.path.basename(sftp_file_path)
+            # Validate/anchor the derived local file name inside tmp_dir_name to
+            # guard against path manipulation / traversal (CWE-73) before it is
+            # used in any open() / write sink.
+            safe_local_path = self._safe_local_path(tmp_dir_name, sftp_file_path)
+            sftp_file_name = os.path.basename(safe_local_path)
             with self.sftp.open(sftp_file_path, "rb") as sftp_file_object:
                 if decryption_configs:
                     original_file_name = os.path.splitext(sftp_file_name)[0]
+                    decrypt_local_path = self._safe_local_path(tmp_dir_name, original_file_name)
                     sample_file = helper.load_file_decrypted(sftp_file_object,
                                                              decryption_configs.get(
                                                                  'key'),
@@ -298,7 +331,7 @@ class SFTPConnection():
                                                                  'gnupghome'),
                                                              decryption_configs.get(
                                                                  'passphrase'),
-                                                             f'{tmp_dir_name}/{original_file_name}',
+                                                             decrypt_local_path,
                                                              max_records,
                                                              decryption_configs.get('sign_key', None))
                     try:
