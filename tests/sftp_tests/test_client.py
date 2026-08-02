@@ -5,6 +5,7 @@ from unittest.mock import patch, mock_open
 import pytest
 import stat
 from paramiko.sftp_attr import SFTPAttributes
+from tap_sftp.client import sanitize_for_log
 from tests.configuration.fixtures import get_sample_file_path, sftp_client, get_full_file_path, file_handle_unscoped, \
     file_handle_second_unscoped, file_handle
 
@@ -340,6 +341,46 @@ def test_get_files_matching_pattern(sftp_client):
     matched_files = sftp_client.get_files_matching_pattern(files, search_pattern)
     assert len(matched_files) == 7
     assert len([file for file in matched_files if file["id"] in [1, 2, 3, 4, 5, 7, 9]]) == 7
+
+
+@pytest.mark.parametrize("dirty,expected", [
+    ("normal_file.csv", "normal_file.csv"),
+    ("evil\r\nINFO forged log entry.csv", "evil\\x0d\\x0aINFO forged log entry.csv"),
+    ("evil\nINJECTED.csv", "evil\\x0aINJECTED.csv"),
+    ("evil\ttab.csv", "evil\\x09tab.csv"),
+    ("evil\x00null.csv", "evil\\x00null.csv"),
+])
+def test_sanitize_for_log_neutralizes_control_chars(dirty, expected):
+    """CWE-117 regression: sanitize_for_log must neutralize CR/LF and other control
+    characters so a remote-supplied filename cannot forge or inject log records."""
+    sanitized = sanitize_for_log(dirty)
+    assert "\r" not in sanitized
+    assert "\n" not in sanitized
+    assert sanitized == expected
+
+
+def test_get_files_by_prefix_sanitizes_missing_mtime_log(sftp_client):
+    """CWE-117 regression: when m_time is missing, the warning at client.py:134 must
+    log the remote filename with CR/LF neutralized (no un-neutralized newline reaches
+    the logger)."""
+    prefix = "/Data"
+    malicious: SFTPAttributes = SFTPAttributes()
+    malicious.filename = "evil\r\nINFO forged admin login.csv"
+    malicious.st_size = 10
+    malicious.st_mode = stat.S_IFREG
+    malicious.st_mtime = None
+
+    sftp_client.sftp.listdir_attr.return_value = [malicious]
+
+    with patch('tap_sftp.client.LOGGER') as mock_logger:
+        sftp_client.get_files_by_prefix(prefix)
+        warning_calls = [c for c in mock_logger.warning.call_args_list
+                         if c.args and "Cannot read m_time" in c.args[0]]
+        assert len(warning_calls) == 1
+        logged_value = warning_calls[0].args[1]
+        assert "\r" not in logged_value
+        assert "\n" not in logged_value
+        assert logged_value == "/Data/evil\\x0d\\x0aINFO forged admin login.csv"
 
 
 

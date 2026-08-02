@@ -20,6 +20,20 @@ logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 SFTP_TRANSPORT_WINDOW_SIZE = 2 * 1024 * 1024
 SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS = 256
 
+# Control characters (including CR/LF) present in remote-supplied filenames or
+# paths can be used to forge or inject log records (CWE-117). Neutralize them
+# before embedding untrusted values in log messages.
+_LOG_CONTROL_CHAR_RE = re.compile(r'[\x00-\x1f\x7f-\x9f]')
+
+
+def sanitize_for_log(value):
+    """Neutralize CR/LF and other control characters in an untrusted value so it
+    cannot forge or inject log records (CWE-117) when written to a log."""
+    if not isinstance(value, str):
+        value = str(value)
+    return _LOG_CONTROL_CHAR_RE.sub(
+        lambda match: '\\x{:02x}'.format(ord(match.group())), value)
+
 
 def handle_backoff(details):
     LOGGER.warn(
@@ -132,7 +146,7 @@ class SFTPConnection():
                 last_modified = file_attr.st_mtime
                 if last_modified is None:
                     LOGGER.warning("Cannot read m_time for file %s, defaulting to current epoch time",
-                                   os.path.join(prefix, file_attr.filename))
+                                   sanitize_for_log(os.path.join(prefix, file_attr.filename)))
                     last_modified = datetime.utcnow().timestamp()
 
                 # NB: SFTP specifies path characters to be '/'
@@ -166,7 +180,7 @@ class SFTPConnection():
         for f in matching_files:
             if self.is_empty(f):
                 empty_file_count += 1
-            LOGGER.info("Found file: %s", f['filepath'])
+            LOGGER.info("Found file: %s", sanitize_for_log(f['filepath']))
 
         if empty_file_count == len(matching_files):
             raise SymonException('File is empty.', 'EmptyFile')
