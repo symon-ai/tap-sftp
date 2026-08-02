@@ -1,3 +1,4 @@
+import logging
 import os.path
 from datetime import datetime
 import time
@@ -5,6 +6,7 @@ from unittest.mock import patch, mock_open
 import pytest
 import stat
 from paramiko.sftp_attr import SFTPAttributes
+from tap_sftp.client import _sanitize_for_log
 from tests.configuration.fixtures import get_sample_file_path, sftp_client, get_full_file_path, file_handle_unscoped, \
     file_handle_second_unscoped, file_handle
 
@@ -340,6 +342,64 @@ def test_get_files_matching_pattern(sftp_client):
     matched_files = sftp_client.get_files_matching_pattern(files, search_pattern)
     assert len(matched_files) == 7
     assert len([file for file in matched_files if file["id"] in [1, 2, 3, 4, 5, 7, 9]]) == 7
+
+
+def test_sanitize_for_log_neutralizes_crlf_and_control_chars():
+    """WP-33404: CWE-117 log forging - CR/LF and control characters in a
+    remote-controlled path must be neutralized so they cannot forge log
+    entries, while the path stays human-readable."""
+    tainted = "/uploads/evil.csv\r\nINFO forged log entry\tmore\x00end"
+    sanitized = _sanitize_for_log(tainted)
+    assert "\r" not in sanitized
+    assert "\n" not in sanitized
+    assert "\t" not in sanitized
+    assert "\x00" not in sanitized
+    # escaped forms are preserved so the message remains meaningful
+    assert "\\r\\n" in sanitized
+    assert sanitized.startswith("/uploads/evil.csv")
+    assert "forged log entry" in sanitized
+
+
+def test_sanitize_for_log_preserves_clean_path():
+    """A benign path is logged unchanged."""
+    clean = "/test_tmp/bin/orders.csv"
+    assert _sanitize_for_log(clean) == clean
+
+
+@patch('tap_sftp.helper.load_file_decrypted')
+@patch('paramiko.sftp_file.SFTPFile')
+@patch('tempfile.TemporaryDirectory.__enter__')
+def test_get_file_handle_sanitizes_decrypt_log(mock_tempfile, mock_sftp_file,
+                                               mock_load_file_decrypted, sftp_client, caplog):
+    """WP-33404: the 'Decrypting file' log line must not contain raw CR/LF from
+    an attacker-controlled remote file path (CWE-117)."""
+    prefix = "/sftp_path"
+    tmp_dir_name = get_full_file_path("../data")
+    file_name = "fake_file.txt.pgp\r\nINJECTED forged entry"
+    sftp_path = f'{prefix}/{file_name}'
+    decrypt_path = f'{tmp_dir_name}/fake_file.txt'
+    mock_tempfile.return_value = tmp_dir_name
+    file = {"id": 1, "filepath": sftp_path, "last_modified": date_modified_since_oldest, "file_size": 12404}
+    decryption_config = {
+        "key": "key",
+        "sign_key": "sign_key",
+        "gnupghome": "home",
+        "passphrase": "passphrase",
+        "decrypt_remote": True
+    }
+    sftp_client.sftp.open.return_value.__enter__.return_value = mock_sftp_file
+    mock_load_file_decrypted.return_value = decrypt_path
+
+    with caplog.at_level(logging.INFO):
+        with sftp_client.get_file_handle(file, "csv", None, decryption_config):
+            pass
+
+    decrypt_messages = [r.getMessage() for r in caplog.records if 'Decrypting file' in r.getMessage()]
+    assert decrypt_messages, "expected a 'Decrypting file' log record"
+    for message in decrypt_messages:
+        assert "\r" not in message
+        assert "\n" not in message
+        assert "INJECTED forged entry" in message  # still conveyed, but escaped
 
 
 

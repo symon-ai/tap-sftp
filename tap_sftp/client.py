@@ -21,6 +21,17 @@ SFTP_TRANSPORT_WINDOW_SIZE = 2 * 1024 * 1024
 SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS = 256
 
 
+def _sanitize_for_log(value):
+    """Neutralize CR/LF and other control characters in externally-controlled
+    values (e.g. remote SFTP file paths) before writing them to logs, so a
+    crafted path cannot forge or inject log entries (CWE-117)."""
+    return re.sub(
+        r'[\x00-\x1f\x7f-\x9f]',
+        lambda m: m.group(0).encode('unicode_escape').decode('ascii'),
+        str(value),
+    )
+
+
 def handle_backoff(details):
     LOGGER.warn(
         "SSH Connection closed unexpectedly. Waiting {wait} seconds and retrying...".format(
@@ -185,7 +196,7 @@ class SFTPConnection():
             file_size = f.get("file_size")
             if decryption_configs:
                 decrypt_remote = decryption_configs.get("decrypt_remote", True)
-                LOGGER.info(f'Decrypting file: {sftp_file_path}')
+                LOGGER.info(f'Decrypting file: {_sanitize_for_log(sftp_file_path)}')
                 sftp_file_name = os.path.basename(sftp_file_path)
                 original_file_name = os.path.splitext(sftp_file_name)[0]
 
