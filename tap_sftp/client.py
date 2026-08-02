@@ -132,7 +132,7 @@ class SFTPConnection():
                 last_modified = file_attr.st_mtime
                 if last_modified is None:
                     LOGGER.warning("Cannot read m_time for file %s, defaulting to current epoch time",
-                                   os.path.join(prefix, file_attr.filename))
+                                   helper.sanitize_for_log(os.path.join(prefix, file_attr.filename)))
                     last_modified = datetime.utcnow().timestamp()
 
                 # NB: SFTP specifies path characters to be '/'
@@ -166,7 +166,7 @@ class SFTPConnection():
         for f in matching_files:
             if self.is_empty(f):
                 empty_file_count += 1
-            LOGGER.info("Found file: %s", f['filepath'])
+            LOGGER.info("Found file: %s", helper.sanitize_for_log(f['filepath']))
 
         if empty_file_count == len(matching_files):
             raise SymonException('File is empty.', 'EmptyFile')
@@ -185,7 +185,7 @@ class SFTPConnection():
             file_size = f.get("file_size")
             if decryption_configs:
                 decrypt_remote = decryption_configs.get("decrypt_remote", True)
-                LOGGER.info(f'Decrypting file: {sftp_file_path}')
+                LOGGER.info('Decrypting file: %s', helper.sanitize_for_log(sftp_file_path))
                 sftp_file_name = os.path.basename(sftp_file_path)
                 original_file_name = os.path.splitext(sftp_file_name)[0]
 
@@ -246,14 +246,14 @@ class SFTPConnection():
         start_time = time.monotonic()
         LOGGER.info(
             "Detecting SFTP text file encoding: local=%s, file_size_bytes=%s",
-            local_path,
+            helper.sanitize_for_log(local_path),
             local_file_size
         )
         detected_encoding = find_encoding.find_encoding_v2(local_path)
         elapsed_seconds = time.monotonic() - start_time
         LOGGER.info(
             "Detected SFTP text file encoding: local=%s, encoding=%s, elapsed_seconds=%.2f",
-            local_path,
+            helper.sanitize_for_log(local_path),
             detected_encoding,
             elapsed_seconds
         )
@@ -263,8 +263,8 @@ class SFTPConnection():
         start_time = time.monotonic()
         LOGGER.info(
             "Downloading SFTP file with bounded Paramiko prefetch: remote=%s, local=%s, remote_size_bytes=%s, max_concurrent_prefetch_requests=%s",
-            sftp_file_path,
-            local_path,
+            helper.sanitize_for_log(sftp_file_path),
+            helper.sanitize_for_log(local_path),
             file_size,
             SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS
         )
@@ -278,7 +278,7 @@ class SFTPConnection():
         local_size = os.path.getsize(local_path)
         LOGGER.info(
             "Downloaded SFTP file: remote=%s, local_size_bytes=%s, elapsed_seconds=%.2f",
-            sftp_file_path,
+            helper.sanitize_for_log(sftp_file_path),
             local_size,
             elapsed_seconds
         )

@@ -91,7 +91,7 @@ def matches_key(table_config, key, dynamic):
 
 def sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats, has_header):
     file_path = file["filepath"]
-    LOGGER.info('Syncing file "%s".', file_path)
+    LOGGER.info('Syncing file "%s".', helper.sanitize_for_log(file_path))
     sftp_client = client.connection(config)
     decryption_configs = config.get('decryption_configs')
     file_type = table_spec.get('file_type').lower()

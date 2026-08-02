@@ -1,6 +1,7 @@
 import singer  # type: ignore
 import json
 import os
+import re
 import base64
 from file_processors.utils import compression  # type: ignore
 from zipfile import ZipFile
@@ -13,6 +14,22 @@ from file_processors.utils.symon_exception import SymonException  # type: ignore
 from tap_sftp import defaults  # type: ignore
 
 LOGGER = singer.get_logger()
+
+# Matches CR, LF and other ASCII/Unicode control characters that could be used
+# to forge or inject log entries (CWE-117 log forging / log injection).
+_CONTROL_CHAR_RE = re.compile(r'[\r\n\t\x00-\x1f\x7f-\x9f]')
+
+
+def sanitize_for_log(value):
+    """Neutralize user-controlled values before writing them to logs.
+
+    Strips CR/LF and other control characters so an attacker-supplied SFTP
+    file path/name cannot forge log entries or inject content (CWE-117).
+    Non-string values are returned unchanged.
+    """
+    if not isinstance(value, str):
+        return value
+    return _CONTROL_CHAR_RE.sub('', value)
 
 
 def update_decryption_key(decryption_configs):
