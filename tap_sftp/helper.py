@@ -39,11 +39,34 @@ def get_inner_file_extension_for_pgp_file(file_path):
     return file_extension
 
 
+def contain_path_within_dir(out_dir, untrusted_name):
+    """Build a destination path inside ``out_dir`` for an untrusted file name.
+
+    Remediates CWE-73 (external control of file name/path). ``untrusted_name``
+    originates from remote SFTP directory listings and archive member names,
+    so it may contain ``../`` segments or an absolute path. Only the base name
+    is used and the resolved path is verified to stay within ``out_dir``; any
+    attempt to escape ``out_dir`` is rejected.
+    """
+    safe_name = os.path.basename(untrusted_name)
+    if not safe_name or safe_name in ('.', '..'):
+        raise SymonException(
+            'Oops! The file name is invalid.', 'sftp.InvalidFileNameError')
+    out_dir_real = os.path.realpath(out_dir)
+    local_path = os.path.realpath(os.path.join(out_dir_real, safe_name))
+    if os.path.commonpath([out_dir_real, local_path]) != out_dir_real:
+        raise SymonException(
+            'Oops! The file name is invalid.', 'sftp.InvalidFileNameError')
+    return local_path
+
+
 def sample_file(src_file_object, src_file_name, out_dir, max_records):
     compressed_iterables = compression.infer(src_file_object, src_file_name)
     generated_files = []
     for compressed_name, compressed_iterators in compressed_iterables:
-        local_path = f'{out_dir}/{src_file_name if (isinstance(compressed_iterators, SFTPFile) or not compressed_name) else compressed_name}'
+        untrusted_name = src_file_name if (isinstance(
+            compressed_iterators, SFTPFile) or not compressed_name) else compressed_name
+        local_path = contain_path_within_dir(out_dir, untrusted_name)
         with open(local_path, "wb") as out_file:
             record_number = 0
             for line in compressed_iterators:
@@ -56,7 +79,7 @@ def sample_file(src_file_object, src_file_name, out_dir, max_records):
     if len(generated_files) == 1:
         return generated_files[0]
 
-    final_file = f'{out_dir}/{src_file_name}'
+    final_file = contain_path_within_dir(out_dir, src_file_name)
     with ZipFile(final_file, "w") as out_file:
         for path in generated_files:
             out_file.write(path)
