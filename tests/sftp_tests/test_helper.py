@@ -89,6 +89,42 @@ def test_sample_file_for_compressed_file(mock_compression_infer, mock_open_file,
     assert mock_ZipFile.return_value.__enter__().write.call_count == 2
 
 
+@pytest.mark.parametrize("malicious_name", ["../../evil.csv", "/etc/passwd", "../evil.zip"])
+@pytest.mark.parametrize("file_handle", ["../data/fake_file.txt"], indirect=True)
+@patch('builtins.open')
+@patch('file_processors.utils.compression.infer')
+def test_sample_file_traversal_name_stays_inside_out_dir(mock_compression_infer, mock_open_file, file_handle, malicious_name):
+    # WP-33380 (CWE-73): a traversal / absolute src_file_name must not escape out_dir.
+    # The sanitized output path is always contained within out_dir (single generated
+    # file returns the local write path).
+    import os
+    src_file_object = None
+    mock_compression_infer.return_value = [('', file_handle)]
+    out_dir = "/test_tmp/bin"
+    max_records = 1
+    result_file = helper.sample_file(
+        src_file_object, malicious_name, out_dir, max_records)
+    resolved_dir = os.path.realpath(out_dir)
+    resolved_path = os.path.realpath(result_file)
+    assert os.path.commonpath([resolved_dir, resolved_path]) == resolved_dir
+    assert os.path.dirname(resolved_path) == resolved_dir
+
+
+@pytest.mark.parametrize("bad_name", ["..", ".", ""])
+@pytest.mark.parametrize("file_handle", ["../data/fake_file.txt"], indirect=True)
+@patch('builtins.open')
+@patch('file_processors.utils.compression.infer')
+def test_sample_file_rejects_degenerate_name(mock_compression_infer, mock_open_file, file_handle, bad_name):
+    # WP-33380 (CWE-73): a name that resolves to no real file (".", "..", "") is rejected.
+    from file_processors.utils.symon_exception import SymonException  # type: ignore
+    src_file_object = None
+    mock_compression_infer.return_value = [('', file_handle)]
+    out_dir = "/test_tmp/bin"
+    max_records = 1
+    with pytest.raises(SymonException):
+        helper.sample_file(src_file_object, bad_name, out_dir, max_records)
+
+
 def test_get_inner_file_extension_for_pgp_file():
     file_path = '/test_tmp/bin/test1.csv.pgp'
     extension = helper.get_inner_file_extension_for_pgp_file(file_path)
