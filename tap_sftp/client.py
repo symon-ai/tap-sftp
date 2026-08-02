@@ -301,6 +301,9 @@ class SFTPConnection():
                                                              f'{tmp_dir_name}/{original_file_name}',
                                                              max_records,
                                                              decryption_configs.get('sign_key', None))
+                    # CWE-73: sample_file is built from the remote (user-supplied)
+                    # filepath; ensure it stays inside the temp dir before open().
+                    sample_file = helper.ensure_path_within_directory(sample_file, tmp_dir_name)
                     try:
                         if file_type in ["csv", "text", "fwf"]:
                             if not encoding:
@@ -314,6 +317,9 @@ class SFTPConnection():
                 else:
                     sample_file = helper.sample_file(
                         sftp_file_object, sftp_file_name, tmp_dir_name, max_records)
+                    # CWE-73: sample_file is built from the remote (user-supplied)
+                    # filepath; ensure it stays inside the temp dir before open().
+                    sample_file = helper.ensure_path_within_directory(sample_file, tmp_dir_name)
                     if file_type in ["csv", "text", "fwf"]:
                         if not encoding:
                             enc = find_encoding.find_encoding_v2(sample_file)

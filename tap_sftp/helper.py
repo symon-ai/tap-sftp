@@ -39,6 +39,25 @@ def get_inner_file_extension_for_pgp_file(file_path):
     return file_extension
 
 
+def ensure_path_within_directory(path, directory):
+    """Validate that ``path`` resolves to a location inside ``directory``.
+
+    Centralized guard against CWE-73 path manipulation: filenames used to build
+    local sample/decrypt paths are derived from the remote (user-supplied) SFTP
+    filepath, so a crafted name containing traversal sequences (e.g. ``../``)
+    could otherwise escape the intended temporary directory before ``open()``.
+    Returns the resolved (real) path when it is safely contained; otherwise
+    raises ``SymonException``.
+    """
+    real_directory = os.path.realpath(directory)
+    real_path = os.path.realpath(path)
+    if os.path.commonpath([real_directory, real_path]) != real_directory:
+        raise SymonException(
+            'Invalid file path detected. The resolved file path escapes the intended directory.',
+            'sftp.InvalidFilePath')
+    return real_path
+
+
 def sample_file(src_file_object, src_file_name, out_dir, max_records):
     compressed_iterables = compression.infer(src_file_object, src_file_name)
     generated_files = []

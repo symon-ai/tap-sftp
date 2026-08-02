@@ -1,7 +1,9 @@
+import os
 from unittest.mock import patch, mock_open, Mock
 from tap_sftp import helper
 import pytest
 from tests.configuration.fixtures import sftp_client, file_handle, file_handle_second
+from file_processors.utils.symon_exception import SymonException  # type: ignore
 import singer  # type: ignore
 import json
 import base64
@@ -87,6 +89,25 @@ def test_sample_file_for_compressed_file(mock_compression_infer, mock_open_file,
     assert result_file == file_path
     assert mock_open_file.return_value.__enter__().write.call_count == 4
     assert mock_ZipFile.return_value.__enter__().write.call_count == 2
+
+
+def test_ensure_path_within_directory_allows_contained_path(tmp_path):
+    """WP-33429 CWE-73: a normal filename inside the temp dir is accepted and
+    the resolved (real) path is returned."""
+    directory = str(tmp_path)
+    contained = os.path.join(directory, "orders.csv")
+    result = helper.ensure_path_within_directory(contained, directory)
+    assert result == os.path.realpath(contained)
+
+
+def test_ensure_path_within_directory_rejects_traversal(tmp_path):
+    """WP-33429 CWE-73: a filename with ../ traversal that escapes the temp dir
+    is rejected before it can reach open()."""
+    directory = str(tmp_path)
+    traversal = os.path.join(directory, "..", "..", "etc", "passwd")
+    with pytest.raises(SymonException) as exc_info:
+        helper.ensure_path_within_directory(traversal, directory)
+    assert exc_info.value.code == 'sftp.InvalidFilePath'
 
 
 def test_get_inner_file_extension_for_pgp_file():
