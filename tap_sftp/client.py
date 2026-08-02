@@ -20,6 +20,18 @@ logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 SFTP_TRANSPORT_WINDOW_SIZE = 2 * 1024 * 1024
 SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS = 256
 
+# CWE-117 (log forging): neutralize CR/LF and other control characters in
+# user-supplied values (e.g. SFTP directory prefix, filename search pattern)
+# before they are embedded in log entries.
+_LOG_CONTROL_CHARS = re.compile(r'[\x00-\x1f\x7f]')
+
+
+def sanitize_for_log(value):
+    """Return a single-line, control-char-free representation of ``value`` safe
+    to embed in a log entry. Replaces CR, LF, and other non-printable control
+    characters (which could otherwise be used to forge log lines) with '_'."""
+    return _LOG_CONTROL_CHARS.sub('_', str(value))
+
 
 def handle_backoff(details):
     LOGGER.warn(
@@ -132,7 +144,7 @@ class SFTPConnection():
                 last_modified = file_attr.st_mtime
                 if last_modified is None:
                     LOGGER.warning("Cannot read m_time for file %s, defaulting to current epoch time",
-                                   os.path.join(prefix, file_attr.filename))
+                                   sanitize_for_log(os.path.join(prefix, file_attr.filename)))
                     last_modified = datetime.utcnow().timestamp()
 
                 # NB: SFTP specifies path characters to be '/'
@@ -145,11 +157,12 @@ class SFTPConnection():
 
     def get_files(self, prefix, search_pattern, modified_since=None, search_subdirectories=True):
         files = self.get_files_by_prefix(prefix, search_subdirectories)
+        safe_prefix = sanitize_for_log(prefix)
         if files:
-            LOGGER.info('Found %s files in "%s"', len(files), prefix)
+            LOGGER.info('Found %s files in "%s"', len(files), safe_prefix)
         else:
             LOGGER.warning(
-                'Found no files on specified SFTP server at "%s"', prefix)
+                'Found no files on specified SFTP server at "%s"', safe_prefix)
 
         # for Symon import, we only import one file. search_pattern is escaped filename, force to match one file.
         matching_files = self.get_files_matching_pattern(
@@ -157,7 +170,7 @@ class SFTPConnection():
 
         if matching_files:
             LOGGER.info('Found %s files in "%s" matching "%s"',
-                        len(matching_files), prefix, search_pattern)
+                        len(matching_files), safe_prefix, sanitize_for_log(search_pattern))
         else:
             # rather than returning None, we throw error instead so we can catch it
             raise SymonException(f'Sorry, we couldn\'t find any files on specified SFTP server at "{prefix}/{search_pattern}"', 'sftp.FileNotFoundError')
@@ -166,7 +179,7 @@ class SFTPConnection():
         for f in matching_files:
             if self.is_empty(f):
                 empty_file_count += 1
-            LOGGER.info("Found file: %s", f['filepath'])
+            LOGGER.info("Found file: %s", sanitize_for_log(f['filepath']))
 
         if empty_file_count == len(matching_files):
             raise SymonException('File is empty.', 'EmptyFile')
