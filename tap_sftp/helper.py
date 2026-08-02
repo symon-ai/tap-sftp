@@ -32,6 +32,25 @@ def update_decryption_key(decryption_configs):
         decryption_configs['passphrase'] = secret_json['passphrase']
 
 
+def validate_path_in_directory(base_dir, candidate_path):
+    """Confine a locally-constructed file path to an intended base directory.
+
+    Local sample/decrypt paths are built from user-supplied / remote SFTP
+    filenames, so a crafted name containing path-traversal sequences
+    (e.g. ``../../etc/passwd``) could make the resolved path escape the
+    intended temporary directory. This centralized routine resolves both
+    paths with ``os.path.realpath`` and asserts the candidate is contained
+    within ``base_dir`` before it is handed to ``open()`` (guards CWE-73).
+    Returns the validated real path; raises ``SymonException`` otherwise.
+    """
+    base_real = os.path.realpath(base_dir)
+    candidate_real = os.path.realpath(candidate_path)
+    if candidate_real != base_real and not candidate_real.startswith(base_real + os.sep):
+        raise SymonException(
+            'Sorry, the file path is invalid.', 'sftp.InvalidFilePathError')
+    return candidate_real
+
+
 def get_inner_file_extension_for_pgp_file(file_path):
     file_extension = os.path.splitext(file_path)[1]
     if file_extension in ['.gpg', '.pgp']:

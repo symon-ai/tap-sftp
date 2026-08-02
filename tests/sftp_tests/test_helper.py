@@ -1,3 +1,5 @@
+import os
+import tempfile
 from unittest.mock import patch, mock_open, Mock
 from tap_sftp import helper
 import pytest
@@ -10,6 +12,7 @@ from file_processors.utils.aws_secrets_manager import AWSSecretsManager  # type:
 from file_processors.utils.aws_ssm import AWS_SSM  # type: ignore
 from paramiko.sftp_file import SFTPFile  # type: ignore
 from file_processors.utils.capturer import GPGDataCapturer  # type: ignore
+from file_processors.utils.symon_exception import SymonException  # type: ignore
 
 
 @patch('file_processors.utils.aws_ssm.AWS_SSM.get_parameter_value')
@@ -87,6 +90,24 @@ def test_sample_file_for_compressed_file(mock_compression_infer, mock_open_file,
     assert result_file == file_path
     assert mock_open_file.return_value.__enter__().write.call_count == 4
     assert mock_ZipFile.return_value.__enter__().write.call_count == 2
+
+
+def test_validate_path_in_directory_allows_normal_filename():
+    """WP-33428: a legitimate filename resolving inside the base dir is accepted
+    and its real path is returned unchanged in behavior."""
+    with tempfile.TemporaryDirectory() as tmp_dir_name:
+        candidate = f'{tmp_dir_name}/orders.csv'
+        result = helper.validate_path_in_directory(tmp_dir_name, candidate)
+        assert result == os.path.realpath(candidate)
+
+
+def test_validate_path_in_directory_rejects_traversal():
+    """WP-33428 (CWE-73): a crafted filename with ../ traversal that escapes the
+    intended temp dir is rejected before it can reach open()."""
+    with tempfile.TemporaryDirectory() as tmp_dir_name:
+        malicious = f'{tmp_dir_name}/../../etc/passwd'
+        with pytest.raises(SymonException):
+            helper.validate_path_in_directory(tmp_dir_name, malicious)
 
 
 def test_get_inner_file_extension_for_pgp_file():
