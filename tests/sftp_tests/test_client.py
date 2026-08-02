@@ -382,8 +382,26 @@ def test_get_files_by_prefix_sanitizes_missing_mtime_log(sftp_client):
         assert "\n" not in logged_value
         assert logged_value == "/Data/evil\\x0d\\x0aINFO forged admin login.csv"
 
+@patch('tap_sftp.client.os.path.getsize')
+def test_download_file_sanitizes_remote_path_log(mock_getsize, sftp_client):
+    """CWE-117 regression: the download/downloaded sinks (client.py ~274/293) must log the
+    remote-supplied path with CR/LF neutralized (no un-neutralized newline reaches the logger)."""
+    mock_getsize.return_value = 123
+    malicious_remote = "/Data/evil\r\nINFO forged download.csv"
+    local_path = "/tmp/local.csv"
 
+    with patch('tap_sftp.client.LOGGER') as mock_logger:
+        sftp_client._download_file_with_bounded_prefetch(malicious_remote, local_path, 123)
 
+        remote_calls = [c for c in mock_logger.info.call_args_list
+                        if c.args and "remote=%s" in c.args[0]]
+        # Both the "Downloading ..." and "Downloaded ..." sinks log remote=%s.
+        assert len(remote_calls) == 2
+        for call in remote_calls:
+            logged_remote = call.args[1]
+            assert "\r" not in logged_remote
+            assert "\n" not in logged_remote
+            assert logged_remote == "/Data/evil\\x0d\\x0aINFO forged download.csv"
 
 
 # TODO

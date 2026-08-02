@@ -199,7 +199,7 @@ class SFTPConnection():
             file_size = f.get("file_size")
             if decryption_configs:
                 decrypt_remote = decryption_configs.get("decrypt_remote", True)
-                LOGGER.info(f'Decrypting file: {sftp_file_path}')
+                LOGGER.info('Decrypting file: %s', sanitize_for_log(sftp_file_path))
                 sftp_file_name = os.path.basename(sftp_file_path)
                 original_file_name = os.path.splitext(sftp_file_name)[0]
 
@@ -277,7 +277,7 @@ class SFTPConnection():
         start_time = time.monotonic()
         LOGGER.info(
             "Downloading SFTP file with bounded Paramiko prefetch: remote=%s, local=%s, remote_size_bytes=%s, max_concurrent_prefetch_requests=%s",
-            sftp_file_path,
+            sanitize_for_log(sftp_file_path),
             local_path,
             file_size,
             SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS
@@ -292,7 +292,7 @@ class SFTPConnection():
         local_size = os.path.getsize(local_path)
         LOGGER.info(
             "Downloaded SFTP file: remote=%s, local_size_bytes=%s, elapsed_seconds=%.2f",
-            sftp_file_path,
+            sanitize_for_log(sftp_file_path),
             local_size,
             elapsed_seconds
         )
