@@ -20,6 +20,16 @@ logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 SFTP_TRANSPORT_WINDOW_SIZE = 2 * 1024 * 1024
 SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS = 256
 
+# Matches CR, LF and other ASCII control characters that could be used to
+# forge/inject additional log entries (CWE-117 log injection).
+_LOG_CONTROL_CHARS_RE = re.compile(r"[\r\n\x00-\x1f\x7f]")
+
+
+def sanitize_for_log(value):
+    """Neutralize CR/LF and other control characters in user-supplied values
+    before they are written to logs, preventing CWE-117 log forging."""
+    return _LOG_CONTROL_CHARS_RE.sub(" ", str(value))
+
 
 def handle_backoff(details):
     LOGGER.warn(
@@ -325,7 +335,7 @@ class SFTPConnection():
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and a regex pattern string, and returns
             files matching that pattern. """
         matcher = re.compile(pattern)
-        LOGGER.info(f"Searching for files for matching pattern: {pattern}")
+        LOGGER.info(f"Searching for files for matching pattern: {sanitize_for_log(pattern)}")
         return [f for f in files if matcher.search(os.path.basename(f["filepath"]))]
 
 

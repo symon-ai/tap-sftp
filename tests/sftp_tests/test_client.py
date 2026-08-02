@@ -342,6 +342,28 @@ def test_get_files_matching_pattern(sftp_client):
     assert len([file for file in matched_files if file["id"] in [1, 2, 3, 4, 5, 7, 9]]) == 7
 
 
+def test_get_files_matching_pattern_sanitizes_crlf_in_log(sftp_client, caplog):
+    """WP-33430 (CWE-117): a user-supplied pattern containing CR/LF or other
+    control characters must not produce a multi-line / forged log entry. The
+    logged pattern value must be sanitized to a single line."""
+    import logging
+    # A valid regex that also embeds a CRLF-injected forged log line. Using an
+    # alternation keeps the regex compilable while carrying the injection.
+    injected_pattern = "test2\r\nERROR forged-admin-login-succeeded"
+    with caplog.at_level(logging.INFO):
+        sftp_client.get_files_matching_pattern(files, injected_pattern)
+    # Locate the "Searching for files" log record and confirm no raw CR/LF made
+    # it into the emitted message (i.e. no forged second line).
+    pattern_records = [r for r in caplog.records
+                       if "Searching for files for matching pattern" in r.getMessage()]
+    assert pattern_records, "expected the pattern search log record to be emitted"
+    logged_message = pattern_records[0].getMessage()
+    assert "\r" not in logged_message
+    assert "\n" not in logged_message
+    # The forged content is neutralized (control chars replaced), not dropped.
+    assert "forged-admin-login-succeeded" in logged_message
+
+
 
 
 
