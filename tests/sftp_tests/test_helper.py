@@ -89,6 +89,24 @@ def test_sample_file_for_compressed_file(mock_compression_infer, mock_open_file,
     assert mock_ZipFile.return_value.__enter__().write.call_count == 2
 
 
+def test_sanitize_for_log_strips_crlf_and_control_chars():
+    # WP-33399: a forged newline in a user-controlled SFTP path/pattern must not
+    # be able to inject a fake log line (CWE-117 log forging).
+    tainted = "deals\n2020-01-01 12:00:00 INFO forged log entry"
+    sanitized = helper.sanitize_for_log(tainted)
+    assert "\n" not in sanitized
+    assert "\r" not in sanitized
+    assert sanitized == "deals2020-01-01 12:00:00 INFO forged log entry"
+
+    # carriage return, null byte and other control chars are stripped too
+    assert helper.sanitize_for_log("a\r\nb\x00c\x1fd") == "abcd"
+
+
+def test_sanitize_for_log_preserves_safe_values():
+    assert helper.sanitize_for_log("/data/orders.csv") == "/data/orders.csv"
+    assert helper.sanitize_for_log(None) is None
+
+
 def test_get_inner_file_extension_for_pgp_file():
     file_path = '/test_tmp/bin/test1.csv.pgp'
     extension = helper.get_inner_file_extension_for_pgp_file(file_path)

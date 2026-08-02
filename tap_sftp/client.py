@@ -96,7 +96,7 @@ class SFTPConnection():
 
     def match_files_for_table(self, files, table_name, search_pattern):
         LOGGER.info("Searching for files for table '%s', matching pattern: %s",
-                    table_name, search_pattern)
+                    helper.sanitize_for_log(table_name), helper.sanitize_for_log(search_pattern))
         matcher = re.compile(search_pattern)
         return [f for f in files if matcher.search(f["filepath"])]
 
@@ -132,7 +132,7 @@ class SFTPConnection():
                 last_modified = file_attr.st_mtime
                 if last_modified is None:
                     LOGGER.warning("Cannot read m_time for file %s, defaulting to current epoch time",
-                                   os.path.join(prefix, file_attr.filename))
+                                   helper.sanitize_for_log(os.path.join(prefix, file_attr.filename)))
                     last_modified = datetime.utcnow().timestamp()
 
                 # NB: SFTP specifies path characters to be '/'
@@ -145,11 +145,12 @@ class SFTPConnection():
 
     def get_files(self, prefix, search_pattern, modified_since=None, search_subdirectories=True):
         files = self.get_files_by_prefix(prefix, search_subdirectories)
+        safe_prefix = helper.sanitize_for_log(prefix)
         if files:
-            LOGGER.info('Found %s files in "%s"', len(files), prefix)
+            LOGGER.info('Found %s files in "%s"', len(files), safe_prefix)
         else:
             LOGGER.warning(
-                'Found no files on specified SFTP server at "%s"', prefix)
+                'Found no files on specified SFTP server at "%s"', safe_prefix)
 
         # for Symon import, we only import one file. search_pattern is escaped filename, force to match one file.
         matching_files = self.get_files_matching_pattern(
@@ -157,7 +158,7 @@ class SFTPConnection():
 
         if matching_files:
             LOGGER.info('Found %s files in "%s" matching "%s"',
-                        len(matching_files), prefix, search_pattern)
+                        len(matching_files), safe_prefix, helper.sanitize_for_log(search_pattern))
         else:
             # rather than returning None, we throw error instead so we can catch it
             raise SymonException(f'Sorry, we couldn\'t find any files on specified SFTP server at "{prefix}/{search_pattern}"', 'sftp.FileNotFoundError')
@@ -166,7 +167,7 @@ class SFTPConnection():
         for f in matching_files:
             if self.is_empty(f):
                 empty_file_count += 1
-            LOGGER.info("Found file: %s", f['filepath'])
+            LOGGER.info("Found file: %s", helper.sanitize_for_log(f['filepath']))
 
         if empty_file_count == len(matching_files):
             raise SymonException('File is empty.', 'EmptyFile')
@@ -325,7 +326,7 @@ class SFTPConnection():
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and a regex pattern string, and returns
             files matching that pattern. """
         matcher = re.compile(pattern)
-        LOGGER.info(f"Searching for files for matching pattern: {pattern}")
+        LOGGER.info("Searching for files for matching pattern: %s", helper.sanitize_for_log(pattern))
         return [f for f in files if matcher.search(os.path.basename(f["filepath"]))]
 
 
