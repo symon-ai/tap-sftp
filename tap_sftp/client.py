@@ -181,7 +181,7 @@ class SFTPConnection():
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and returns a handle to the file. """
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             sftp_file_path = f["filepath"]
-            local_path = f'{tmp_dir_name}/{os.path.basename(sftp_file_path)}'
+            local_path = self._safe_local_path(tmp_dir_name, sftp_file_path)
             file_size = f.get("file_size")
             if decryption_configs:
                 decrypt_remote = decryption_configs.get("decrypt_remote", True)
@@ -258,6 +258,31 @@ class SFTPConnection():
             elapsed_seconds
         )
         return detected_encoding
+
+    @staticmethod
+    def _safe_local_path(base_dir, sftp_file_path):
+        """Build the local download path for a remote SFTP file inside ``base_dir``.
+
+        Centralized input-validation routine (CWE-73 remediation): the remote
+        SFTP path is user/config-supplied, so its filename is reduced to a bare
+        basename and joined onto the intended containment root. The result is
+        then normalized and verified to resolve INSIDE ``base_dir`` before it is
+        handed to os.path.getsize / open / sftp.get. Any path that escapes the
+        base directory (path-traversal attempt) is rejected.
+        """
+        # Strip any directory components an attacker may have smuggled into the
+        # remote filename so only a plain filename is joined to the base dir.
+        file_name = os.path.basename(sftp_file_path)
+        local_path = os.path.join(base_dir, file_name)
+        # Verify the fully resolved path stays inside the intended base dir
+        # (defends against traversal via symlinks or a crafted filename).
+        base_dir_real = os.path.realpath(base_dir)
+        candidate_real = os.path.realpath(local_path)
+        if candidate_real != base_dir_real and not candidate_real.startswith(base_dir_real + os.sep):
+            raise SymonException(
+                'Invalid SFTP file path. The resolved download path escapes the working directory.',
+                'sftp.InvalidFilePath')
+        return local_path
 
     def _download_file_with_bounded_prefetch(self, sftp_file_path, local_path, file_size=None):
         start_time = time.monotonic()
