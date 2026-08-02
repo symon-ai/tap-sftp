@@ -30,7 +30,7 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
             stream for stream in streams if stream_is_selected(metadata.to_map(stream.metadata))), None)
         if not streams_to_read:
             for stream in streams:
-                LOGGER.info(f"{stream.tap_stream_id}: Skipping - not selected")
+                LOGGER.info(f"{helper.sanitize_for_log(stream.tap_stream_id)}: Skipping - not selected")
                 continue
             return 0
 
@@ -40,11 +40,11 @@ def sync_stream(config, catalog, state, collect_sync_stats=False):
                        matches_key(table_config, key, dynamic)]
         if len(table_specs) == 0:
             LOGGER.info(
-                "No table configuration found for '%s', skipping stream", key)
+                "No table configuration found for '%s', skipping stream", helper.sanitize_for_log(key))
             return 0
         if len(table_specs) > 1:
             LOGGER.info(
-                "Multiple table configurations found for '%s', skipping stream", key)
+                "Multiple table configurations found for '%s', skipping stream", helper.sanitize_for_log(key))
             return 0
         table_spec = table_specs[0]
         modified_since = utils.strptime_to_utc(config.get('start_date'))
@@ -79,11 +79,11 @@ def matches_key(table_config, key, dynamic):
         table_name = table_config.get('table_name')
         # if table_name starts with *, then add dot to the start of the table_name as it was removed in the config to avoid having output file with dot at the start
         if table_name.startswith('*'):
-            LOGGER.info(f'Table name {table_name} starts with "*", adding dot to the start of the table name.')
+            LOGGER.info(f'Table name {helper.sanitize_for_log(table_name)} starts with "*", adding dot to the start of the table name.')
             table_name= '.' + table_name
         # file name is predetermined for dynamic import - we only check here to see if file still exist at this point
         search_pattern = f"{re.escape(table_config.get('search_prefix'))}/{table_name}"
-        LOGGER.info('Checking if file "%s" exists for table "%s".', key, table_name)
+        LOGGER.info('Checking if file "%s" exists for table "%s".', helper.sanitize_for_log(key), helper.sanitize_for_log(table_name))
         matcher = re.compile(search_pattern, re.IGNORECASE)
         result = matcher.search(key) != None
     return result
@@ -91,7 +91,7 @@ def matches_key(table_config, key, dynamic):
 
 def sync_file(config, file, streams, table_spec, state, modified_since, collect_sync_stats, has_header):
     file_path = file["filepath"]
-    LOGGER.info('Syncing file "%s".', file_path)
+    LOGGER.info('Syncing file "%s".', helper.sanitize_for_log(file_path))
     sftp_client = client.connection(config)
     decryption_configs = config.get('decryption_configs')
     file_type = table_spec.get('file_type').lower()
