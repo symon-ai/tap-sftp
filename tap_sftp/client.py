@@ -20,6 +20,20 @@ logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 SFTP_TRANSPORT_WINDOW_SIZE = 2 * 1024 * 1024
 SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS = 256
 
+# Matches CR, LF, and other ASCII control characters that could be used to
+# forge or inject log entries (CWE-117 log forging).
+_LOG_CONTROL_CHAR_RE = re.compile(r"[\x00-\x1f\x7f]")
+
+
+def sanitize_for_log(value):
+    """Neutralize CR/LF and other control characters in user/remote-derived
+    values (e.g. SFTP file paths/names) before embedding them in a log
+    message, to prevent CWE-117 log forging. Non-string values are returned
+    unchanged so callers can pass sizes/counts through directly."""
+    if not isinstance(value, str):
+        return value
+    return _LOG_CONTROL_CHAR_RE.sub("", value)
+
 
 def handle_backoff(details):
     LOGGER.warn(
@@ -246,14 +260,14 @@ class SFTPConnection():
         start_time = time.monotonic()
         LOGGER.info(
             "Detecting SFTP text file encoding: local=%s, file_size_bytes=%s",
-            local_path,
+            sanitize_for_log(local_path),
             local_file_size
         )
         detected_encoding = find_encoding.find_encoding_v2(local_path)
         elapsed_seconds = time.monotonic() - start_time
         LOGGER.info(
             "Detected SFTP text file encoding: local=%s, encoding=%s, elapsed_seconds=%.2f",
-            local_path,
+            sanitize_for_log(local_path),
             detected_encoding,
             elapsed_seconds
         )
@@ -263,8 +277,8 @@ class SFTPConnection():
         start_time = time.monotonic()
         LOGGER.info(
             "Downloading SFTP file with bounded Paramiko prefetch: remote=%s, local=%s, remote_size_bytes=%s, max_concurrent_prefetch_requests=%s",
-            sftp_file_path,
-            local_path,
+            sanitize_for_log(sftp_file_path),
+            sanitize_for_log(local_path),
             file_size,
             SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS
         )
@@ -278,7 +292,7 @@ class SFTPConnection():
         local_size = os.path.getsize(local_path)
         LOGGER.info(
             "Downloaded SFTP file: remote=%s, local_size_bytes=%s, elapsed_seconds=%.2f",
-            sftp_file_path,
+            sanitize_for_log(sftp_file_path),
             local_size,
             elapsed_seconds
         )
