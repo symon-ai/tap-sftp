@@ -20,6 +20,19 @@ logging.getLogger("paramiko").setLevel(logging.CRITICAL)
 SFTP_TRANSPORT_WINDOW_SIZE = 2 * 1024 * 1024
 SFTP_MAX_CONCURRENT_PREFETCH_REQUESTS = 256
 
+# Matches CR, LF and other C0/C1 control characters (except tab) that could be
+# used to forge log entries (CWE-117 log injection).
+_LOG_CONTROL_CHARS_RE = re.compile(r'[\x00-\x08\x0a-\x1f\x7f-\x9f]')
+
+
+def sanitize_for_log(value):
+    """Neutralize carriage returns, line feeds and other control characters in
+    user-/config-controlled values before they are written to the log, to
+    prevent log forging (CWE-117)."""
+    if not isinstance(value, str):
+        return value
+    return _LOG_CONTROL_CHARS_RE.sub(' ', value)
+
 
 def handle_backoff(details):
     LOGGER.warn(
@@ -149,7 +162,7 @@ class SFTPConnection():
             LOGGER.info('Found %s files in "%s"', len(files), prefix)
         else:
             LOGGER.warning(
-                'Found no files on specified SFTP server at "%s"', prefix)
+                'Found no files on specified SFTP server at "%s"', sanitize_for_log(prefix))
 
         # for Symon import, we only import one file. search_pattern is escaped filename, force to match one file.
         matching_files = self.get_files_matching_pattern(
