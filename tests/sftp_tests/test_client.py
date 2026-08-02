@@ -5,6 +5,7 @@ from unittest.mock import patch, mock_open
 import pytest
 import stat
 from paramiko.sftp_attr import SFTPAttributes
+from tap_sftp.client import SFTPConnection, sanitize_for_log
 from tests.configuration.fixtures import get_sample_file_path, sftp_client, get_full_file_path, file_handle_unscoped, \
     file_handle_second_unscoped, file_handle
 
@@ -340,6 +341,52 @@ def test_get_files_matching_pattern(sftp_client):
     matched_files = sftp_client.get_files_matching_pattern(files, search_pattern)
     assert len(matched_files) == 7
     assert len([file for file in matched_files if file["id"] in [1, 2, 3, 4, 5, 7, 9]]) == 7
+
+
+# WP-33419: CWE-117 log forging remediation - tainted SFTP path/filename
+# values must be stripped of CR/LF and other control characters before being
+# written into log entries.
+def test_sanitize_for_log_strips_crlf():
+    """A crafted filename containing CR/LF must collapse to a single-line,
+    control-char-free value so an attacker cannot forge additional log lines."""
+    tainted = "foo\r\nINJECTED admin logged in"
+    sanitized = sanitize_for_log(tainted)
+    assert "\r" not in sanitized
+    assert "\n" not in sanitized
+    assert sanitized == "fooINJECTED admin logged in"
+
+
+def test_sanitize_for_log_strips_other_control_chars():
+    """Other ASCII control characters (tab, null, escape, DEL) are removed too."""
+    assert sanitize_for_log("a\tb\x00c\x1bd\x7fe") == "abcde"
+
+
+def test_sanitize_for_log_passes_through_non_strings():
+    """Non-string values (sizes/counts) are returned unchanged."""
+    assert sanitize_for_log(12404) == 12404
+    assert sanitize_for_log(None) is None
+
+
+def test_get_text_encoding_does_not_emit_raw_newlines_from_tainted_path():
+    """_get_text_encoding logs the local path; a crafted path with CR/LF must
+    not produce raw newlines in the emitted log message (CWE-117)."""
+    tainted_path = "/tmp/evil\r\nINJECTED.csv"
+    with patch('tap_sftp.client.find_encoding.find_encoding_v2', return_value='utf-8'), \
+            patch('tap_sftp.client.LOGGER') as mock_logger:
+        SFTPConnection._get_text_encoding(tainted_path, None, file_size=123)
+
+    logged_path_args = []
+    for call in mock_logger.info.call_args_list:
+        # positional args after the format string are the interpolated values
+        logged_path_args.extend(call.args[1:])
+
+    assert logged_path_args, "expected the local path to be logged"
+    for arg in logged_path_args:
+        if isinstance(arg, str):
+            assert "\r" not in arg
+            assert "\n" not in arg
+    # the sanitized path is still present (minus control chars)
+    assert any(arg == "/tmp/evilINJECTED.csv" for arg in logged_path_args)
 
 
 
