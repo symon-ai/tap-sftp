@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 import singer  # type: ignore
 import traceback
@@ -21,6 +22,32 @@ LOGGER = singer.get_logger()
 # for symon error logging
 ERROR_START_MARKER = '[tap_error_start]'
 ERROR_END_MARKER = '[tap_error_end]'
+
+
+def sanitize_error_file_path(error_file_path, base_dir=None):
+    """Centralized validation for the user-supplied `error_file_path` config
+    value before it is used as an `open()` argument (CWE-73 remediation).
+
+    The error file is always meant to live inside the tap's local working
+    directory (the process cwd). This constrains the resolved path to that
+    base directory and rejects absolute-path or `..` traversal escapes so
+    tainted config cannot write outside the sandbox.
+
+    Returns the safe absolute path, or None if the path is missing or escapes
+    the allowed base directory.
+    """
+    if not error_file_path or not isinstance(error_file_path, str):
+        return None
+
+    base_dir = os.path.realpath(base_dir if base_dir is not None else os.getcwd())
+    resolved = os.path.realpath(os.path.join(base_dir, error_file_path))
+
+    if resolved != base_dir and not resolved.startswith(base_dir + os.sep):
+        LOGGER.warning('Ignoring error_file_path outside of allowed working directory.')
+        return None
+
+    return resolved
+
 
 def do_discover(config):
     LOGGER.info("Starting discover")
@@ -104,7 +131,7 @@ def main():
     finally:
         if error_info is not None:
             try:
-                error_file_path = args.config.get('error_file_path', None)
+                error_file_path = sanitize_error_file_path(args.config.get('error_file_path', None))
                 if error_file_path is not None:
                     try:
                         with open(error_file_path, 'w', encoding='utf-8') as fp:
