@@ -59,7 +59,11 @@ def sample_file(src_file_object, src_file_name, out_dir, max_records):
     final_file = f'{out_dir}/{src_file_name}'
     with ZipFile(final_file, "w") as out_file:
         for path in generated_files:
-            out_file.write(path)
+            # Write each archive entry using a sanitized base-name arcname
+            # instead of the raw, source-supplied on-disk path. This prevents
+            # untrusted input from controlling the archive entry name (CWE-80)
+            # and avoids leaking the local directory structure into the archive.
+            out_file.write(path, arcname=os.path.basename(path))
     return final_file
 
 
