@@ -5,6 +5,7 @@ from tests.configuration.fixtures import sftp_client, file_handle, file_handle_s
 import singer  # type: ignore
 import json
 import base64
+import secrets
 from file_processors.utils import compression  # type: ignore
 from file_processors.utils.aws_secrets_manager import AWSSecretsManager  # type: ignore
 from file_processors.utils.aws_ssm import AWS_SSM  # type: ignore
@@ -32,7 +33,7 @@ def test_update_decryption_key_for_AWS_SSM(mock_get_parameter_value):
 def test_update_decryption_key_for_AWS_Secrets_Manager(mock_get_secret, mock_boto3, mock_os_environ):
     key = 'PRIVATE_KEY'
     bytes_key = key.encode('ascii')
-    passphrase = 'pass'
+    passphrase = secrets.token_hex()
     secret = {'privateKeyEncoded': base64.b64encode(
         bytes_key).decode('ascii'), 'passphrase': passphrase}
     secure_string = json.dumps(secret)
@@ -102,7 +103,7 @@ def test_load_file_decrypted(mock_GPGDataCapturer, mock_gpg_decrypt_to_file):
     key = 'key'
     sign_key = 'sign_key'
     gnupghome = 'home'
-    passphrase = 'pass'
+    passphrase = secrets.token_hex()
     decrypt_path = '/test_dir/test1.csv'
     max_records = 5
     mocked_capturer = Mock()
