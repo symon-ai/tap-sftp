@@ -998,6 +998,18 @@ files = [
 ]
 
 [[package]]
+name = "invoke"
+version = "3.0.3"
+description = "Pythonic task execution"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "invoke-3.0.3-py3-none-any.whl", hash = "sha256:f11327165e5cbb89b2ad1d88d3292b5113332c43b8553b494da435d6ec6f5053"},
+    {file = "invoke-3.0.3.tar.gz", hash = "sha256:437b6a622223824380bfb4e64f612711a6b648c795f565efc8625af66fb57f0c"},
+]
+
+[[package]]
 name = "jmespath"
 version = "1.1.0"
 description = "JSON Matching Expressions"
@@ -1413,25 +1425,21 @@ xml = ["lxml (>=4.9.2)"]
 
 [[package]]
 name = "paramiko"
-version = "3.4.1"
+version = "5.0.0"
 description = "SSH2 protocol library"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "paramiko-3.4.1-py3-none-any.whl", hash = "sha256:8e49fd2f82f84acf7ffd57c64311aa2b30e575370dc23bdb375b10262f7eac32"},
-    {file = "paramiko-3.4.1.tar.gz", hash = "sha256:8b15302870af7f6652f2e038975c1d2973f06046cb5d7d65355668b3ecbece0c"},
+    {file = "paramiko-5.0.0-py3-none-any.whl", hash = "sha256:b7044611c30140d9a75261653210e2002977b71a0497ff3ba0d98d7edbf62f7c"},
+    {file = "paramiko-5.0.0.tar.gz", hash = "sha256:36763b5b95c2a0dcfdf1abc48e48156ee425b21efe2f0e787c2dd5a95c0e5e79"},
 ]
 
 [package.dependencies]
 bcrypt = ">=3.2"
 cryptography = ">=3.3"
+invoke = ">=2.0"
 pynacl = ">=1.5"
-
-[package.extras]
-all = ["gssapi (>=1.4.1) ; platform_system != \"Windows\"", "invoke (>=2.0)", "pyasn1 (>=0.1.7)", "pywin32 (>=2.1.8) ; platform_system == \"Windows\""]
-gssapi = ["gssapi (>=1.4.1) ; platform_system != \"Windows\"", "pyasn1 (>=0.1.7)", "pywin32 (>=2.1.8) ; platform_system == \"Windows\""]
-invoke = ["invoke (>=2.0)"]
 
 [[package]]
 name = "platformdirs"
@@ -2427,4 +2435,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.13.0,<4.0"
-content-hash = "3eb679eae48d67dcfa4a91260c502af8a67edc807f614e3c01079c1129a3dd0a"
+content-hash = "f5e1f35df7f1f4958e3b51e1aefd5d97f810f9be9d9b9f67923cfc2f354bd4c5"

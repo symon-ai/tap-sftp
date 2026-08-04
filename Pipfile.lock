@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "72960f028cd686928febb212e8d9a3b37f9c5b6ac9c1b5757842f37f7b4610f8"
+            "sha256": "55323dc434fdf264152d8979b40d32a1b69c8efb20171bf501a15da9721fd85d"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -952,6 +952,14 @@
             "markers": "python_full_version > '3.13.0' and python_version < '4.0'",
             "version": "==2.3.0"
         },
+        "invoke": {
+            "hashes": [
+                "sha256:437b6a622223824380bfb4e64f612711a6b648c795f565efc8625af66fb57f0c",
+                "sha256:f11327165e5cbb89b2ad1d88d3292b5113332c43b8553b494da435d6ec6f5053"
+            ],
+            "markers": "python_full_version > '3.13.0' and python_version < '4.0'",
+            "version": "==3.0.3"
+        },
         "jmespath": {
             "hashes": [
                 "sha256:472c87d80f36026ae83c6ddd0f1d05d4e510134ed462851fd5f754c8c3cbb88d",
@@ -1294,11 +1302,11 @@
         },
         "paramiko": {
             "hashes": [
-                "sha256:8b15302870af7f6652f2e038975c1d2973f06046cb5d7d65355668b3ecbece0c",
-                "sha256:8e49fd2f82f84acf7ffd57c64311aa2b30e575370dc23bdb375b10262f7eac32"
+                "sha256:36763b5b95c2a0dcfdf1abc48e48156ee425b21efe2f0e787c2dd5a95c0e5e79",
+                "sha256:b7044611c30140d9a75261653210e2002977b71a0497ff3ba0d98d7edbf62f7c"
             ],
             "markers": "python_full_version > '3.13.0' and python_version < '4.0'",
-            "version": "==3.4.1"
+            "version": "==5.0.0"
         },
         "platformdirs": {
             "hashes": [
