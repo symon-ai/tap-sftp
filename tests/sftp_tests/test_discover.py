@@ -3,6 +3,7 @@ from unittest.mock import patch, mock_open
 from tap_sftp import defaults
 from tap_sftp.discover import discover_streams
 import pytest
+from tests.configuration.credentials import ephemeral_sftp_credentials
 from tests.configuration.fixtures import sftp_client, file_handle
 
 date_modified_since_oldest = datetime.fromisoformat('1970-01-01 00:00:00')
@@ -31,8 +32,7 @@ def test_discover_streams_encrypted_csv_file(mock_build_streams, mock_update_dec
     config = {
         "host": "host",
         "port": 22,
-        "username": "user",
-        "password": "password",
+        **ephemeral_sftp_credentials(),
         "search_subdirectories": True,
         "start_date": "1800-01-01",
         "private_key_file": "",
@@ -78,8 +78,7 @@ def test_discover_streams_encrypted_excel_file(mock_build_streams, mock_update_d
     config = {
         "host": "host",
         "port": 22,
-        "username": "user",
-        "password": "password",
+        **ephemeral_sftp_credentials(),
         "search_subdirectories": True,
         "start_date": "1800-01-01",
         "private_key_file": "",
@@ -114,8 +113,7 @@ def test_discover_streams_unsupported_file(mock_connection, mock_sftp_client):
     config = {
         "host": "host",
         "port": 22,
-        "username": "user",
-        "password": "password",
+        **ephemeral_sftp_credentials(),
         "search_subdirectories": True,
         "start_date": "1800-01-01",
         "tables": table_specs
@@ -140,8 +138,7 @@ def test_discover_streams_with_no_matching_file_found(mock_connection, mock_sftp
     config = {
         "host": "host",
         "port": 22,
-        "username": "user",
-        "password": "password",
+        **ephemeral_sftp_credentials(),
         "search_subdirectories": True,
         "start_date": "1800-01-01",
         "tables": table_specs
@@ -165,8 +162,7 @@ def test_discover_streams_with_large_file(mock_connection, mock_sftp_client):
     config = {
         "host": "host",
         "port": 22,
-        "username": "user",
-        "password": "password",
+        **ephemeral_sftp_credentials(),
         "search_subdirectories": True,
         "start_date": "1800-01-01",
         "tables": table_specs
