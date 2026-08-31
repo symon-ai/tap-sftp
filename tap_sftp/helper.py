@@ -1,7 +1,6 @@
 import singer  # type: ignore
 import json
 import os
-import html
 import base64
 from file_processors.utils import compression  # type: ignore
 from zipfile import ZipFile
@@ -41,9 +40,8 @@ def get_inner_file_extension_for_pgp_file(file_path):
 
 
 def _safe_filename(file_name):
-    """Return a base file name with HTML-special characters escaped."""
-    base_name = os.path.basename(str(file_name).replace('\\', '/'))
-    safe_name = html.escape(base_name, quote=True)
+    """Return only the base file name so paths cannot escape out_dir."""
+    safe_name = os.path.basename(str(file_name).replace('\\', '/'))
     if not safe_name or safe_name in {'.', '..'}:
         raise ValueError('Invalid file name')
     return safe_name

@@ -115,9 +115,9 @@ def test_sample_file_strips_member_path_traversal(mock_compression_infer, mock_o
         'data.csv', mock_open_file.return_value.__enter__().read())
 
 
-def test_safe_filename_escapes_html_metacharacters():
-    assert helper._safe_filename('<script>.csv') == '&lt;script&gt;.csv'
-    assert helper._safe_filename('../../foo"bar.csv') == 'foo&quot;bar.csv'
+def test_safe_filename_uses_basename_only():
+    assert helper._safe_filename('../../foo"bar.csv') == 'foo"bar.csv'
+    assert helper._safe_filename('nested/dir/data.csv') == 'data.csv'
 
 
 def test_get_inner_file_extension_for_pgp_file():
