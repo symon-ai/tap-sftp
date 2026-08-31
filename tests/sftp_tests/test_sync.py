@@ -5,6 +5,7 @@ from tap_sftp import defaults
 from singer.catalog import Catalog
 from singer import metadata
 import pytest
+from tests.configuration.credentials import ephemeral_sftp_credentials
 from tests.configuration.fixtures import sftp_client, file_handle, get_full_file_path
 
 date_modified_since_oldest = datetime.fromisoformat('1970-01-01 00:00:00')
@@ -111,8 +112,7 @@ def test_sync_stream(mock_connection, mock_sftp_client, mock_sync_file):
     config = {
         "host": "host",
         "port": 22,
-        "username": "user",
-        "password": "password",
+        **ephemeral_sftp_credentials(),
         "search_subdirectories": True,
         "start_date": "1800-01-01",
         "private_key_file": "",
@@ -162,8 +162,7 @@ def test_sync_stream_no_stream_selected(mock_connection, mock_sftp_client, mock_
     config = {
         "host": "host",
         "port": 22,
-        "username": "user",
-        "password": "password",
+        **ephemeral_sftp_credentials(),
         "search_subdirectories": True,
         "start_date": "1800-01-01",
         "private_key_file": "",
@@ -200,8 +199,7 @@ def test_sync_stream_for_large_files(mock_connection, mock_sftp_client, mock_syn
     config = {
         "host": "host",
         "port": 22,
-        "username": "user",
-        "password": "password",
+        **ephemeral_sftp_credentials(),
         "search_subdirectories": True,
         "start_date": "1800-01-01",
         "private_key_file": "",
@@ -240,8 +238,7 @@ def test_sync_stream_no_file_found(mock_connection, mock_sftp_client, mock_sync_
     config = {
         "host": "host",
         "port": 22,
-        "username": "user",
-        "password": "password",
+        **ephemeral_sftp_credentials(),
         "search_subdirectories": True,
         "start_date": "1800-01-01",
         "private_key_file": "",
@@ -286,8 +283,7 @@ def test_sync_stream_with_duplicate_table_specs(mock_connection, mock_sftp_clien
     config = {
         "host": "host",
         "port": 22,
-        "username": "user",
-        "password": "password",
+        **ephemeral_sftp_credentials(),
         "search_subdirectories": True,
         "start_date": "1800-01-01",
         "private_key_file": "",
@@ -317,8 +313,7 @@ def test_sync_stream_with_missing_table_specs(mock_connection, mock_sftp_client,
     config = {
         "host": "host",
         "port": 22,
-        "username": "user",
-        "password": "password",
+        **ephemeral_sftp_credentials(),
         "search_subdirectories": True,
         "start_date": "1800-01-01",
         "private_key_file": "",
@@ -356,8 +351,7 @@ def test_sync_file_for_csv(mock_sync, mock_update_decryption_key, mock_connectio
     config = {
         "host": "host",
         "port": 22,
-        "username": "user",
-        "password": "password",
+        **ephemeral_sftp_credentials(),
         "search_subdirectories": True,
         "start_date": "1800-01-01",
         "private_key_file": "",
@@ -394,8 +388,7 @@ def test_sync_file_for_excel(mock_sync, mock_update_decryption_key, mock_connect
     config = {
         "host": "host",
         "port": 22,
-        "username": "user",
-        "password": "password",
+        **ephemeral_sftp_credentials(),
         "search_subdirectories": True,
         "start_date": "1800-01-01",
         "private_key_file": "",
