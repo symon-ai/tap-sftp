@@ -44,6 +44,7 @@ file-processors = {ref = "v4.7.1", git = "ssh://git@github.com/symon-ai/file-pro
 frozenlist = {version = "==1.8.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 fsspec = {version = "==2026.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 idna = {version = "==3.18", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+invoke = {version = "==3.0.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 jmespath = {version = "==1.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 jsonschema = {version = "==2.6.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 multidict = {version = "==6.7.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
@@ -51,7 +52,7 @@ numpy = {version = "==2.5.0", markers = "python_full_version > \"3.13.0\" and py
 openpyxl = {version = "==3.1.5", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 packaging = {version = "==26.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 pandas = {version = "==2.3.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-paramiko = {version = "==3.4.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+paramiko = {version = "==5.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 propcache = {version = "==0.5.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 pyarrow = {version = "==24.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 pycparser = {version = "==3.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\" and platform_python_implementation != \"PyPy\" and implementation_name != \"PyPy\""}

@@ -39,11 +39,30 @@ def get_inner_file_extension_for_pgp_file(file_path):
     return file_extension
 
 
+def _safe_filename(file_name):
+    """Return only the base file name so paths cannot escape out_dir."""
+    safe_name = os.path.basename(str(file_name).replace('\\', '/'))
+    if not safe_name or safe_name in {'.', '..'}:
+        raise ValueError('Invalid file name')
+    return safe_name
+
+
+def _safe_local_path(out_dir, file_name):
+    """Join out_dir with a sanitized file name and reject path traversal."""
+    safe_name = _safe_filename(file_name)
+    out_dir_abs = os.path.abspath(out_dir)
+    local_path = os.path.abspath(os.path.join(out_dir, safe_name))
+    if os.path.commonpath([out_dir_abs, local_path]) != out_dir_abs:
+        raise ValueError('Invalid file path')
+    return local_path
+
+
 def sample_file(src_file_object, src_file_name, out_dir, max_records):
     compressed_iterables = compression.infer(src_file_object, src_file_name)
     generated_files = []
     for compressed_name, compressed_iterators in compressed_iterables:
-        local_path = f'{out_dir}/{src_file_name if (isinstance(compressed_iterators, SFTPFile) or not compressed_name) else compressed_name}'
+        name = src_file_name if (isinstance(compressed_iterators, SFTPFile) or not compressed_name) else compressed_name
+        local_path = _safe_local_path(out_dir, name)
         with open(local_path, "wb") as out_file:
             record_number = 0
             for line in compressed_iterators:
@@ -56,10 +75,12 @@ def sample_file(src_file_object, src_file_name, out_dir, max_records):
     if len(generated_files) == 1:
         return generated_files[0]
 
-    final_file = f'{out_dir}/{src_file_name}'
-    with ZipFile(final_file, "w") as out_file:
+    final_file = _safe_local_path(out_dir, src_file_name)
+    with ZipFile(final_file, "w") as zip_file:
         for path in generated_files:
-            out_file.write(path)
+            member_name = _safe_filename(path)
+            with open(path, "rb") as member_file:
+                zip_file.writestr(member_name, member_file.read())
     return final_file
 
 
