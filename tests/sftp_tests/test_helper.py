@@ -1,4 +1,4 @@
-from unittest.mock import patch, mock_open, Mock
+from unittest.mock import patch, mock_open, Mock, call
 from tap_sftp import helper
 import pytest
 from tests.configuration.fixtures import sftp_client, file_handle, file_handle_second
@@ -98,17 +98,29 @@ def test_sample_file_for_compressed_file(mock_compression_infer, mock_open_file,
 @patch('zipfile.ZipFile.__new__')
 @patch('builtins.open')
 @patch('file_processors.utils.compression.infer')
-def test_sample_file_strips_member_path_traversal(mock_compression_infer, mock_open_file, mock_ZipFile, file_handle, file_handle_second):
+def test_sample_file_revalidates_traversal_shaped_members_before_read(mock_compression_infer, mock_open_file, mock_ZipFile, file_handle, file_handle_second):
     mock_compression_infer.return_value = [
         ('../../etc/passwd', file_handle),
         ('nested/dir/data.csv', file_handle_second)]
     out_dir = "/test_tmp/bin"
     mock_ZipFile.return_value.__enter__.return_value = Mock()
-    result_file = helper.sample_file(None, "Archive.csv.zip", out_dir, 1)
+    with patch.object(helper, '_safe_local_path', wraps=helper._safe_local_path) as mock_safe_local_path:
+        result_file = helper.sample_file(
+            None, "Archive.csv.zip", out_dir, 1)
     assert result_file == helper._safe_local_path(out_dir, "Archive.csv.zip")
-    opened_paths = [call.args[0] for call in mock_open_file.call_args_list]
-    assert helper._safe_local_path(out_dir, 'passwd') in opened_paths
-    assert helper._safe_local_path(out_dir, 'data.csv') in opened_paths
+    mock_safe_local_path.assert_has_calls([
+        call(out_dir, 'passwd'),
+        call(out_dir, 'data.csv')
+    ])
+    read_paths = [
+        open_call.args[0]
+        for open_call in mock_open_file.call_args_list
+        if open_call.args[1] == 'rb'
+    ]
+    assert read_paths == [
+        helper._safe_local_path(out_dir, 'passwd'),
+        helper._safe_local_path(out_dir, 'data.csv')
+    ]
     mock_ZipFile.return_value.__enter__().writestr.assert_any_call(
         'passwd', mock_open_file.return_value.__enter__().read())
     mock_ZipFile.return_value.__enter__().writestr.assert_any_call(

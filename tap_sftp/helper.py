@@ -77,9 +77,10 @@ def sample_file(src_file_object, src_file_name, out_dir, max_records):
 
     final_file = _safe_local_path(out_dir, src_file_name)
     with ZipFile(final_file, "w") as zip_file:
-        for path in generated_files:
-            member_name = _safe_filename(path)
-            with open(path, "rb") as member_file:
+        for generated_path in generated_files:
+            member_name = _safe_filename(generated_path)
+            local_path = _safe_local_path(out_dir, member_name)
+            with open(local_path, "rb") as member_file:
                 zip_file.writestr(member_name, member_file.read())
     return final_file
 
