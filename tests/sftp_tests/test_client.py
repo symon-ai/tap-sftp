@@ -5,6 +5,7 @@ from unittest.mock import patch, mock_open
 import pytest
 import stat
 from paramiko.sftp_attr import SFTPAttributes
+from tap_sftp.client import sanitize_for_log
 from tests.configuration.fixtures import get_sample_file_path, sftp_client, get_full_file_path, file_handle_unscoped, \
     file_handle_second_unscoped, file_handle
 
@@ -340,6 +341,37 @@ def test_get_files_matching_pattern(sftp_client):
     matched_files = sftp_client.get_files_matching_pattern(files, search_pattern)
     assert len(matched_files) == 7
     assert len([file for file in matched_files if file["id"] in [1, 2, 3, 4, 5, 7, 9]]) == 7
+
+
+# WP-33421: CWE-117 log forging regression tests for sanitize_for_log.
+def test_sanitize_for_log_strips_crlf():
+    """A remote file path carrying embedded CR/LF (a log-forging payload)
+    must have those control characters removed before it is logged."""
+    tainted = "/data/report.csv\r\nINFO Injected fake log line"
+    sanitized = sanitize_for_log(tainted)
+    assert "\r" not in sanitized
+    assert "\n" not in sanitized
+    assert sanitized == "/data/report.csvINFO Injected fake log line"
+
+
+def test_sanitize_for_log_strips_other_control_chars():
+    """Other C0/C1 control characters (e.g. NUL, backspace, ESC) are also
+    neutralized so they cannot corrupt log output."""
+    tainted = "file\x00name\x1b[31m\x08.csv"
+    sanitized = sanitize_for_log(tainted)
+    assert sanitized == "filename[31m.csv"
+
+
+def test_sanitize_for_log_preserves_clean_value():
+    """A well-formed path must be logged unchanged."""
+    clean = "/test_tmp/bin/orders.csv"
+    assert sanitize_for_log(clean) == clean
+
+
+def test_sanitize_for_log_handles_non_string_and_none():
+    """None passes through and non-strings are coerced then sanitized."""
+    assert sanitize_for_log(None) is None
+    assert sanitize_for_log(12404) == "12404"
 
 
 
