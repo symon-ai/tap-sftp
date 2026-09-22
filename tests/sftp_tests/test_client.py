@@ -5,6 +5,7 @@ from unittest.mock import patch, mock_open
 import pytest
 import stat
 from paramiko.sftp_attr import SFTPAttributes
+from tap_sftp.client import _sanitize_for_log
 from tests.configuration.fixtures import get_sample_file_path, sftp_client, get_full_file_path, file_handle_unscoped, \
     file_handle_second_unscoped, file_handle
 
@@ -340,6 +341,76 @@ def test_get_files_matching_pattern(sftp_client):
     matched_files = sftp_client.get_files_matching_pattern(files, search_pattern)
     assert len(matched_files) == 7
     assert len([file for file in matched_files if file["id"] in [1, 2, 3, 4, 5, 7, 9]]) == 7
+
+
+def test_sanitize_for_log_strips_crlf_and_control_chars():
+    """CWE-117: CR/LF/newlines and other control characters in untrusted
+    values must be neutralized so an attacker cannot forge log lines."""
+    injected = "orders.csv\r\nERROR forged log entry\x00\x1b[31m"
+    sanitized = _sanitize_for_log(injected)
+    assert "\r" not in sanitized
+    assert "\n" not in sanitized
+    assert "\x00" not in sanitized
+    assert "\x1b" not in sanitized
+    # benign characters are preserved
+    assert sanitized == "orders.csvERROR forged log entry[31m"
+
+
+def test_sanitize_for_log_preserves_none_and_benign_values():
+    assert _sanitize_for_log(None) is None
+    assert _sanitize_for_log("normal_file.csv") == "normal_file.csv"
+
+
+def test_get_files_by_prefix_sanitizes_filename_in_missing_mtime_warning(sftp_client):
+    """CWE-117 regression: when an SFTP-server-supplied filename with a null
+    m_time contains CR/LF injection, the warning log argument must be
+    sanitized (no raw newlines forwarded to the log record)."""
+    prefix = "/Data"
+    malicious = SFTPAttributes()
+    malicious.filename = "evil.csv\r\nWARNING injected forged log line"
+    malicious.st_size = 100
+    malicious.st_mode = stat.S_IFREG
+    malicious.st_mtime = None
+
+    sftp_client.sftp.listdir_attr.return_value = [malicious]
+
+    with patch('tap_sftp.client.LOGGER') as mock_logger:
+        sftp_client.get_files_by_prefix(prefix, search_subdirectories=False)
+        assert mock_logger.warning.called
+        logged_arg = mock_logger.warning.call_args.args[1]
+        assert "\r" not in logged_arg
+        assert "\n" not in logged_arg
+        assert "injected forged log line" in logged_arg
+
+
+@patch('os.path.getsize', return_value=42)
+def test_download_file_with_bounded_prefetch_sanitizes_remote_and_local_paths(mock_getsize, sftp_client):
+    """CWE-117 regression: the download log lines must not forward raw CR/LF
+    from the SFTP-server-supplied remote path (or the local path derived from
+    it) into the log record."""
+    malicious_remote = "/sftp_path/evil.csv\r\nINFO forged download log line"
+    malicious_local = "/tmp/evil.csv\r\nINFO forged download log line"
+
+    with patch('tap_sftp.client.LOGGER') as mock_logger:
+        sftp_client._download_file_with_bounded_prefetch(
+            malicious_remote, malicious_local, file_size=100)
+
+    download_calls = [
+        call for call in mock_logger.info.call_args_list
+        if call.args and isinstance(call.args[0], str)
+        and call.args[0].startswith(("Downloading SFTP file", "Downloaded SFTP file"))
+    ]
+    # both LOGGER.info calls (before + after download) must be present...
+    assert len(download_calls) == 2
+    # ...and every string argument they log must be neutralized.
+    for call in download_calls:
+        for logged_arg in call.args[1:]:
+            if isinstance(logged_arg, str):
+                assert "\r" not in logged_arg
+                assert "\n" not in logged_arg
+    # the neutralized payload text is still present (sanitized, not dropped)
+    first_call_remote = download_calls[0].args[1]
+    assert "forged download log line" in first_call_remote
 
 
 
