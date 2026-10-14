@@ -4,11 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-certifi = {version = "==2026.6.17", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-charset-normalizer = {version = "==3.4.7", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-deepdiff = {version = "==8.6.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-orderly-set = {version = "==5.5.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-requests = {version = "==2.34.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 aiobotocore = {version = "==3.7.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 aiohappyeyeballs = {version = "==2.6.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 aiohttp = {version = "==3.14.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
