@@ -162,6 +162,12 @@ python -m pip install --user pipenv
 pipenv install --python 3.13 -r requirements.txt
 ```
 
+Keep existing scanner-only dependency pins when refreshing this inventory. Pipenv
+may omit setuptools during requirements import; retain its explicit version from
+the Poetry export in `[packages]` and run `pipenv lock`. Preserve the Git tags
+declared in pyproject.toml for private dependencies: importing commit references
+can conflict with the same dependency's tagged transitive requirement.
+
 ## License
 
 Apache License Version 2.0
