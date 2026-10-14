@@ -72,6 +72,7 @@ urllib3 = {version = "==2.7.0", markers = "python_full_version > \"3.13.0\" and 
 wrapt = {version = "==2.2.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 xlrd = {version = "==2.0.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 yarl = {version = "==1.24.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+setuptools = {version = "==83.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 
 [dev-packages]
 
