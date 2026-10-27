@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-filelock = {version = "==3.25.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+filelock = {version = "==4.2.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 iniconfig = {version = "==2.3.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 mypy-extensions = {version = "==1.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 mypy = {version = "==0.971", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
@@ -14,10 +14,10 @@ py = {version = "==1.11.0", markers = "python_full_version > \"3.13.0\" and pyth
 pygments = {version = "==2.20.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 pytest-cov = {version = "==3.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 pytest = {version = "==9.0.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-python-discovery = {version = "==1.2.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+python-discovery = {version = "==1.6.4", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 toml = {version = "==0.10.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 tox = {version = "==3.25.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-virtualenv = {version = "==21.2.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+virtualenv = {version = "==21.14.9", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 certifi = {version = "==2026.6.17", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 charset-normalizer = {version = "==3.4.7", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 deepdiff = {version = "==8.6.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
@@ -50,7 +50,7 @@ jsonschema = {version = "==2.6.0", markers = "python_full_version > \"3.13.0\" a
 multidict = {version = "==6.7.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 numpy = {version = "==2.5.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 openpyxl = {version = "==3.1.5", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-packaging = {version = "==26.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+packaging = {version = "==26.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 pandas = {version = "==2.3.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 paramiko = {version = "==5.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 propcache = {version = "==0.5.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "55323dc434fdf264152d8979b40d32a1b69c8efb20171bf501a15da9721fd85d"
+            "sha256": "334032185cea611c808f2d84c75f13e887e2581c201494c8d7a9241f49a63d5b"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -786,11 +786,11 @@
         },
         "filelock": {
             "hashes": [
-                "sha256:b64ece2b38f4ca29dd3e810287aa8c48182bbecd1ae6e9ae126c9b35f1382694",
-                "sha256:ca8afb0da15f229774c9ad1b455ed96e85a81373065fb10446672f64444ddf70"
+                "sha256:7be2662e9e826b9bba28afc0f843a123280d799a2ea44bb5d35ccec67905ae44",
+                "sha256:c4c937ccac2a813cee448e662a56366cfb374c0f8702e75f295c412cc1c5d5a3"
             ],
             "markers": "python_full_version > '3.13.0' and python_version < '4.0'",
-            "version": "==3.25.2"
+            "version": "==4.2.1"
         },
         "frozenlist": {
             "hashes": [
@@ -1233,11 +1233,11 @@
         },
         "packaging": {
             "hashes": [
-                "sha256:5fc45236b9446107ff2415ce77c807cee2862cb6fac22b8a73826d0693b0980e",
-                "sha256:ff452ff5a3e828ce110190feff1178bb1f2ea2281fa2075aadb987c2fb221661"
+                "sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79",
+                "sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c"
             ],
             "markers": "python_full_version > '3.13.0' and python_version < '4.0'",
-            "version": "==26.2"
+            "version": "==26.3"
         },
         "pandas": {
             "hashes": [
@@ -1588,11 +1588,11 @@
         },
         "python-discovery": {
             "hashes": [
-                "sha256:1e108f1bbe2ed0ef089823d28805d5ad32be8e734b86a5f212bf89b71c266e4a",
-                "sha256:7d33e350704818b09e3da2bd419d37e21e7c30db6e0977bb438916e06b41b5b1"
+                "sha256:530179cc51a1816d512b15635b3dc931295ae12efb183783ad31190a5d425d2b",
+                "sha256:bc70d31f0ec5de11eda13d4d64c16e24b3506a65984684f2b6c98cb83b2ea9df"
             ],
             "markers": "python_full_version > '3.13.0' and python_version < '4.0'",
-            "version": "==1.2.0"
+            "version": "==1.6.4"
         },
         "python-gnupg": {
             "git": "ssh://git@github.com/symon-ai/python-gnupg.git",
@@ -1828,11 +1828,11 @@
         },
         "virtualenv": {
             "hashes": [
-                "sha256:1720dc3a62ef5b443092e3f499228599045d7fea4c79199770499df8becf9098",
-                "sha256:1bd755b504931164a5a496d217c014d098426cddc79363ad66ac78125f9d908f"
+                "sha256:4d1bee354cd81c820da3bee56e38be3426490f8d1fc54e10ea5b2072ebad8ef8",
+                "sha256:ac51744da66ae56ff814b087d65096c94de698ec520adc624b108b679655809b"
             ],
             "markers": "python_full_version > '3.13.0' and python_version < '4.0'",
-            "version": "==21.2.0"
+            "version": "==21.14.9"
         },
         "wrapt": {
             "hashes": [
