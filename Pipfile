@@ -40,14 +40,14 @@ ciso8601 = {version = "==2.3.3", markers = "python_full_version > \"3.13.0\" and
 cryptography = {version = "==49.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 et-xmlfile = {version = "==2.0.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 fastjsonschema = {version = "==2.14.5", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-file-processors = {ref = "v4.7.1", git = "ssh://git@github.com/symon-ai/file-processors.git", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+file-processors = {ref = "WP-36191-file-processors-fsspec", git = "ssh://git@github.com/symon-ai/file-processors.git", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 frozenlist = {version = "==1.8.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-fsspec = {version = "==2026.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+fsspec = {version = "==2026.6.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 idna = {version = "==3.18", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 invoke = {version = "==3.0.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 jmespath = {version = "==1.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 jsonschema = {version = "==2.6.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-multidict = {version = "==6.7.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+multidict = {version = "==6.9.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 numpy = {version = "==2.5.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 openpyxl = {version = "==3.1.5", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 packaging = {version = "==26.3", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
@@ -60,7 +60,7 @@ pynacl = {version = "==1.6.2", markers = "python_full_version > \"3.13.0\" and p
 python-dateutil = {version = "==2.9.0.post0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 python-gnupg = {ref = "v0.6.0", git = "ssh://git@github.com/symon-ai/python-gnupg.git", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 pytz = {version = "==2026.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-s3fs = {version = "==2026.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+s3fs = {version = "==2026.6.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 s3transfer = {version = "==0.17.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 simplejson = {version = "==3.20.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 singer-python = {version = "==6.3.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
