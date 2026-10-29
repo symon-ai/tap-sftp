@@ -29,9 +29,6 @@ coverage = "6.4.4"
 mypy = "0.971"
 pytest-cov = "^3.0.0"
 
-[tool.poetry.group.security-overrides]
-optional = false
-
 [tool.poetry.group.security-overrides.dependencies]
 fsspec = "2026.6.0"
 multidict = "6.9.1"
