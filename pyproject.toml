@@ -30,8 +30,8 @@ mypy = "0.971"
 pytest-cov = "^3.0.0"
 
 [tool.poetry.group.security-overrides.dependencies]
-fsspec = "2026.6.0"
-multidict = "6.9.1"
+fsspec = ">=2026.6.0"
+multidict = ">=6.9.1"
 
 [tool.poetry.scripts]
 tap-sftp = "tap_sftp.tap:main"
