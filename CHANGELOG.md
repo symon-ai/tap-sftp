@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.10.0
+  * WP-36206: Pin `fsspec` `2026.6.0` (CVE-2026-104851) and `multidict` `6.9.1` (CVE-2026-104874). Refresh dependency locks via `file-processors` v4.9.0.
+  * The app-api import-activity consumer must select connector tag v5.10.0 after release. The scanner mirror remains flattened; the application installs without the optional dev group.
+
 ## 5.9.0
   * WP-36464: Pin optional development dependencies to filelock 4.2.1 (CVE-2026-112940, CVE-2026-112907, CVE-2026-112913) and virtualenv 21.14.9 (CVE-2026-113721, CVE-2026-113719). Refresh both dependency locks, including required packaging and python-discovery updates.
   * The app-api import-activity consumer must select connector tag v5.9.0 after release. The scanner mirror remains flattened; the application installs without the optional dev group.
