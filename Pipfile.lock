@@ -810,7 +810,7 @@
         "file-processors": {
             "git": "ssh://git@github.com/symon-ai/file-processors.git",
             "markers": "python_full_version > '3.13.0' and python_version < '4.0'",
-            "ref": "b71233257fdbe2fae925050c33b72a2b0d2c1956"
+            "ref": "1b7fdd50d7f8c96aaecb819d197fe59eeb941cfa"
         },
         "filelock": {
             "hashes": [

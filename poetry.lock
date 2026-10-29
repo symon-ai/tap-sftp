@@ -775,8 +775,8 @@ xlrd = "2.0.1"
 [package.source]
 type = "git"
 url = "ssh://git@github.com/symon-ai/file-processors.git"
-reference = "WP-36191-file-processors-fsspec"
-resolved_reference = "b71233257fdbe2fae925050c33b72a2b0d2c1956"
+reference = "v4.9.0"
+resolved_reference = "1b7fdd50d7f8c96aaecb819d197fe59eeb941cfa"
 
 [[package]]
 name = "filelock"
