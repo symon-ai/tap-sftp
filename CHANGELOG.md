@@ -1,7 +1,7 @@
 # Changelog
 
 ## 5.10.0
-  * WP-36206: Pin `fsspec` `2026.6.0` (CVE-2026-104851) and `multidict` `6.9.1` (CVE-2026-104874). Refresh dependency locks via `file-processors` v4.9.0.
+  * WP-36206: Set security-overrides floors `fsspec` >= 2026.6.0 (CVE-2026-104851) and `multidict` >= 6.9.1 (CVE-2026-104874); locks resolve to those patched versions. Bump `file-processors` to v4.9.0.
   * The app-api import-activity consumer must select connector tag v5.10.0 after release. The scanner mirror remains flattened; the application installs without the optional dev group.
 
 ## 5.9.0
