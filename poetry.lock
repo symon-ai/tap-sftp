@@ -749,7 +749,7 @@ devel = ["colorama", "json-spec", "jsonschema", "pylint", "pytest", "pytest-benc
 
 [[package]]
 name = "file-processors"
-version = "4.10.0"
+version = "4.11.0"
 description = "File processors for singer tap and targets."
 optional = false
 python-versions = ">3.13.0,<4.0"
@@ -775,8 +775,8 @@ xlrd = "2.0.1"
 [package.source]
 type = "git"
 url = "ssh://git@github.com/symon-ai/file-processors.git"
-reference = "v4.10.0"
-resolved_reference = "d910b1714e1e5cf6963f3fafabd510ff351939c1"
+reference = "v4.11.0"
+resolved_reference = "505407353616f6bd03686bd885e6611890761ada"
 
 [[package]]
 name = "filelock"
@@ -1852,7 +1852,7 @@ develop = false
 type = "git"
 url = "ssh://git@github.com/symon-ai/python-gnupg.git"
 reference = "v0.6.0"
-resolved_reference = "8a0a89a58b7cc76b2dc8512f09f3b646401d017a"
+resolved_reference = "505407353616f6bd03686bd885e6611890761ada"
 
 [[package]]
 name = "pytz"
@@ -2456,4 +2456,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.13.0,<4.0"
-content-hash = "35d11514b3d9b7f1703e947bc8310f9a7df10558ca18cfa095a1c80db1f8bcb5"
+content-hash = "f4e2d7645b8ea30c233d47d4ef24011058fb5a75799d2c2f898fe7ac1e810623"
