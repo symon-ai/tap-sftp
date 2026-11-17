@@ -25,7 +25,7 @@ orderly-set = {version = "==5.5.0", markers = "python_full_version > \"3.13.0\" 
 requests = {version = "==2.34.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 aiobotocore = {version = "==3.7.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 aiohappyeyeballs = {version = "==2.6.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-aiohttp = {version = "==3.14.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+aiohttp = {version = "==3.14.5", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 aioitertools = {version = "==0.13.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 aiosignal = {version = "==1.4.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 attrs = {version = "==26.1.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
@@ -72,7 +72,7 @@ tzdata = {version = "==2026.2", markers = "python_full_version > \"3.13.0\" and 
 urllib3 = {version = "==2.7.0", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 wrapt = {version = "==2.2.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 xlrd = {version = "==2.0.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
-yarl = {version = "==1.24.2", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
+yarl = {version = "==1.25.1", markers = "python_full_version > \"3.13.0\" and python_version < \"4.0\""}
 
 [dev-packages]
 

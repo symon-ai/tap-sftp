@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tap-sftp"
-version = "5.10.0"
+version = "5.11.0"
 description = "Singer.io tap for extracting data"
 authors = ["Stitch"]
 classifiers = ["Programming Language :: Python :: 3 :: Only"]
@@ -30,6 +30,7 @@ mypy = "0.971"
 pytest-cov = "^3.0.0"
 
 [tool.poetry.group.security-overrides.dependencies]
+aiohttp = ">=3.14.4,<4.0.0"
 fsspec = ">=2026.6.0"
 multidict = ">=6.9.1"
 
